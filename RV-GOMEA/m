@@ -1,0 +1,15 @@
+#!/bin/sh
+
+/usr/bin/clear
+echo "Current directory:" `pwd`
+echo "Current host     :" `hostname`
+echo ""
+
+echo -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+gcc -Wall -O3 RV-GOMEA.c ../util/*.c -o RV-GOMEA -lm
+echo -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+if [ -f RV-GOMEA.exe ]
+then
+  mv RV-GOMEA.exe RV-GOMEA
+fi
