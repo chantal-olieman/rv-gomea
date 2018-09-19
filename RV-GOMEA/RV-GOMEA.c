@@ -94,6 +94,7 @@ void makeSelectionsForOnePopulation( int population_index );
 void makeSelectionsForOnePopulationUsingDiversityOnRank0( int population_index );
 void estimateParameters( int population_index );
 void estimateMeanVectorML( int population_index );
+void estimateDependencies();
 void estimateFullCovarianceMatrixML( int population_index );
 void estimateParametersML( int population_index );
 void estimateCovarianceMatricesML( int population_index );
@@ -158,6 +159,7 @@ double maximum_number_of_evaluations,                       /* The maximum numbe
    ****decomposed_covariance_matrices,                      /* The covariance matrices to be used for the sampling. */
    ****decomposed_cholesky_factors_lower_triangle,          /* The unique lower triangular matrix of the Cholesky factorization for every linkage tree element. */
     ***full_covariance_matrix,
+     **dependency_matrix,
        eta_ams = 1.0,
        eta_cov = 1.0;
 FOS  **linkage_model;
@@ -622,6 +624,7 @@ void initializeMemory( void )
     mean_shift_vector                = (double **) Malloc( maximum_number_of_populations*sizeof( double * ) );
     decomposed_covariance_matrices   = (double ****) Malloc( maximum_number_of_populations * sizeof( double ***) );
     full_covariance_matrix           = (double ***) Malloc( maximum_number_of_populations * sizeof( double **) );
+    dependency_matrix                = (double **) Malloc( sizeof( double **) );
     distribution_multipliers         = (double **) Malloc( maximum_number_of_populations*sizeof( double * ) );
     samples_drawn_from_normal        = (int **) Malloc( maximum_number_of_populations*sizeof( int * ) );
     out_of_bounds_draws              = (int **) Malloc( maximum_number_of_populations*sizeof( int * ) );
@@ -683,6 +686,8 @@ void initializeNewPopulationMemory( int population_index )
     no_improvement_stretch[population_index] = 0;
 
     number_of_generations[population_index] = 0;
+
+    estimateDependencies();
 }
 
 void initializeNewPopulation()
@@ -806,7 +811,8 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
     int i;
     FOS *new_FOS;
 
-    new_FOS = learnLinkageTree( full_covariance_matrix[population_index] );
+
+    new_FOS = learnLinkageTree( full_covariance_matrix[population_index], 0 );
     if( learn_linkage_tree && number_of_generations[population_index] > 0 )
         inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
 
@@ -1580,6 +1586,62 @@ void estimateFullCovarianceMatrixML( int population_index )
     }
 }
 
+/**
+* Computes the matrix of sample covariances for
+* a specified population.
+*
+* It is important that the pre-condition must be satisified:
+* estimateMeanVector was called first.
+*/
+void estimateDependencies( )
+{
+    int i, j, k;
+
+    dependency_matrix = (double **) Malloc( number_of_parameters*sizeof( double * ) );
+    for( j = 0; j < number_of_parameters; j++ )
+        dependency_matrix[j] = (double *) Malloc( number_of_parameters*sizeof( double ) );
+
+    double *individual = malloc(sizeof(number_of_parameters));
+    double *different_individual = malloc(sizeof(number_of_parameters));
+    double *individual_to_compare = malloc(sizeof(number_of_parameters));
+
+    for( k = 0; k < number_of_parameters; k++ )
+    {
+        individual[k] = lower_init_ranges[k] + (upper_init_ranges[k] - lower_init_ranges[k])*randomRealUniform01();
+        individual_to_compare[k] = individual[k];
+        double parameter_value = individual[k];
+        while(parameter_value == individual[k]){
+            parameter_value = lower_init_ranges[k] + (upper_init_ranges[k] - lower_init_ranges[k])*randomRealUniform01();
+        }
+        different_individual[k] = parameter_value;
+    }
+    double objective_value, constraint_value;
+    installedProblemEvaluation( problem_index, individual, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+    printf("objective value  1 = %f and 2 = %f\n", objective_value, constraint_value);
+
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        for( j = i; j < number_of_parameters; j++ )
+        {
+            double original_objective, change_i, change_j, change_i_j;
+            individual_to_compare[i] = individual[i];
+            individual_to_compare[j] = individual[j];
+            installedProblemEvaluation( problem_index, individual_to_compare, &(original_objective), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+            individual_to_compare[i] = different_individual[i];
+            installedProblemEvaluation( problem_index, individual_to_compare, &(change_i), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+            individual_to_compare[j] = different_individual[j];
+            installedProblemEvaluation( problem_index, individual_to_compare, &(change_i_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+            individual_to_compare[i] = individual[i];
+            installedProblemEvaluation( problem_index, individual_to_compare, &(change_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+            double delta_i = abs(original_objective-change_i);
+            double delta_j = abs(change_j-change_i_j);
+            dependency_matrix[i][j] = 1-delta_i/delta_j;
+            printf("%f, ", dependency_matrix[i][j] );
+        }
+        printf("  \n");
+    }
+}
+
 void estimateCovarianceMatricesML( int population_index )
 {
     int i, j, k, m, vara, varb;
@@ -1693,7 +1755,9 @@ void evaluateCompletePopulation( int population_index )
 
     for( j = 0; j < population_sizes[population_index]; j++ )
         installedProblemEvaluation( problem_index, populations[population_index][j], &(objective_values[population_index][j]), &(constraint_values[population_index][j]), number_of_parameters, NULL, NULL, 0, 0 );
+    printf("objective = %f, ", objective_values[population_index][0]);
 }
+
 
 /**
  * Applies the distribution multipliers.
@@ -2304,6 +2368,7 @@ void ezilaitiniMemory( void )
     free( out_of_bounds_draws );
     free( individual_NIS );
     free( full_covariance_matrix );
+    free( dependency_matrix );
     free( decomposed_covariance_matrices );
     free( decomposed_cholesky_factors_lower_triangle );
     free( lower_range_bounds );
