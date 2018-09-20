@@ -812,7 +812,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
     FOS *new_FOS;
 
 
-    new_FOS = learnLinkageTree( full_covariance_matrix[population_index], 0 );
+    new_FOS = learnLinkageTree( full_covariance_matrix[population_index], dependency_matrix );
     if( learn_linkage_tree && number_of_generations[population_index] > 0 )
         inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
 
@@ -1608,34 +1608,58 @@ void estimateDependencies( )
     for( k = 0; k < number_of_parameters; k++ )
     {
         individual[k] = lower_init_ranges[k] + (upper_init_ranges[k] - lower_init_ranges[k])*randomRealUniform01();
-        individual_to_compare[k] = individual[k];
         double parameter_value = individual[k];
         while(parameter_value == individual[k]){
             parameter_value = lower_init_ranges[k] + (upper_init_ranges[k] - lower_init_ranges[k])*randomRealUniform01();
         }
         different_individual[k] = parameter_value;
     }
-    double objective_value, constraint_value;
-    installedProblemEvaluation( problem_index, individual, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
-    printf("objective value  1 = %f and 2 = %f\n", objective_value, constraint_value);
+    double constraint_value;
+    for( k = 0; k < number_of_parameters; k++ )
+        individual_to_compare[k] = individual[k];
+
+    for( k = 0; k < number_of_parameters; k++ ) {
+        printf("the %d parameter of individual: %f, different: %f, and compare %f\n", k, individual[k], different_individual[k], individual_to_compare[k]);
+    }
 
     for( i = 0; i < number_of_parameters; i++ )
     {
         for( j = i; j < number_of_parameters; j++ )
         {
+            if(i==j){
+                dependency_matrix[i][j] = 1;
+                continue;
+            }
+
             double original_objective, change_i, change_j, change_i_j;
             individual_to_compare[i] = individual[i];
             individual_to_compare[j] = individual[j];
             installedProblemEvaluation( problem_index, individual_to_compare, &(original_objective), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+//            printf("the original i: %f, j: %f and objective: %f\n", individual_to_compare[i], individual_to_compare[j], original_objective);
             individual_to_compare[i] = different_individual[i];
             installedProblemEvaluation( problem_index, individual_to_compare, &(change_i), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+//            printf("the change_i: %f, j: %f and objective: %f\n", individual_to_compare[i], individual_to_compare[j], change_i);
             individual_to_compare[j] = different_individual[j];
             installedProblemEvaluation( problem_index, individual_to_compare, &(change_i_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+//            printf("the change_ij i: %f, j: %f and objective: %f\n", individual_to_compare[i], individual_to_compare[j], change_i_j);
             individual_to_compare[i] = individual[i];
             installedProblemEvaluation( problem_index, individual_to_compare, &(change_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+//            printf("the change_j i: %f, j: %f and objective: %f\n", individual_to_compare[i], individual_to_compare[j], change_j);
             double delta_i = abs(original_objective-change_i);
             double delta_j = abs(change_j-change_i_j);
-            dependency_matrix[i][j] = 1-delta_i/delta_j;
+
+            printf("delta_i: %f, delta_j %f\n", delta_i, delta_j);
+            dependency_matrix[i][j] = (1-(delta_i/delta_j));
+            dependency_matrix[j][i] = (1-(delta_i/delta_j));
+            printf("delta/delta %f, ", dependency_matrix[i][j] );
+//            printf("%f, ", dependency_matrix[i][j] );
+        }
+        printf("  \n");
+    }
+    printf("The whole matrix: \n");
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        for( j = 0; j < number_of_parameters; j++ ) {
             printf("%f, ", dependency_matrix[i][j] );
         }
         printf("  \n");
