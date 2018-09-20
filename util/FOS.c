@@ -147,7 +147,7 @@ FOS *copyFOS( FOS *f )
     return( new_FOS );
 }
 
-FOS *learnLinkageTree( double **covariance_matrix, double **dependency_matrix )
+FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
 {
     char     done;
     int      i, j, r0, r1, rswap, *indices, *order, *sorted,
@@ -156,8 +156,10 @@ FOS *learnLinkageTree( double **covariance_matrix, double **dependency_matrix )
             *NN_chain, NN_chain_length;
     double   mul0, mul1, **MI_matrix;
     FOS *new_FOS;
+    int dependency_linkage = 1;
+
+    /* Compute Mutual Information matrix */
     MI_matrix = NULL;
-//    int dependency_linkage_tree = 0;
     if( learn_linkage_tree )
         MI_matrix = computeMIMatrix( covariance_matrix, number_of_parameters );
 
@@ -229,14 +231,13 @@ FOS *learnLinkageTree( double **covariance_matrix, double **dependency_matrix )
                 S_matrix[i][i] = 0.0;
             }
         }
-//        else if( dependency_linkage_tree )
-//        {
-//            for( i = 0; i < mpm_length; i++ )
-//                for( j = 0; j < mpm_length; j++ )
-//                    S_matrix[i][j] = dependency_matrix[mpm[i][0]][mpm[j][0]];
-//            for( i = 0; i < mpm_length; i++ )
-//                S_matrix[i][i] = 0;
-//        }
+        else if ( dependency_linkage ){
+            for( i = 0; i < mpm_length; i++ )
+                for( j = 0; j < mpm_length; j++ )
+                    S_matrix[i][j] = dependency_matrix[mpm[i][0]][mpm[j][0]];
+            for( i = 0; i < mpm_length; i++ )
+                S_matrix[i][i] = 0;
+        }
         else
         {
             for( i = 0; i < mpm_length; i++ )
@@ -284,6 +285,10 @@ FOS *learnLinkageTree( double **covariance_matrix, double **dependency_matrix )
         }
         r0 = NN_chain[NN_chain_length-2];
         r1 = NN_chain[NN_chain_length-1];
+        if(getSimilarity(r0, r1) == 0.0){
+            break;
+        }
+
 
         if( r1 >= mpm_length || r0 >= mpm_length || mpm_number_of_indices[r0]+mpm_number_of_indices[r1] > FOS_element_ub )
         {
@@ -329,9 +334,9 @@ FOS *learnLinkageTree( double **covariance_matrix, double **dependency_matrix )
             new_FOS->sets[FOS_index] = (int *) Malloc( (mpm_number_of_indices[r0]+mpm_number_of_indices[r1])*sizeof( int ) );
             new_FOS->set_length[FOS_index] = mpm_number_of_indices[r0]+mpm_number_of_indices[r1];
             sorted = mergeSortInt(indices, mpm_number_of_indices[r0]+mpm_number_of_indices[r1]);
-            for( j = 0; j < mpm_number_of_indices[r0]+mpm_number_of_indices[r1]; j++ )
+            for( j = 0; j < mpm_number_of_indices[r0]+mpm_number_of_indices[r1]; j++ ){
                 new_FOS->sets[FOS_index][j] = indices[sorted[j]];
-
+            }
             free( sorted );
             free( indices );
 
@@ -410,7 +415,13 @@ FOS *learnLinkageTree( double **covariance_matrix, double **dependency_matrix )
             FOS_index++;
         }
     }
-
+/*    for( i =0; i < FOS_index; i++){
+        int setlenght = new_FOS->set_length[i];
+        for(int j = 0; j < setlenght; j++ ){
+            printf("%d, ", new_FOS->sets[i][j]);
+        }
+        printf("\n");
+    }*/
     new_FOS->length = FOS_index;
 
     free( NN_chain );
@@ -449,6 +460,7 @@ int determineNearestNeighbour( int index, double **S_matrix, int *mpm_number_of_
         if( ((getSimilarity(index,i) > getSimilarity(index,result)) || ((getSimilarity(index,i) == getSimilarity(index,result)) && (mpm_number_of_indices[i] < mpm_number_of_indices[result]))) && (i != index) )
             result = i;
     }
+
     return( result );
 }
 
