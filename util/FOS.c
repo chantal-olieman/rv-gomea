@@ -156,11 +156,10 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
             *NN_chain, NN_chain_length;
     double   mul0, mul1, **MI_matrix;
     FOS *new_FOS;
-    int dependency_linkage = 1;
 
     /* Compute Mutual Information matrix */
     MI_matrix = NULL;
-    if( learn_linkage_tree )
+    if( learn_linkage_tree && !dependency_learning)
         MI_matrix = computeMIMatrix( covariance_matrix, number_of_parameters );
 
     /* Initialize MPM to the univariate factorization */
@@ -201,15 +200,25 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
 
     if( learn_linkage_tree )
     {
-        for( i = 0; i < mpm_length; i++ )
-            for( j = 0; j < mpm_length; j++ )
-                S_matrix[i][j] = MI_matrix[mpm[i][0]][mpm[j][0]];
-        for( i = 0; i < mpm_length; i++ )
-            S_matrix[i][i] = 0;
+        if ( dependency_learning ) {
+            for (i = 0; i < mpm_length; i++)
+                for (j = 0; j < mpm_length; j++)
+                    S_matrix[i][j] = dependency_matrix[mpm[i][0]][mpm[j][0]];
+            for (i = 0; i < mpm_length; i++)
+                S_matrix[i][i] = 0;
+        }
+        else{
+            for( i = 0; i < mpm_length; i++ )
+                for( j = 0; j < mpm_length; j++ )
+                    S_matrix[i][j] = MI_matrix[mpm[i][0]][mpm[j][0]];
+            for( i = 0; i < mpm_length; i++ )
+                S_matrix[i][i] = 0;
 
-        for( i = 0; i < number_of_parameters; i++ )
-            free( MI_matrix[i] );
-        free( MI_matrix );
+            for( i = 0; i < number_of_parameters; i++ )
+                free( MI_matrix[i] );
+            free( MI_matrix );
+        }
+
     }
     else if( random_linkage_tree )
     {
@@ -231,11 +240,11 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
                 S_matrix[i][i] = 0.0;
             }
         }
-        else if ( dependency_linkage ){
-            for( i = 0; i < mpm_length; i++ )
-                for( j = 0; j < mpm_length; j++ )
+        else if (dependency_learning){
+            for (i = 0; i < mpm_length; i++)
+                for (j = 0; j < mpm_length; j++)
                     S_matrix[i][j] = dependency_matrix[mpm[i][0]][mpm[j][0]];
-            for( i = 0; i < mpm_length; i++ )
+            for (i = 0; i < mpm_length; i++)
                 S_matrix[i][i] = 0;
         }
         else
@@ -253,6 +262,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
             }
         }
     }
+
 
     NN_chain        = (int *) Malloc( (number_of_parameters+2)*sizeof( int ) );
     NN_chain_length = 0;

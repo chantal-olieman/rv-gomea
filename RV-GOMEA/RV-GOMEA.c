@@ -139,7 +139,7 @@ int    base_population_size,                                /* The size of the f
       *no_improvement_stretch,                              /* The number of subsequent generations without an improvement while the distribution multiplier is <= 1.0, for each population separately. */
        maximum_no_improvement_stretch,                      /* The maximum number of subsequent generations without an improvement while the distribution multiplier is <= 1.0. */
      **individual_NIS;                                      /* The number of generations a solution has not improved. */
-double maximum_number_of_evaluations,                       /* The maximum number of evaluations. */
+    double maximum_number_of_evaluations,                       /* The maximum number of evaluations. */
        maximum_number_of_seconds,                           /* The maximum number of seconds. */
        tau,                                                 /* The selection truncation percentile (in [1/population_size,1]). */
     ***populations,                                         /* The populations containing the solutions. */
@@ -259,6 +259,7 @@ void interpretCommandLine( int argc, char **argv )
     use_univariate_FOS = 0;
     learn_linkage_tree = 0;
     static_linkage_tree = 0;
+    dependency_learning = 0;
     random_linkage_tree = 0;
     FOS_element_size = -1;
     block_start = 0;
@@ -290,6 +291,8 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -3 ) static_linkage_tree = 1;
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
+    if( FOS_element_size == -6 ) {learn_linkage_tree = 1; dependency_learning = 1;}
+    if( FOS_element_size == -7 ) {static_linkage_tree = 1; dependency_learning = 1;}
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
 
     checkOptions();
@@ -810,7 +813,9 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 {
     int i;
     FOS *new_FOS;
-
+    if( dependency_learning && learn_linkage_tree ){
+        estimateDependencies();
+    }
     new_FOS = learnLinkageTree( full_covariance_matrix[population_index], dependency_matrix);
     if( learn_linkage_tree && number_of_generations[population_index] > 0 )
         inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
@@ -1586,11 +1591,8 @@ void estimateFullCovarianceMatrixML( int population_index )
 }
 
 /**
-* Computes the matrix of sample covariances for
+* Computes the matrix of dependencies for
 * a specified population.
-*
-* It is important that the pre-condition must be satisified:
-* estimateMeanVector was called first.
 */
 void estimateDependencies( )
 {
@@ -1660,17 +1662,22 @@ void estimateDependencies( )
 //            printf("%f, ", dependency_matrix[i][j] );
         }
     }
-/*    printf("The whole matrix: \n");
-    for( i = 0; i < number_of_parameters; i++ )
-    {
-        for( j = 0; j < number_of_parameters; j++ ) {
-            printf("%f, ", dependency_matrix[i][j] );
-        }
-        printf("  \n");
-    }*/
+    //printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free( individual );
     free( different_individual );
     free( individual_to_compare );
+}
+
+void printMatrix(double **matrix, int cols, int rows){
+    int i, j;
+    printf("The whole matrix: \n");
+    for( i = 0; i < rows; i++ )
+    {
+        for( j = 0; j < cols; j++ ) {
+            printf("%f, ", matrix[i][j] );
+        }
+        printf("  \n");
+    }
 }
 
 void estimateCovarianceMatricesML( int population_index )
