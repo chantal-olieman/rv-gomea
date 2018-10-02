@@ -287,7 +287,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
         {
             NN_chain[NN_chain_length] = determineNearestNeighbour( NN_chain[NN_chain_length-1], S_matrix, mpm_number_of_indices, mpm_length );
             if( ((getSimilarity(NN_chain[NN_chain_length-1],NN_chain[NN_chain_length]) == getSimilarity(NN_chain[NN_chain_length-1],NN_chain[NN_chain_length-2])))
-                    && (NN_chain[NN_chain_length] != NN_chain[NN_chain_length-2]) )
+                && (NN_chain[NN_chain_length] != NN_chain[NN_chain_length-2]) )
                 NN_chain[NN_chain_length] = NN_chain[NN_chain_length-2];
             NN_chain_length++;
             if( NN_chain_length > number_of_parameters )
@@ -561,7 +561,7 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
     int i, j, x, y, root, *q, wr, rd, cx, cy, ty, max_match,
             *lx, *ly, *xy, *yx, *slack, *slackx, *prev, delta;
     short *S, *T, terminated;
-    
+
     lx = (int*) Malloc(dim*sizeof(int));
     ly = (int*) Malloc(dim*sizeof(int));
     xy = (int*) Malloc(dim*sizeof(int));
@@ -571,7 +571,7 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
     prev = (int*) Malloc(dim*sizeof(int));
     S = (short*) Malloc(dim*sizeof(short));
     T = (short*) Malloc(dim*sizeof(short));
-    
+
     root = -1;
     max_match = 0;
     for( i = 0; i < dim; i++ )
@@ -585,12 +585,12 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
         for(j = 0; j < dim; j++)
             if(similarity_matrix[i][j] > lx[i])
                 lx[i] = similarity_matrix[i][j];
-    
+
     terminated = 0;
     while(!terminated)
     {
         if (max_match == dim) break;
-        
+
         wr = 0;
         rd = 0;
         q = (int*) Malloc(dim*sizeof(int));
@@ -600,7 +600,7 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
             T[i] = 0;
             prev[i] = -1;
         }
-        
+
         for (x = 0; x < dim; x++)
         {
             if (xy[x] == -1)
@@ -617,7 +617,7 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
             slack[y] = lx[root] + ly[y] - similarity_matrix[root][y];
             slackx[y] = root;
         }
-        
+
         while ( 1 )
         {
             while (rd < wr)
@@ -687,10 +687,10 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
             }
         }
         else terminated = 1;
-        
+
         free( q );
     }
-    
+
     free( lx );
     free( ly );
     free( yx );
@@ -699,14 +699,14 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
     free( prev );
     free( S );
     free( T );
-    
+
     return xy;
 }
 
-void hungarianAlgorithmAddToTree(int x, int prevx, short *S, int *prev, int *slack, int *slackx, int* lx, int *ly, int** similarity_matrix, int dim) 
+void hungarianAlgorithmAddToTree(int x, int prevx, short *S, int *prev, int *slack, int *slackx, int* lx, int *ly, int** similarity_matrix, int dim)
 {
     int y;
-    
+
     S[x] = 1;
     prev[x] = prevx;
     for (y = 0; y < dim; y++)
