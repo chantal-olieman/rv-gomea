@@ -676,9 +676,12 @@ void initializeNewPopulationMemory( int population_index )
     mean_vectors[population_index] = (double *) Malloc( number_of_parameters*sizeof( double ) );
 
     mean_shift_vector[population_index] = (double *) Malloc( number_of_parameters*sizeof( double ) );
-    
+
     individual_NIS[population_index] = (int*) Malloc( population_sizes[population_index]*sizeof(int));
-    
+
+    for( j = 0; j < number_of_parameters; j++ )
+        dependency_matrix[j] = (double *) Malloc( number_of_parameters*sizeof( double ) );
+
     if( learn_linkage_tree )
     {
         distribution_multipliers[population_index]  = (double *) Malloc( 1*sizeof( double ) );
@@ -698,9 +701,6 @@ void initializeNewPopulationMemory( int population_index )
     no_improvement_stretch[population_index] = 0;
 
     number_of_generations[population_index] = 0;
-
-    for( j = 0; j < number_of_parameters; j++ )
-        dependency_matrix[j] = (double *) Malloc( number_of_parameters*sizeof( double ) );
 }
 
 void initializeNewPopulation()
@@ -708,19 +708,18 @@ void initializeNewPopulation()
     initializeNewPopulationMemory( number_of_populations );
 
     initializePopulationAndFitnessValues( number_of_populations );
-    
+
     if( !learn_linkage_tree )
     {
         initializeCovarianceMatrices( number_of_populations );
 
         initializeDistributionMultipliers( number_of_populations );
     }
-    
+
     computeRanksForOnePopulation( number_of_populations );
 
     number_of_populations++;
 }
-
 /**
  * Initializes the linkage tree
  */
@@ -741,14 +740,16 @@ void initializeFOS( int population_index )
     }
     else if( static_linkage_tree )
     {
-        if( population_index == 0 ){
-            if( dependency_learning ){
-                estimateDependencies( population_index );
+        if( population_index == 0 ) {
+            if (dependency_learning) {
+                estimateDependencies(population_index);
             }
-            new_FOS = learnLinkageTreeRVGOMEA( population_index );
+            new_FOS = learnLinkageTreeRVGOMEA(population_index);
         }
-        else
+        else{
             new_FOS = copyFOS( linkage_model[0] );
+        }
+
     }
     else
     {
@@ -830,8 +831,10 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
     if( dependency_learning && learn_linkage_tree ){
         estimateDependencies( population_index );
     }
-    if( function_learning && learn_linkage_tree ){
-        estimateFunction(population_index);
+    if( function_learning ){
+        if( population_index == 0 || learn_linkage_tree ){
+            estimateFunction(population_index);
+        }
     }
     new_FOS = learnLinkageTree( full_covariance_matrix[population_index], dependency_matrix);
     if( learn_linkage_tree && number_of_generations[population_index] > 0 )
@@ -1626,15 +1629,13 @@ void getMinMaxofPopulation(int variable, int population_index, double min, doubl
 void estimateDependencies( int population_index )
 {
     int i, j, k;
-    for( j = 0; j < number_of_parameters; j++ )
-        dependency_matrix[j] = (double *) Malloc( number_of_parameters*sizeof( double ) );
     double *individual = (double *) Malloc( number_of_parameters*sizeof( double ) );
     double *different_individual = (double *) Malloc( number_of_parameters*sizeof( double ) );
     double *individual_to_compare = (double *) Malloc( number_of_parameters*sizeof( double ) );
 
+    double rand = randomRealUniform01();
     for( k = 0; k < number_of_parameters; k++ )
     {
-        double rand = randomRealUniform01();
         double min = lower_init_ranges[k], max = upper_init_ranges[k];
         getMinMaxofPopulation(k, population_index, min, max);
         individual[k] = min + ((max - min)*rand*0.5);
@@ -1681,7 +1682,7 @@ void estimateDependencies( int population_index )
             dependency_matrix[j][i] = dependency;
         }
     }
-//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free( individual );
     free( different_individual );
     free( individual_to_compare );
@@ -1717,10 +1718,7 @@ double* createFunctionInput(double* original_parameters){
 void createFunctionDependencies(double* weight_vector){
     int count = 1;
     for(int i = 0; i< number_of_parameters; i++){
-        if(weight_vector[count]>1)
-            dependency_matrix[i][i] = weight_vector[count];
-        else
-            dependency_matrix[i][i] = 1.0;
+        dependency_matrix[i][i] = weight_vector[count];
         count += 1;
         for(int j = i; j <number_of_parameters; j++){
             if( i != j ){
@@ -1761,19 +1759,19 @@ void estimateFunction( int population_index ) {
     double **dot_product_data_point = (double **) Malloc(number_of_function_parameters * sizeof(double *));
     double *dot_product_y = (double *) Malloc(number_of_function_parameters * sizeof(double));
     double *weight_vector = (double *) Malloc(number_of_function_parameters * sizeof(double));
-
+    printf("y:");
     for (j = 0; j < population_sizes[population_index]; j++) {
         data_point_matrix[j] = createFunctionInput(populations[population_index][j]);
         y[j] = objective_values[population_index][j];
+        printf("%f , ", y[j]);
     }
-
     for (j = 0; j < number_of_function_parameters; j++) {
         data_point_matrix_T[j] = (double *) Malloc( population_sizes[population_index]*sizeof( double ) );
         for (i = 0; i < population_sizes[population_index]; i++) {
             data_point_matrix_T[j][i] = data_point_matrix[i][j];
         }
     }
-
+    printMatrix(data_point_matrix, number_of_function_parameters, population_sizes[population_index]);
     for (int i = 0; i < number_of_function_parameters; i++) {
         dot_product_data_point[i] = (double *) Malloc(number_of_function_parameters * sizeof(double));
     }
@@ -1792,12 +1790,10 @@ void estimateFunction( int population_index ) {
         dot_product_y[i] = vectorDotProduct(data_point_matrix_T[i], y, population_sizes[population_index]);
     }
     pseudoInverse(dot_product_data_point, number_of_function_parameters);
-
     // dot product of inv(Xt.X) and y
     for (int i = 0; i < number_of_function_parameters; i++) {
         weight_vector[i] = vectorDotProduct(dot_product_data_point[i], dot_product_y, number_of_function_parameters);
     }
-    createFunctionDependencies(weight_vector);
     free(y);
     free(dot_product_y);
     free(data_point_matrix);
