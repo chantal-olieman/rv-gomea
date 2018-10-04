@@ -95,7 +95,7 @@ void makeSelectionsForOnePopulation( int population_index );
 void makeSelectionsForOnePopulationUsingDiversityOnRank0( int population_index );
 void estimateParameters( int population_index );
 void estimateMeanVectorML( int population_index );
-void estimateDependencies( int population_index );
+void estimateDifferentialDependencies( int population_index );
 void printMatrix(double **matrix, int cols, int rows);
 void svdcmp(double **a, size_t m, size_t n, double *w, double **v);
 void estimateFunction(int population_index );
@@ -297,10 +297,10 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -3 ) static_linkage_tree = 1;
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
-    if( FOS_element_size == -6 ) {learn_linkage_tree = 1; dependency_learning = 1;}
-    if( FOS_element_size == -7 ) {static_linkage_tree = 1; dependency_learning = 1;}
-    if( FOS_element_size == -8 ) {learn_linkage_tree = 1; function_learning = 1;}
-    if( FOS_element_size == -9 ) {static_linkage_tree = 1; function_learning = 1;}
+    if( FOS_element_size == -6 ) {learn_linkage_tree = 1; dependency_learning = 1;differential_learning = 1;}
+    if( FOS_element_size == -7 ) {static_linkage_tree = 1; dependency_learning = 1;differential_learning = 1;}
+    if( FOS_element_size == -8 ) {learn_linkage_tree = 1; dependency_learning = 1; function_learning = 1;}
+    if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; function_learning = 1;}
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
 
     checkOptions();
@@ -741,8 +741,8 @@ void initializeFOS( int population_index )
     else if( static_linkage_tree )
     {
         if( population_index == 0 ) {
-            if (dependency_learning) {
-                estimateDependencies(population_index);
+            if (differential_learning) {
+                estimateDifferentialDependencies(population_index);
             }
             new_FOS = learnLinkageTreeRVGOMEA(population_index);
         }
@@ -828,11 +828,12 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 {
     int i;
     FOS *new_FOS;
-    if( dependency_learning && learn_linkage_tree ){
-        estimateDependencies( population_index );
+    if( differential_learning && learn_linkage_tree ){
+        estimateDifferentialDependencies( population_index );
     }
     if( function_learning ){
-        if( population_index == 0 || learn_linkage_tree ){
+        if( number_of_populations == 1 || learn_linkage_tree ){
+            printf("one population");
             estimateFunction(population_index);
         }
     }
@@ -1626,7 +1627,7 @@ void getMinMaxofPopulation(int variable, int population_index, double min, doubl
 * Computes the matrix of dependencies for
 * a specified population.
 */
-void estimateDependencies( int population_index )
+void estimateDifferentialDependencies( int population_index )
 {
     int i, j, k;
     double *individual = (double *) Malloc( number_of_parameters*sizeof( double ) );
