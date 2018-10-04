@@ -1689,14 +1689,8 @@ void estimateDependencies( int population_index )
 }
 
 int calculateNumberofFunctionParameters(int number){
-    long long factorial = 1;
-    long long factorial_minus_k = 1;
-    for (int i = 2; i <= number-2; i++){
-        factorial_minus_k *= i;
-    }
-    factorial = factorial_minus_k * (number-1);
-    factorial = factorial*number;
-    int result = (factorial/(2*factorial_minus_k));
+    long long factorial = number*number-1;
+    int result = (factorial/2);
     return 2*number+result+1;
 }
 
