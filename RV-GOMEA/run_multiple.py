@@ -1,52 +1,58 @@
-    import os
+import os
 import numpy
 
-linkage_tree_time = []
-linkage_tree_obj = []
-dependency_matrix_time = []
-dependency_matrix_obj = []
-runs = 20
+result_times = [[],[],[],[]]
+result_evals = [[],[],[],[]]
+runs = 10
 
-population = 10
-blackbox = "-b"
-rotation = 45
-problem = 13
+linkage_options = [1, -2, -7]
+populations = [5, 15, 45, 135, 405]
+blackbox = ""
+rotation = 0
+problem = 7
 
-learned_linkage = f"./RV-GOMEA -s -r {blackbox} -f -7 {problem} {population} -115 -100 {rotation} " \
-                  f"0.35 10 25 0.9 1 0 1e-10 100 0.0 30"
+for population in populations:
+    times = []
+    evals = []
+    for linkage in linkage_options:
+        learned_linkage = f"./RV-GOMEA -s -r {blackbox} -f {linkage} {problem} {population} -115 -100 {rotation} " \
+                          f"0.35 10 25 0.9 1 0 1e-10 100 0.0 300"
+        print(f"settings: {learned_linkage}")
+        linkage_evals = []
+        linkage_time = []
+        max_time = 0
+        for i in range(runs):
+            results = os.popen(learned_linkage).readlines()
+            if i % 5 == 0:
+                print(f"run {i}")
+            try:
+                linkage_evals.append(float(results[0].split(" ")[1]))
+                linkage_time.append(float(results[0].split(" ")[5]))
+                if linkage_time[-1] > 600:
+                    max_time += 1
+                    if max_time >= 3:
+                        break
+            except IndexError:
+                print(f"error: {results}")
+        evaluations = numpy.median(linkage_evals)
+        time = numpy.median(linkage_time)
+        times.append(time)
+        evals.append(evaluations)
+    result_times[0].append(population)
+    result_evals[0].append(population)
+    for i in range(len(times)):
+        result_times[i+1].append(times[i])
+    for i in range(len(evals)):
+        result_evals[i+1].append(evals[i])
+    file = open("output_time_rosenbrock.txt", "w")
+    file.write(str(result_times))
+    file = open("output_evals_rosenbroc.txt", "w")
+    file.write(str(result_evals))
 
-dependency = f"./RV-GOMEA -s -r {blackbox} -f -6 {problem} {population} -115 -100 {rotation} " \
-                  f"0.35 10 25 0.9 1 0 1e-10 100 0.0 30"
-
-print(f"settings: {learned_linkage}")
-
-for i in range(runs):
-    results = os.popen(learned_linkage).readlines()
-    if i % 5 == 0:
-        print(f"run {i}")
-    try:
-        linkage_tree_obj.append(float(results[0].split(" ")[3]))
-        linkage_tree_time.append(float(results[0].split(" ")[5]))
-    except IndexError:
-        print(f"error: {results}")
-
-for i in range(runs):
-    results = os.popen(dependency).readlines()
-    if i % 5 == 0:
-        print(f"run {i}")
-    try:
-        dependency_matrix_obj.append(float(results[0].split(" ")[3]))
-        dependency_matrix_time.append(float(results[0].split(" ")[5]))
-    except IndexError:
-        print(f"error: {results}")
 
 
-print(f"the linkage tree runs for {numpy.mean(linkage_tree_time)} "
-      f"on average with an objective of {numpy.mean(linkage_tree_obj)}")
-print(f"the dependency tree runs for {numpy.mean(dependency_matrix_time)} "
-      f"on average with an objective of {numpy.mean(dependency_matrix_obj)}")
-
-result = "time-linkage:"+str(linkage_tree_time) +"\ntime-dependency:"+ str(dependency_matrix_time) +"\nobjective-linkage:"+ str(linkage_tree_obj) +"\nobjective-dependency:"+  str(dependency_matrix_obj) +"\n"+learned_linkage+ "\n" + dependency
-file = open("output.txt", "w")
-file.write(str(result))
+file = open("output_time_rosenbroc.txt", "w")
+file.write(str(result_times))
+file = open("output_evals_rosenbroc.txt", "w")
+file.write(str(result_evals))
 print("done")

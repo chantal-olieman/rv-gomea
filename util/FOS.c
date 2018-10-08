@@ -295,7 +295,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
         }
         r0 = NN_chain[NN_chain_length-2];
         r1 = NN_chain[NN_chain_length-1];
-        if(getSimilarity(r0, r1) == 0.0){
+        if(getSimilarity(r0, r1) <= 0.0005 && dependency_learning){
             break;
         }
 

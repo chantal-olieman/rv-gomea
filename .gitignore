@@ -51,3 +51,13 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+.idea
+cmake-build-debug
+.vscode
+.vscode/
+RV-GOMEA/statistics.dat
+RV-GOMEA/random_seed.dat
+
+
+cmake-build-debug/
+.vscodes

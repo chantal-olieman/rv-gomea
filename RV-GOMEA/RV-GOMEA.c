@@ -744,6 +744,10 @@ void initializeFOS( int population_index )
             if (differential_learning) {
                 estimateDifferentialDependencies(population_index);
             }
+            if ( function_learning ) {
+                initializePopulationAndFitnessValues(0);
+//                estimateFunction(0);
+            }
             new_FOS = learnLinkageTreeRVGOMEA(population_index);
         }
         else{
@@ -832,8 +836,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
         estimateDifferentialDependencies( population_index );
     }
     if( function_learning ){
-        if( number_of_populations == 1 || learn_linkage_tree ){
-            printf("one population");
+        if( number_of_populations == 0 || learn_linkage_tree ){
             estimateFunction(population_index);
         }
     }
@@ -1683,7 +1686,7 @@ void estimateDifferentialDependencies( int population_index )
             dependency_matrix[j][i] = dependency;
         }
     }
-    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free( individual );
     free( different_individual );
     free( individual_to_compare );
@@ -1713,12 +1716,23 @@ double* createFunctionInput(double* original_parameters){
 void createFunctionDependencies(double* weight_vector){
     int count = 1;
     for(int i = 0; i< number_of_parameters; i++){
-        dependency_matrix[i][i] = weight_vector[count];
+        if ( weight_vector[count] < 0 ){
+            dependency_matrix[i][i] = -weight_vector[count];
+        }
+        else{
+            dependency_matrix[i][i] = weight_vector[count];
+        }
         count += 1;
         for(int j = i; j <number_of_parameters; j++){
             if( i != j ){
-                dependency_matrix[i][j] = weight_vector[count];
-                dependency_matrix[j][i] = weight_vector[count];
+                if ( weight_vector[count] < 0 ){
+                    dependency_matrix[i][j] = -weight_vector[count];
+                    dependency_matrix[j][i] = -weight_vector[count];
+                }
+                else{
+                    dependency_matrix[i][j] = weight_vector[count];
+                    dependency_matrix[j][i] = weight_vector[count];
+                }
             }
             count += 1;
         }
@@ -1754,11 +1768,9 @@ void estimateFunction( int population_index ) {
     double **dot_product_data_point = (double **) Malloc(number_of_function_parameters * sizeof(double *));
     double *dot_product_y = (double *) Malloc(number_of_function_parameters * sizeof(double));
     double *weight_vector = (double *) Malloc(number_of_function_parameters * sizeof(double));
-    printf("y:");
     for (j = 0; j < population_sizes[population_index]; j++) {
         data_point_matrix[j] = createFunctionInput(populations[population_index][j]);
         y[j] = objective_values[population_index][j];
-        printf("%f , ", y[j]);
     }
     for (j = 0; j < number_of_function_parameters; j++) {
         data_point_matrix_T[j] = (double *) Malloc( population_sizes[population_index]*sizeof( double ) );
@@ -1766,7 +1778,7 @@ void estimateFunction( int population_index ) {
             data_point_matrix_T[j][i] = data_point_matrix[i][j];
         }
     }
-    printMatrix(data_point_matrix, number_of_function_parameters, population_sizes[population_index]);
+    //printMatrix(data_point_matrix, number_of_function_parameters, population_sizes[population_index]);
     for (int i = 0; i < number_of_function_parameters; i++) {
         dot_product_data_point[i] = (double *) Malloc(number_of_function_parameters * sizeof(double));
     }
@@ -1789,12 +1801,25 @@ void estimateFunction( int population_index ) {
     for (int i = 0; i < number_of_function_parameters; i++) {
         weight_vector[i] = vectorDotProduct(dot_product_data_point[i], dot_product_y, number_of_function_parameters);
     }
+
+    // checking the prediction with a new y_predict
+    double prediction_error = 0.0;
+    for (j = 0; j < population_sizes[population_index]; j++) {
+        double error = predict(weight_vector, populations[population_index][j])-y[j];
+        prediction_error += error*error;
+    }
+    prediction_error = prediction_error/population_sizes[population_index];
+    printf("MSE: %f\n", prediction_error);
+
+
+    createFunctionDependencies(weight_vector);
     free(y);
     free(dot_product_y);
     free(data_point_matrix);
     free(data_point_matrix_T);
     free(weight_vector);
     free(dot_product_data_point);
+    //printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 }
 
 void printMatrix(double **matrix, int cols, int rows){

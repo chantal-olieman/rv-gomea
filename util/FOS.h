@@ -70,6 +70,7 @@ int      *mpm_number_of_indices,
           use_univariate_FOS,                   /* Whether a univariate FOS is used. */
           learn_linkage_tree,                   /* Whether the FOS is learned at the start of each generation. */
           static_linkage_tree,
+          differential_learning,
           dependency_learning,                   /* Whether the FOS is fixed throughout optimization. */
           function_learning,                    /* Whether the FOS is fixed throughout optimization. */
           random_linkage_tree,                  /* Whether the fixed linkage tree is learned based on a random distance measure. */
