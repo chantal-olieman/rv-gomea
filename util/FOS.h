@@ -58,6 +58,7 @@ int determineNearestNeighbour( int index, double **S_matrix, int *mpm_number_of_
 double getSimilarity( int a, int b );
 double **computeMIMatrix( double **covariance_matrix, int n );
 int *matchFOSElements( FOS *new_FOS, FOS *prev_FOS );
+int *matchFOSElementsUnevenSizedFOS( FOS *new_FOS, FOS *prev_FOS );
 int *hungarianAlgorithm( int** similarity_matrix, int dim );
 void hungarianAlgorithmAddToTree(int x, int prevx, short *S, int *prev, int *slack, int *slackx, int* lx, int *ly, int** similarity_matrix, int dim);
 int determineNearestNeighbour(int index, double **S_matrix, int *mpm_number_of_indices, int mpm_length );

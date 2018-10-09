@@ -862,8 +862,14 @@ void inheritDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multip
     multipliers_copy = (double*) Malloc(new_FOS->length*sizeof(double));
     for( i = 0; i < new_FOS->length; i++ )
         multipliers_copy[i] = multipliers[i];
-
-    permutation = matchFOSElements( new_FOS, prev_FOS );
+    permutation = matchFOSElementsUnevenSizedFOS(new_FOS, prev_FOS);
+    if( new_FOS->length != prev_FOS->length){
+        printf("ist happening");
+        permutation = matchFOSElementsUnevenSizedFOS(new_FOS, prev_FOS);
+    }
+    else{
+        permutation = matchFOSElements( new_FOS, prev_FOS );
+    }
 
     for( i = 0; i < new_FOS->length; i++ )
         multipliers[permutation[i]] = multipliers_copy[i];
@@ -1687,9 +1693,6 @@ void estimateDifferentialDependencies( int population_index )
                 if(dependency<0)
                     dependency = dependency*-1;
             }
-            if(dependency != 0.0){
-                printf("dependency %f", dependency);
-            }
             if (dependency<min)
                 min = dependency;
             else if (dependency>max){
@@ -1700,8 +1703,6 @@ void estimateDifferentialDependencies( int population_index )
             dependency_matrix[j][i] = dependency;
         }
     }
-    printf("max %f", max);
-    printf("min %f", min);
 
     if( min != max && max != 0.0){
         for( i = 0; i < number_of_parameters; i++ ) {
@@ -1716,7 +1717,7 @@ void estimateDifferentialDependencies( int population_index )
             }
         }
     }
-    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free( individual );
     free( different_individual );
     free( individual_to_compare );

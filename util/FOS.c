@@ -295,7 +295,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
         }
         r0 = NN_chain[NN_chain_length-2];
         r1 = NN_chain[NN_chain_length-1];
-        if(getSimilarity(r0, r1) <= 0.0005 && dependency_learning && static_linkage_tree){
+        if(getSimilarity(r0, r1) <= 0.05 && dependency_learning && static_linkage_tree){
             break;
         }
 
@@ -497,6 +497,89 @@ double **computeMIMatrix( double **covariance_matrix, int n )
     return( MI_matrix );
 }
 
+int *matchFOSElementsUnevenSizedFOS( FOS *new_FOS, FOS *prev_FOS ){
+    int      i, j, a, b, matches, *permutation, *hungarian_permutation,
+            **FOS_element_similarity_matrix;
+    permutation = (int *) Malloc( new_FOS->length*sizeof(int));
+    FOS_element_similarity_matrix = (int**) Malloc((new_FOS->length-number_of_parameters)*sizeof(int*));
+    for( i = 0; i < new_FOS->length-number_of_parameters; i++ )
+        FOS_element_similarity_matrix[i] = (int*) Malloc((new_FOS->length-number_of_parameters)*sizeof(int));
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        for( j = 0; j < number_of_parameters; j++ )
+        {
+            if( prev_FOS->sets[i][0] == new_FOS->sets[j][0] )
+            {
+                permutation[i] = j;
+                break;
+            }
+        }
+    }
+    for( i = number_of_parameters; i < new_FOS->length; i++ )
+    {
+        for( j = number_of_parameters; j < new_FOS->length; j++ )
+        {
+            a = 0; b = 0;
+            matches = 0;
+            while( a < prev_FOS->set_length[i] && b < new_FOS->set_length[j] )
+            {
+                if( prev_FOS->sets[i][a] < new_FOS->sets[j][b] )
+                {
+                    a++;
+                }
+                else if( prev_FOS->sets[i][a] > new_FOS->sets[j][b] )
+                {
+                    b++;
+                }
+                else
+                {
+                    a++;
+                    b++;
+                    matches++;
+                }
+            }
+            FOS_element_similarity_matrix[i-number_of_parameters][j-number_of_parameters] = (int) 10000*(2.0*matches/(prev_FOS->set_length[i]+new_FOS->set_length[j]));
+        }
+    }
+    printf("similariuty matrix");
+    for( i = number_of_parameters; i < new_FOS->length; i++ )
+    {
+        for( j = number_of_parameters; j < new_FOS->length; j++ )
+        {
+            printf("%d, ", FOS_element_similarity_matrix[i-number_of_parameters][j-number_of_parameters]);
+        }
+        printf("\n");
+    }
+    for( i =number_of_parameters; i < prev_FOS->length; i++){
+        int setlenght = new_FOS->set_length[i];
+        for(int j = 0; j < setlenght; j++ ){
+            printf("%d, ", new_FOS->sets[i][j]);
+        }
+        printf("\n");
+    }
+    for( i =number_of_parameters; i < prev_FOS->length; i++){
+        int setlenght = prev_FOS->set_length[i];
+        for(int j = 0; j < setlenght; j++ ){
+            printf("%d, ", new_FOS->sets[i][j]);
+        }
+        printf("\n");
+    }
+    for( i = number_of_parameters; i < new_FOS->length; i++ )
+    {
+        int max_index = i;
+        int max_similarity = 0;
+        for( j = number_of_parameters; j < new_FOS->length; j++ )
+        {
+             if(FOS_element_similarity_matrix[i][j]>max_similarity){
+                 max_index = j;
+                 max_similarity = FOS_element_similarity_matrix[i][j];
+             }
+        }
+        permutation[number_of_parameters+i] = max_index;
+    }
+    return permutation;
+}
+
 int *matchFOSElements( FOS *new_FOS, FOS *prev_FOS )
 {
     int      i, j, a, b, matches, *permutation, *hungarian_permutation,
@@ -506,6 +589,7 @@ int *matchFOSElements( FOS *new_FOS, FOS *prev_FOS )
     FOS_element_similarity_matrix = (int**) Malloc((new_FOS->length-number_of_parameters)*sizeof(int*));
     for( i = 0; i < new_FOS->length-number_of_parameters; i++ )
         FOS_element_similarity_matrix[i] = (int*) Malloc((new_FOS->length-number_of_parameters)*sizeof(int));
+
     for( i = 0; i < number_of_parameters; i++ )
     {
         for( j = 0; j < number_of_parameters; j++ )
