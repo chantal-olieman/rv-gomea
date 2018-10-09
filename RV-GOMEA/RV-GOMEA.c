@@ -1798,9 +1798,7 @@ void estimateFunction( int population_index ) {
     for (int i = 0; i < number_of_function_parameters; i++) {
         dot_product_y[i] = vectorDotProduct(data_point_matrix_T[i], y, population_sizes[population_index]);
     }
-    //    pseudoInverse(dot_product_data_point, number_of_function_parameters);
-    printf("Not calculating a pseudo inverse \n");
-
+    pseudoInverse(dot_product_data_point, number_of_function_parameters);
     // dot product of inv(Xt.X) and y
     for (int i = 0; i < number_of_function_parameters; i++) {
         weight_vector[i] = vectorDotProduct(dot_product_data_point[i], dot_product_y, number_of_function_parameters);
@@ -1815,12 +1813,14 @@ void estimateFunction( int population_index ) {
     prediction_error = prediction_error/population_sizes[population_index];
     if( prediction_error > 0.00001){
         printf("population: %d MSE: %f\n", population_index, prediction_error);
-        if(prediction_error < 1){
-            createFunctionDependencies(weight_vector);
-        }
-        else{
-            dependency_matrix = full_covariance_matrix[population_index];
-        }
+//        if(prediction_error < 1){
+//            createFunctionDependencies(weight_vector);
+//            dependency_learning =
+//            printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//        }
+//        else{
+//            dependency_matrix = full_covariance_matrix[population_index];
+//        }
     }
     free(y);
     free(dot_product_y);
