@@ -94,6 +94,10 @@ void makeSelectionsForOnePopulation( int population_index );
 void makeSelectionsForOnePopulationUsingDiversityOnRank0( int population_index );
 void estimateParameters( int population_index );
 void estimateMeanVectorML( int population_index );
+void estimateDifferentialDependencies( int population_index );
+void printMatrix(double **matrix, int cols, int rows);
+void estimateFunction(int population_index );
+int calculateNumberofFunctionParameters(int number);
 void estimateFullCovarianceMatrixML( int population_index );
 void estimateParametersML( int population_index );
 void estimateCovarianceMatricesML( int population_index );
@@ -158,6 +162,7 @@ double maximum_number_of_evaluations,                       /* The maximum numbe
    ****decomposed_covariance_matrices,                      /* The covariance matrices to be used for the sampling. */
    ****decomposed_cholesky_factors_lower_triangle,          /* The unique lower triangular matrix of the Cholesky factorization for every linkage tree element. */
     ***full_covariance_matrix,
+     **dependency_matrix,
        eta_ams = 1.0,
        eta_cov = 1.0;
 FOS  **linkage_model;
@@ -257,6 +262,9 @@ void interpretCommandLine( int argc, char **argv )
     use_univariate_FOS = 0;
     learn_linkage_tree = 0;
     static_linkage_tree = 0;
+    dependency_learning = 0;
+    differential_learning = 0;
+    function_learning = 0;
     random_linkage_tree = 0;
     FOS_element_size = -1;
     block_start = 0;
@@ -288,6 +296,10 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -3 ) static_linkage_tree = 1;
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
+    if( FOS_element_size == -6 ) {learn_linkage_tree = 1; dependency_learning = 1;differential_learning = 1;}
+    if( FOS_element_size == -7 ) {static_linkage_tree = 1; dependency_learning = 1;differential_learning = 1;}
+    if( FOS_element_size == -8 ) {learn_linkage_tree = 1; dependency_learning = 1; function_learning = 1;}
+    if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; function_learning = 1;}
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
 
     checkOptions();
@@ -622,7 +634,8 @@ void initializeMemory( void )
     mean_shift_vector                = (double **) Malloc( maximum_number_of_populations*sizeof( double * ) );
     decomposed_covariance_matrices   = (double ****) Malloc( maximum_number_of_populations * sizeof( double ***) );
     full_covariance_matrix           = (double ***) Malloc( maximum_number_of_populations * sizeof( double **) );
-    distribution_multipliers         = (double **) Malloc( maximum_number_of_populations*sizeof( double * ) );
+    dependency_matrix                = (double **) Malloc( number_of_parameters*sizeof( double * ) );
+    distribution_multipliers         = (double **) Malloc( maximum_number_of_populations * sizeof( double * ) );
     samples_drawn_from_normal        = (int **) Malloc( maximum_number_of_populations*sizeof( int * ) );
     out_of_bounds_draws              = (int **) Malloc( maximum_number_of_populations*sizeof( int * ) );
     number_of_generations            = (int *) Malloc( maximum_number_of_populations*sizeof( int ) );
@@ -634,8 +647,9 @@ void initializeNewPopulationMemory( int population_index )
 {
     int i,j;
 
-    if( population_index == 0 )
+    if( population_index == 0 ){
         population_sizes[population_index] = base_population_size;
+    }
     else
         population_sizes[population_index] = 2*population_sizes[population_index-1];
     selection_sizes[population_index] = (double) (tau * population_sizes[population_index] );
@@ -661,9 +675,12 @@ void initializeNewPopulationMemory( int population_index )
     mean_vectors[population_index] = (double *) Malloc( number_of_parameters*sizeof( double ) );
 
     mean_shift_vector[population_index] = (double *) Malloc( number_of_parameters*sizeof( double ) );
-    
+
     individual_NIS[population_index] = (int*) Malloc( population_sizes[population_index]*sizeof(int));
-    
+
+    for( j = 0; j < number_of_parameters; j++ )
+        dependency_matrix[j] = (double *) Malloc( number_of_parameters*sizeof( double ) );
+
     if( learn_linkage_tree )
     {
         distribution_multipliers[population_index]  = (double *) Malloc( 1*sizeof( double ) );
@@ -690,19 +707,18 @@ void initializeNewPopulation()
     initializeNewPopulationMemory( number_of_populations );
 
     initializePopulationAndFitnessValues( number_of_populations );
-    
+
     if( !learn_linkage_tree )
     {
         initializeCovarianceMatrices( number_of_populations );
 
         initializeDistributionMultipliers( number_of_populations );
     }
-    
+
     computeRanksForOnePopulation( number_of_populations );
 
     number_of_populations++;
 }
-
 /**
  * Initializes the linkage tree
  */
@@ -723,10 +739,20 @@ void initializeFOS( int population_index )
     }
     else if( static_linkage_tree )
     {
-        if( population_index == 0 )
-            new_FOS = learnLinkageTreeRVGOMEA( population_index );
-        else
+        if( population_index == 0 ) {
+            if (differential_learning) {
+                estimateDifferentialDependencies(population_index);
+            }
+            if ( function_learning ) {
+                initializePopulationAndFitnessValues(0);
+//                estimateFunction(0);
+            }
+            new_FOS = learnLinkageTreeRVGOMEA(population_index);
+        }
+        else{
             new_FOS = copyFOS( linkage_model[0] );
+        }
+
     }
     else
     {
@@ -805,8 +831,15 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 {
     int i;
     FOS *new_FOS;
-
-    new_FOS = learnLinkageTree( full_covariance_matrix[population_index] );
+    if( differential_learning && learn_linkage_tree ){
+        estimateDifferentialDependencies( population_index );
+    }
+    if( function_learning ){
+        if( number_of_populations == 0 || learn_linkage_tree ){
+            estimateFunction(population_index);
+        }
+    }
+    new_FOS = learnLinkageTree( full_covariance_matrix[population_index], dependency_matrix);
     if( learn_linkage_tree && number_of_generations[population_index] > 0 )
         inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
 
@@ -1500,7 +1533,9 @@ void estimateParameters( int population_index )
         
         if( learn_linkage_tree )
         {
-            estimateFullCovarianceMatrixML( population_index );
+            if( ! dependency_learning ){
+                estimateFullCovarianceMatrixML( population_index );
+            }
             
             linkage_model[population_index] = learnLinkageTreeRVGOMEA( population_index );
 
@@ -1579,6 +1614,236 @@ void estimateFullCovarianceMatrixML( int population_index )
         }
     }
 }
+
+void getMinMaxofPopulation(int variable, int population_index, double min, double max){
+    min = populations[population_index][variable][0];
+    max = populations[population_index][variable][0];
+    for(int i = 0; i< population_sizes[population_index]; i++){
+        if(populations[population_index][variable][i] < min)
+            min = populations[population_index][variable][i];
+        else if(populations[population_index][variable][i] > max)
+            max = populations[population_index][variable][i];
+    }
+}
+
+
+/**
+* Computes the matrix of dependencies for
+* a specified population.
+*/
+void estimateDifferentialDependencies( int population_index )
+{
+    int i, j, k;
+    double *individual = (double *) Malloc( number_of_parameters*sizeof( double ) );
+    double *different_individual = (double *) Malloc( number_of_parameters*sizeof( double ) );
+    double *individual_to_compare = (double *) Malloc( number_of_parameters*sizeof( double ) );
+
+    double rand = randomRealUniform01();
+    rand = 0.5;
+    for( k = 0; k < number_of_parameters; k++ )
+    {
+        double min = lower_init_ranges[k], max = upper_init_ranges[k];
+        getMinMaxofPopulation(k, population_index, min, max);
+        individual[k] = min + ((max - min)*rand*0.5);
+        double parameter_diff = (max - min)*0.5*rand;
+        different_individual[k] = parameter_diff+individual[k];
+        individual_to_compare[k] = individual[k];
+    }
+    double constraint_value;
+
+    for( k = 0; k < number_of_parameters; k++ ) {
+        if(individual[k]!= individual_to_compare[k])
+            printf("not equal: %f and %f", individual[k], individual_to_compare[k]);
+    }
+
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        for( j = i; j < number_of_parameters; j++ )
+        {
+            if(i==j){
+                dependency_matrix[i][j] = 1.0;
+                continue;
+            }
+
+            double original_objective, change_i, change_j, change_i_j;
+            individual_to_compare[i] = individual[i];
+            individual_to_compare[j] = individual[j];
+            installedProblemEvaluation( problem_index, individual_to_compare, &(original_objective), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+            individual_to_compare[i] = different_individual[i];
+            installedProblemEvaluation( problem_index, individual_to_compare, &(change_i), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+            individual_to_compare[j] = different_individual[j];
+            installedProblemEvaluation( problem_index, individual_to_compare, &(change_i_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+            individual_to_compare[i] = individual[i];
+            installedProblemEvaluation( problem_index, individual_to_compare, &(change_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+            double delta_i = abs(original_objective-change_i);
+            double delta_j = abs(change_j-change_i_j);
+
+            double dependency = 0.0;
+            if(delta_i != 0.0 && delta_j != 0.0){
+                dependency = 1-(delta_i/delta_j);
+                if(dependency<0)
+                    dependency = dependency*-1;
+            }
+            dependency_matrix[i][j] = dependency;
+            dependency_matrix[j][i] = dependency;
+        }
+    }
+    //printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+    free( individual );
+    free( different_individual );
+    free( individual_to_compare );
+}
+
+int calculateNumberofFunctionParameters(int number){
+    long long factorial = number*number-1;
+    int result = (factorial/2);
+    return 2*number+result+1;
+}
+
+double* createFunctionInput(double* original_parameters){
+    double *function_parameters = (double *) Malloc( number_of_function_parameters*sizeof( double ) );
+    int count = 1;
+    function_parameters[0] = 1;
+    for(int i = 0; i< number_of_parameters; i++){
+        function_parameters[count] = original_parameters[i];
+        count += 1;
+        for(int j = i; j <number_of_parameters; j++){
+            function_parameters[count] = original_parameters[i]*original_parameters[j];
+            count += 1;
+        }
+    }
+    return function_parameters;
+}
+
+void createFunctionDependencies(double* weight_vector){
+    int count = 1;
+    for(int i = 0; i< number_of_parameters; i++){
+        if ( weight_vector[count] < 0 ){
+            dependency_matrix[i][i] = -weight_vector[count];
+        }
+        else{
+            dependency_matrix[i][i] = weight_vector[count];
+        }
+        count += 1;
+        for(int j = i; j <number_of_parameters; j++){
+            if( i != j ){
+                if ( weight_vector[count] < 0 ){
+                    dependency_matrix[i][j] = -weight_vector[count];
+                    dependency_matrix[j][i] = -weight_vector[count];
+                }
+                else{
+                    dependency_matrix[i][j] = weight_vector[count];
+                    dependency_matrix[j][i] = weight_vector[count];
+                }
+            }
+            count += 1;
+        }
+    }
+}
+
+
+double predict(double* function_parameters, double* individual_parameters){
+    double result;
+    int count = 1;
+    result = function_parameters[0];
+    for(int i = 0; i< number_of_parameters; i++){
+        result += individual_parameters[i]*function_parameters[count];
+        count += 1;
+        for(int j = i; j <number_of_parameters; j++){
+            result += individual_parameters[i]*individual_parameters[j]*function_parameters[count];
+            count += 1;
+        }
+    }
+    return result;
+}
+
+/**
+* Computes the matrix of dependencies for
+* a specified population.
+*/
+void estimateFunction( int population_index ) {
+    int i, j;
+    number_of_function_parameters = calculateNumberofFunctionParameters(number_of_parameters);
+    double *y = (double *) Malloc(population_sizes[population_index] * sizeof(double));
+    double **data_point_matrix_T = (double **) Malloc( number_of_function_parameters*sizeof( double * ) );
+    double **data_point_matrix = (double **) Malloc( population_sizes[population_index] *sizeof( double * ) );
+    double **dot_product_data_point = (double **) Malloc(number_of_function_parameters * sizeof(double *));
+    double *dot_product_y = (double *) Malloc(number_of_function_parameters * sizeof(double));
+    double *weight_vector = (double *) Malloc(number_of_function_parameters * sizeof(double));
+    for (j = 0; j < population_sizes[population_index]; j++) {
+        data_point_matrix[j] = createFunctionInput(populations[population_index][j]);
+        y[j] = objective_values[population_index][j];
+    }
+    for (j = 0; j < number_of_function_parameters; j++) {
+        data_point_matrix_T[j] = (double *) Malloc( population_sizes[population_index]*sizeof( double ) );
+        for (i = 0; i < population_sizes[population_index]; i++) {
+            data_point_matrix_T[j][i] = data_point_matrix[i][j];
+        }
+    }
+    //printMatrix(data_point_matrix, number_of_function_parameters, population_sizes[population_index]);
+    for (int i = 0; i < number_of_function_parameters; i++) {
+        dot_product_data_point[i] = (double *) Malloc(number_of_function_parameters * sizeof(double));
+    }
+
+    // dot prodcut of Xt and X
+    for (int i = 0; i < number_of_function_parameters; i++) {
+        for (int j = i; j < number_of_function_parameters; j++) {
+            double dot_product = vectorDotProduct(data_point_matrix_T[i], data_point_matrix_T[j],
+                                            population_sizes[population_index]);
+            dot_product_data_point[i][j] = dot_product;
+            dot_product_data_point[j][i] = dot_product;
+        }
+    }
+    // dot product of Xt and y
+    for (int i = 0; i < number_of_function_parameters; i++) {
+        dot_product_y[i] = vectorDotProduct(data_point_matrix_T[i], y, population_sizes[population_index]);
+    }
+    //    pseudoInverse(dot_product_data_point, number_of_function_parameters);
+    printf("Not calculating a pseudo inverse");
+
+    // dot product of inv(Xt.X) and y
+    for (int i = 0; i < number_of_function_parameters; i++) {
+        weight_vector[i] = vectorDotProduct(dot_product_data_point[i], dot_product_y, number_of_function_parameters);
+    }
+
+    // checking the prediction with a new y_predict
+    double prediction_error = 0.0;
+    for (j = 0; j < population_sizes[population_index]; j++) {
+        double error = predict(weight_vector, populations[population_index][j])-y[j];
+        prediction_error += error*error;
+    }
+    prediction_error = prediction_error/population_sizes[population_index];
+    if( prediction_error > 0.00001){
+        printf("population: %d MSE: %f\n", population_index, prediction_error);
+        if(prediction_error < 1){
+            createFunctionDependencies(weight_vector);
+        }
+        else{
+            dependency_matrix = full_covariance_matrix[population_index];
+        }
+    }
+    free(y);
+    free(dot_product_y);
+    free(data_point_matrix);
+    free(data_point_matrix_T);
+    free(weight_vector);
+    free(dot_product_data_point);
+}
+
+void printMatrix(double **matrix, int cols, int rows){
+    int i, j;
+    printf("The whole matrix: \n");
+    for( i = 0; i < rows; i++ )
+    {
+        for( j = 0; j < cols; j++ ) {
+            printf("%f, ", matrix[i][j] );
+        }
+        printf("  \n");
+    }
+}
+
+
+
 
 void estimateCovarianceMatricesML( int population_index )
 {
@@ -1694,6 +1959,7 @@ void evaluateCompletePopulation( int population_index )
     for( j = 0; j < population_sizes[population_index]; j++ )
         installedProblemEvaluation( problem_index, populations[population_index][j], &(objective_values[population_index][j]), &(constraint_values[population_index][j]), number_of_parameters, NULL, NULL, 0, 0 );
 }
+
 
 /**
  * Applies the distribution multipliers.
@@ -2304,6 +2570,7 @@ void ezilaitiniMemory( void )
     free( out_of_bounds_draws );
     free( individual_NIS );
     free( full_covariance_matrix );
+    free( dependency_matrix );
     free( decomposed_covariance_matrices );
     free( decomposed_cholesky_factors_lower_triangle );
     free( lower_range_bounds );

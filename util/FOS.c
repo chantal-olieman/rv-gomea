@@ -147,7 +147,7 @@ FOS *copyFOS( FOS *f )
     return( new_FOS );
 }
 
-FOS *learnLinkageTree( double **covariance_matrix )
+FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
 {
     char     done;
     int      i, j, r0, r1, rswap, *indices, *order, *sorted,
@@ -159,7 +159,7 @@ FOS *learnLinkageTree( double **covariance_matrix )
 
     /* Compute Mutual Information matrix */
     MI_matrix = NULL;
-    if( learn_linkage_tree )
+    if( learn_linkage_tree && !dependency_learning)
         MI_matrix = computeMIMatrix( covariance_matrix, number_of_parameters );
 
     /* Initialize MPM to the univariate factorization */
@@ -200,15 +200,25 @@ FOS *learnLinkageTree( double **covariance_matrix )
 
     if( learn_linkage_tree )
     {
-        for( i = 0; i < mpm_length; i++ )
-            for( j = 0; j < mpm_length; j++ )
-                S_matrix[i][j] = MI_matrix[mpm[i][0]][mpm[j][0]];
-        for( i = 0; i < mpm_length; i++ )
-            S_matrix[i][i] = 0;
+        if ( dependency_learning ) {
+            for (i = 0; i < mpm_length; i++)
+                for (j = 0; j < mpm_length; j++)
+                    S_matrix[i][j] = dependency_matrix[mpm[i][0]][mpm[j][0]];
+            for (i = 0; i < mpm_length; i++)
+                S_matrix[i][i] = 0;
+        }
+        else{
+            for( i = 0; i < mpm_length; i++ )
+                for( j = 0; j < mpm_length; j++ )
+                    S_matrix[i][j] = MI_matrix[mpm[i][0]][mpm[j][0]];
+            for( i = 0; i < mpm_length; i++ )
+                S_matrix[i][i] = 0;
 
-        for( i = 0; i < number_of_parameters; i++ )
-            free( MI_matrix[i] );
-        free( MI_matrix );
+            for( i = 0; i < number_of_parameters; i++ )
+                free( MI_matrix[i] );
+            free( MI_matrix );
+        }
+
     }
     else if( random_linkage_tree )
     {
@@ -230,6 +240,13 @@ FOS *learnLinkageTree( double **covariance_matrix )
                 S_matrix[i][i] = 0.0;
             }
         }
+        else if (dependency_learning){
+            for (i = 0; i < mpm_length; i++)
+                for (j = 0; j < mpm_length; j++)
+                    S_matrix[i][j] = dependency_matrix[mpm[i][0]][mpm[j][0]];
+            for (i = 0; i < mpm_length; i++)
+                S_matrix[i][i] = 0;
+        }
         else
         {
             for( i = 0; i < mpm_length; i++ )
@@ -245,6 +262,7 @@ FOS *learnLinkageTree( double **covariance_matrix )
             }
         }
     }
+
 
     NN_chain        = (int *) Malloc( (number_of_parameters+2)*sizeof( int ) );
     NN_chain_length = 0;
@@ -269,7 +287,7 @@ FOS *learnLinkageTree( double **covariance_matrix )
         {
             NN_chain[NN_chain_length] = determineNearestNeighbour( NN_chain[NN_chain_length-1], S_matrix, mpm_number_of_indices, mpm_length );
             if( ((getSimilarity(NN_chain[NN_chain_length-1],NN_chain[NN_chain_length]) == getSimilarity(NN_chain[NN_chain_length-1],NN_chain[NN_chain_length-2])))
-                    && (NN_chain[NN_chain_length] != NN_chain[NN_chain_length-2]) )
+                && (NN_chain[NN_chain_length] != NN_chain[NN_chain_length-2]) )
                 NN_chain[NN_chain_length] = NN_chain[NN_chain_length-2];
             NN_chain_length++;
             if( NN_chain_length > number_of_parameters )
@@ -277,6 +295,10 @@ FOS *learnLinkageTree( double **covariance_matrix )
         }
         r0 = NN_chain[NN_chain_length-2];
         r1 = NN_chain[NN_chain_length-1];
+        if(getSimilarity(r0, r1) <= 0.0005 && dependency_learning && static_linkage_tree){
+            break;
+        }
+
 
         if( r1 >= mpm_length || r0 >= mpm_length || mpm_number_of_indices[r0]+mpm_number_of_indices[r1] > FOS_element_ub )
         {
@@ -322,9 +344,9 @@ FOS *learnLinkageTree( double **covariance_matrix )
             new_FOS->sets[FOS_index] = (int *) Malloc( (mpm_number_of_indices[r0]+mpm_number_of_indices[r1])*sizeof( int ) );
             new_FOS->set_length[FOS_index] = mpm_number_of_indices[r0]+mpm_number_of_indices[r1];
             sorted = mergeSortInt(indices, mpm_number_of_indices[r0]+mpm_number_of_indices[r1]);
-            for( j = 0; j < mpm_number_of_indices[r0]+mpm_number_of_indices[r1]; j++ )
+            for( j = 0; j < mpm_number_of_indices[r0]+mpm_number_of_indices[r1]; j++ ){
                 new_FOS->sets[FOS_index][j] = indices[sorted[j]];
-
+            }
             free( sorted );
             free( indices );
 
@@ -403,7 +425,13 @@ FOS *learnLinkageTree( double **covariance_matrix )
             FOS_index++;
         }
     }
-
+//    for( i =0; i < FOS_index; i++){
+//        int setlenght = new_FOS->set_length[i];
+//        for(int j = 0; j < setlenght; j++ ){
+//            printf("%d, ", new_FOS->sets[i][j]);
+//        }
+//        printf("\n");
+//    }
     new_FOS->length = FOS_index;
 
     free( NN_chain );
@@ -533,7 +561,7 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
     int i, j, x, y, root, *q, wr, rd, cx, cy, ty, max_match,
             *lx, *ly, *xy, *yx, *slack, *slackx, *prev, delta;
     short *S, *T, terminated;
-    
+
     lx = (int*) Malloc(dim*sizeof(int));
     ly = (int*) Malloc(dim*sizeof(int));
     xy = (int*) Malloc(dim*sizeof(int));
@@ -543,7 +571,7 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
     prev = (int*) Malloc(dim*sizeof(int));
     S = (short*) Malloc(dim*sizeof(short));
     T = (short*) Malloc(dim*sizeof(short));
-    
+
     root = -1;
     max_match = 0;
     for( i = 0; i < dim; i++ )
@@ -557,12 +585,12 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
         for(j = 0; j < dim; j++)
             if(similarity_matrix[i][j] > lx[i])
                 lx[i] = similarity_matrix[i][j];
-    
+
     terminated = 0;
     while(!terminated)
     {
         if (max_match == dim) break;
-        
+
         wr = 0;
         rd = 0;
         q = (int*) Malloc(dim*sizeof(int));
@@ -572,7 +600,7 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
             T[i] = 0;
             prev[i] = -1;
         }
-        
+
         for (x = 0; x < dim; x++)
         {
             if (xy[x] == -1)
@@ -589,7 +617,7 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
             slack[y] = lx[root] + ly[y] - similarity_matrix[root][y];
             slackx[y] = root;
         }
-        
+
         while ( 1 )
         {
             while (rd < wr)
@@ -659,10 +687,10 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
             }
         }
         else terminated = 1;
-        
+
         free( q );
     }
-    
+
     free( lx );
     free( ly );
     free( yx );
@@ -671,14 +699,14 @@ int *hungarianAlgorithm( int **similarity_matrix, int dim )
     free( prev );
     free( S );
     free( T );
-    
+
     return xy;
 }
 
-void hungarianAlgorithmAddToTree(int x, int prevx, short *S, int *prev, int *slack, int *slackx, int* lx, int *ly, int** similarity_matrix, int dim) 
+void hungarianAlgorithmAddToTree(int x, int prevx, short *S, int *prev, int *slack, int *slackx, int* lx, int *ly, int** similarity_matrix, int dim)
 {
     int y;
-    
+
     S[x] = 1;
     prev[x] = prevx;
     for (y = 0; y < dim; y++)

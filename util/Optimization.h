@@ -61,6 +61,7 @@ short  black_box_evaluations,                         /* Whether full (black-box
        write_generational_solutions;                  /* Whether to write the population every generation (0 = no). */
 int    problem_index,                                 /* The index of the optimization problem. */
        number_of_parameters,                          /* The number of parameters to be optimized. */
+       number_of_function_parameters,
        number_of_populations,                         /* The number of parallel populations that initially partition the search space. */
        block_size,                                    /* The number of variables in one block of the 'sum of rotated ellipsoid blocks' function. */
        number_of_blocks,                              /* The number of blocks the 'sum of rotated ellipsoid blocks' function. */

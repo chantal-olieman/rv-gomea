@@ -53,7 +53,7 @@ typedef struct FOS {
 void printFOS( FOS *fos );
 FOS *readFOSFromFile( FILE *file );
 FOS *copyFOS( FOS *f );
-FOS *learnLinkageTree( double **covariance_matrix );
+FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix );
 int determineNearestNeighbour( int index, double **S_matrix, int *mpm_number_of_indices, int mpm_length );
 double getSimilarity( int a, int b );
 double **computeMIMatrix( double **covariance_matrix, int n );
@@ -69,7 +69,10 @@ int      *mpm_number_of_indices,
           FOS_element_ub,                       /* Cut-off value for bounded fixed linkage tree (BFLT). */
           use_univariate_FOS,                   /* Whether a univariate FOS is used. */
           learn_linkage_tree,                   /* Whether the FOS is learned at the start of each generation. */
-          static_linkage_tree,                  /* Whether the FOS is fixed throughout optimization. */
+          static_linkage_tree,                  /* Wheter the FOS is learned at the beginning only */
+          differential_learning,                /* Wheter we use differnetial grouping to learn dependencies */
+          dependency_learning,                   /* Wheter we learn dependencies from fitness evaluation of MI */
+          function_learning,                    /* Wheter we estimate the fitness function */
           random_linkage_tree,                  /* Whether the fixed linkage tree is learned based on a random distance measure. */
           FOS_element_size;                     /* If positive, the size of blocks of consecutive variables in the FOS. If negative, determines specific kind of linkage tree FOS. */
 double ***MI_matrices,
