@@ -1656,12 +1656,15 @@ void estimateDifferentialDependencies( int population_index )
             printf("not equal: %f and %f", individual[k], individual_to_compare[k]);
     }
 
+    double min = 1.0;
+    double max = 0.0;
+
     for( i = 0; i < number_of_parameters; i++ )
     {
         for( j = i; j < number_of_parameters; j++ )
         {
             if(i==j){
-                dependency_matrix[i][j] = 1.0;
+                dependency_matrix[i][j] = 0.0;
                 continue;
             }
 
@@ -1684,11 +1687,36 @@ void estimateDifferentialDependencies( int population_index )
                 if(dependency<0)
                     dependency = dependency*-1;
             }
+            if(dependency != 0.0){
+                printf("dependency %f", dependency);
+            }
+            if (dependency<min)
+                min = dependency;
+            else if (dependency>max){
+                max = dependency;
+            }
+
             dependency_matrix[i][j] = dependency;
             dependency_matrix[j][i] = dependency;
         }
     }
-    //printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+    printf("max %f", max);
+    printf("min %f", min);
+
+    if( min != max && max != 0.0){
+        for( i = 0; i < number_of_parameters; i++ ) {
+            for (j = i; j < number_of_parameters; j++) {
+                if(i==j){
+                    dependency_matrix[i][j] = 1.0;
+                }
+                else{
+                    dependency_matrix[i][j] = (dependency_matrix[i][j]-min)/(max-min);
+                    dependency_matrix[j][i] = dependency_matrix[i][j];
+                }
+            }
+        }
+    }
+    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free( individual );
     free( different_individual );
     free( individual_to_compare );
@@ -1860,7 +1888,7 @@ void estimateCovarianceMatricesML( int population_index )
             {
                 varb = linkage_model[population_index]->sets[i][k];
                 
-                if( learn_linkage_tree )
+                if( learn_linkage_tree && ! dependency_learning )
                 {
                     cov = full_covariance_matrix[population_index][vara][varb];
                 }
@@ -2645,7 +2673,7 @@ void ezilaitiniParametersForSampling( int population_index )
         }
         free( decomposed_cholesky_factors_lower_triangle[population_index] );
     }
-    if( learn_linkage_tree )
+    if( learn_linkage_tree && !dependency_learning )
     {
         ezilaitiniCovarianceMatrices( population_index );
         
