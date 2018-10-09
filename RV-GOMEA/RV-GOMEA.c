@@ -1799,7 +1799,7 @@ void estimateFunction( int population_index ) {
         dot_product_y[i] = vectorDotProduct(data_point_matrix_T[i], y, population_sizes[population_index]);
     }
     //    pseudoInverse(dot_product_data_point, number_of_function_parameters);
-    printf("Not calculating a pseudo inverse");
+    printf("Not calculating a pseudo inverse \n");
 
     // dot product of inv(Xt.X) and y
     for (int i = 0; i < number_of_function_parameters; i++) {

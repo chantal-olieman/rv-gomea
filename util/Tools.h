@@ -47,7 +47,6 @@
 void *Malloc( long size );
 double **matrixNew( int n, int m );
 double vectorDotProduct( double *vector0, double *vector1, int n0 );
-void pseudoInverse(double ** mat, int number_of_function_parameters);
 double vectorNorm( double *vector0, int n0 );
 double *matrixVectorMultiplication( double **matrix, double *vector, int n0, int n1 );
 double **matrixMatrixMultiplication( double **matrix0, double **matrix1, int n0, int n1, int n2 );
