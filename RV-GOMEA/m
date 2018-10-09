@@ -6,7 +6,7 @@ echo "Current host     :" `hostname`
 echo ""
 
 echo -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-gcc -static -g -Wall -O3 RV-GOMEA.c ../util/*.c -o RV-GOMEA -lgsl -lgslcblas -lm
+gcc -static -g -Wall -O3 RV-GOMEA.c ../util/*.c -o RV-GOMEA -lm
 echo -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 if [ -f RV-GOMEA.exe ]
