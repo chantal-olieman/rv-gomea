@@ -5,11 +5,11 @@ result_times = [[],[],[],[]]
 result_evals = [[],[],[],[]]
 runs = 10
 
-linkage_options = [1, -2, -7]
-populations = [5, 15, 45, 135, 405]
+linkage_options = [1, -7]
+populations = [1215]
 blackbox = ""
 rotation = 0
-problem = 7
+problem = 0
 
 for population in populations:
     times = []
@@ -32,7 +32,7 @@ for population in populations:
                     max_time += 1
                     if max_time >= 3:
                         break
-            except IndexError:
+            except Exception as e:
                 print(f"error: {results}")
         evaluations = numpy.median(linkage_evals)
         time = numpy.median(linkage_time)
@@ -44,15 +44,15 @@ for population in populations:
         result_times[i+1].append(times[i])
     for i in range(len(evals)):
         result_evals[i+1].append(evals[i])
-    file = open("output_time_rosenbrock.txt", "w")
+    file = open("output_time_sphere.txt", "w")
     file.write(str(result_times))
-    file = open("output_evals_rosenbroc.txt", "w")
+    file = open("output_evals_sphere.txt", "w")
     file.write(str(result_evals))
 
 
 
-file = open("output_time_rosenbroc.txt", "w")
+file = open("output_time_sphere.txt", "w")
 file.write(str(result_times))
-file = open("output_evals_rosenbroc.txt", "w")
+file = open("output_evals_sphere.txt", "w")
 file.write(str(result_evals))
 print("done")

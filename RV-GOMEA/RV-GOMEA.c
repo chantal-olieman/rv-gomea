@@ -47,7 +47,6 @@
 #include "../util/SO_optimization.h"
 #include "../util/Optimization.h"
 #include "../util/FOS.h"
-#include "../util/FOS.h"
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 
@@ -97,7 +96,6 @@ void estimateParameters( int population_index );
 void estimateMeanVectorML( int population_index );
 void estimateDifferentialDependencies( int population_index );
 void printMatrix(double **matrix, int cols, int rows);
-void svdcmp(double **a, size_t m, size_t n, double *w, double **v);
 void estimateFunction(int population_index );
 int calculateNumberofFunctionParameters(int number);
 void estimateFullCovarianceMatrixML( int population_index );
@@ -144,7 +142,7 @@ int    base_population_size,                                /* The size of the f
       *no_improvement_stretch,                              /* The number of subsequent generations without an improvement while the distribution multiplier is <= 1.0, for each population separately. */
        maximum_no_improvement_stretch,                      /* The maximum number of subsequent generations without an improvement while the distribution multiplier is <= 1.0. */
      **individual_NIS;                                      /* The number of generations a solution has not improved. */
-    double maximum_number_of_evaluations,                       /* The maximum number of evaluations. */
+double maximum_number_of_evaluations,                       /* The maximum number of evaluations. */
        maximum_number_of_seconds,                           /* The maximum number of seconds. */
        tau,                                                 /* The selection truncation percentile (in [1/population_size,1]). */
     ***populations,                                         /* The populations containing the solutions. */
@@ -265,6 +263,7 @@ void interpretCommandLine( int argc, char **argv )
     learn_linkage_tree = 0;
     static_linkage_tree = 0;
     dependency_learning = 0;
+    differential_learning = 0;
     function_learning = 0;
     random_linkage_tree = 0;
     FOS_element_size = -1;
@@ -1534,7 +1533,9 @@ void estimateParameters( int population_index )
         
         if( learn_linkage_tree )
         {
-            estimateFullCovarianceMatrixML( population_index );
+            if( ! dependency_learning ){
+                estimateFullCovarianceMatrixML( population_index );
+            }
             
             linkage_model[population_index] = learnLinkageTreeRVGOMEA( population_index );
 
@@ -1638,6 +1639,7 @@ void estimateDifferentialDependencies( int population_index )
     double *individual_to_compare = (double *) Malloc( number_of_parameters*sizeof( double ) );
 
     double rand = randomRealUniform01();
+    rand = 0.5;
     for( k = 0; k < number_of_parameters; k++ )
     {
         double min = lower_init_ranges[k], max = upper_init_ranges[k];
@@ -1659,7 +1661,7 @@ void estimateDifferentialDependencies( int population_index )
         for( j = i; j < number_of_parameters; j++ )
         {
             if(i==j){
-                dependency_matrix[i][j] = 0;
+                dependency_matrix[i][j] = 1.0;
                 continue;
             }
 
@@ -1677,7 +1679,7 @@ void estimateDifferentialDependencies( int population_index )
             double delta_j = abs(change_j-change_i_j);
 
             double dependency = 0.0;
-            if(delta_i != 0.0){
+            if(delta_i != 0.0 && delta_j != 0.0){
                 dependency = 1-(delta_i/delta_j);
                 if(dependency<0)
                     dependency = dependency*-1;
@@ -1686,7 +1688,7 @@ void estimateDifferentialDependencies( int population_index )
             dependency_matrix[j][i] = dependency;
         }
     }
-//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+    //printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free( individual );
     free( different_individual );
     free( individual_to_compare );
@@ -1809,17 +1811,23 @@ void estimateFunction( int population_index ) {
         prediction_error += error*error;
     }
     prediction_error = prediction_error/population_sizes[population_index];
-    printf("MSE: %f\n", prediction_error);
-
-
-    createFunctionDependencies(weight_vector);
+    if( prediction_error > 0.00001){
+        printf("population: %d MSE: %f\n", population_index, prediction_error);
+//        if(prediction_error < 1){
+//            createFunctionDependencies(weight_vector);
+//            dependency_learning =
+//            printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//        }
+//        else{
+//            dependency_matrix = full_covariance_matrix[population_index];
+//        }
+    }
     free(y);
     free(dot_product_y);
     free(data_point_matrix);
     free(data_point_matrix_T);
     free(weight_vector);
     free(dot_product_data_point);
-    //printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 }
 
 void printMatrix(double **matrix, int cols, int rows){

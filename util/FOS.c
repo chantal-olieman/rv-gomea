@@ -295,7 +295,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
         }
         r0 = NN_chain[NN_chain_length-2];
         r1 = NN_chain[NN_chain_length-1];
-        if(getSimilarity(r0, r1) <= 0.0005 && dependency_learning){
+        if(getSimilarity(r0, r1) <= 0.0005 && dependency_learning && static_linkage_tree){
             break;
         }
 
@@ -425,13 +425,13 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
             FOS_index++;
         }
     }
-/*    for( i =0; i < FOS_index; i++){
-        int setlenght = new_FOS->set_length[i];
-        for(int j = 0; j < setlenght; j++ ){
-            printf("%d, ", new_FOS->sets[i][j]);
-        }
-        printf("\n");
-    }*/
+//    for( i =0; i < FOS_index; i++){
+//        int setlenght = new_FOS->set_length[i];
+//        for(int j = 0; j < setlenght; j++ ){
+//            printf("%d, ", new_FOS->sets[i][j]);
+//        }
+//        printf("\n");
+//    }
     new_FOS->length = FOS_index;
 
     free( NN_chain );
