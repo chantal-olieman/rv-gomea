@@ -741,6 +741,7 @@ void initializeFOS( int population_index )
     {
         if( population_index == 0 ) {
             if (differential_learning) {
+                initializePopulationAndFitnessValues(0);
                 estimateDifferentialDependencies(population_index);
             }
             if ( function_learning ) {
@@ -796,7 +797,6 @@ void initializeDistributionMultipliers( int population_index )
         free( samples_drawn_from_normal[population_index] );
         free( out_of_bounds_draws[population_index] );
     }
-
     distribution_multipliers[population_index] = (double *) Malloc( linkage_model[population_index]->length*sizeof( double ) );
     for( j = 0; j < linkage_model[population_index]->length; j++ )
         distribution_multipliers[population_index][j] = 1.0;
@@ -831,9 +831,9 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 {
     int i;
     FOS *new_FOS;
-    if( differential_learning && learn_linkage_tree ){
+    if( differential_learning && learn_linkage_tree )
         estimateDifferentialDependencies( population_index );
-    }
+
     if( function_learning ){
         if( number_of_populations == 0 || learn_linkage_tree ){
             estimateFunction(population_index);
@@ -862,17 +862,21 @@ void inheritDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multip
     multipliers_copy = (double*) Malloc(new_FOS->length*sizeof(double));
     for( i = 0; i < new_FOS->length; i++ )
         multipliers_copy[i] = multipliers[i];
-    permutation = matchFOSElementsUnevenSizedFOS(new_FOS, prev_FOS);
-    if( new_FOS->length != prev_FOS->length){
-        printf("ist happening");
-        permutation = matchFOSElementsUnevenSizedFOS(new_FOS, prev_FOS);
+    permutation = matchFOSElements( new_FOS, prev_FOS );
+
+    for( i = 0; i < number_of_parameters; i++ )
+        multipliers[permutation[i]] = multipliers_copy[i];
+
+    if( new_FOS->length != prev_FOS->length) {
+        for( i = number_of_parameters; i < new_FOS->length; i++ ){
+            multipliers[i] = multipliers_copy[permutation[i]];
+        }
     }
     else{
-        permutation = matchFOSElements( new_FOS, prev_FOS );
+        for( i = number_of_parameters; i < new_FOS->length; i++ )
+            multipliers[permutation[i]] = multipliers_copy[i];
     }
 
-    for( i = 0; i < new_FOS->length; i++ )
-        multipliers[permutation[i]] = multipliers_copy[i];
 
     free( multipliers_copy );
     free( permutation );
@@ -1621,14 +1625,14 @@ void estimateFullCovarianceMatrixML( int population_index )
     }
 }
 
-void getMinMaxofPopulation(int variable, int population_index, double min, double max){
-    min = populations[population_index][variable][0];
-    max = populations[population_index][variable][0];
+void getMinMaxofPopulation(int variable, int population_index, double *min, double *max){
+    *min = populations[population_index][0][variable];
+    *max = populations[population_index][0][variable];
     for(int i = 0; i< population_sizes[population_index]; i++){
-        if(populations[population_index][variable][i] < min)
-            min = populations[population_index][variable][i];
-        else if(populations[population_index][variable][i] > max)
-            max = populations[population_index][variable][i];
+        if(populations[population_index][i][variable] < *min)
+            *min = populations[population_index][i][variable];
+        else if(populations[population_index][i][variable] > *max)
+            *max = populations[population_index][i][variable];
     }
 }
 
@@ -1645,22 +1649,25 @@ void estimateDifferentialDependencies( int population_index )
     double *individual_to_compare = (double *) Malloc( number_of_parameters*sizeof( double ) );
 
     double rand = randomRealUniform01();
-    rand = 0.5;
+    rand = 0.7;
     for( k = 0; k < number_of_parameters; k++ )
     {
-        double min = lower_init_ranges[k], max = upper_init_ranges[k];
-        getMinMaxofPopulation(k, population_index, min, max);
+        double min = lower_init_ranges[k], max = upper_init_ranges[k]; // TODO: should make sure min is updated instead of that it stays -115 since that is always the minimum
+        getMinMaxofPopulation(k, population_index, &min, &max);
+//        for(int i = 0; i< population_sizes[population_index]; i++){
+//            printf("%f, ", populations[population_index][i][k]);
+//        }
+        if( nround(min, 2) == nround(max, 2) ){
+            max = upper_init_ranges[k];
+        }
+//        printf("\n");
+//        printf("min: %f, \tmax:%f\n", min, max);
         individual[k] = min + ((max - min)*rand*0.5);
         double parameter_diff = (max - min)*0.5*rand;
         different_individual[k] = parameter_diff+individual[k];
         individual_to_compare[k] = individual[k];
     }
     double constraint_value;
-
-    for( k = 0; k < number_of_parameters; k++ ) {
-        if(individual[k]!= individual_to_compare[k])
-            printf("not equal: %f and %f", individual[k], individual_to_compare[k]);
-    }
 
     double min = 1.0;
     double max = 0.0;
@@ -1708,7 +1715,7 @@ void estimateDifferentialDependencies( int population_index )
         for( i = 0; i < number_of_parameters; i++ ) {
             for (j = i; j < number_of_parameters; j++) {
                 if(i==j){
-                    dependency_matrix[i][j] = 1.0;
+                    dependency_matrix[i][j] = 0.0;
                 }
                 else{
                     dependency_matrix[i][j] = (dependency_matrix[i][j]-min)/(max-min);
