@@ -308,10 +308,10 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1;}
     if( FOS_element_size == -9 ) {learn_linkage_tree = 1; dependency_learning = 1; function_learning = 1;}
     if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; function_learning = 1;}
-    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; dependency_evolve_factor = 0.1;}
-    if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; dependency_evolve_factor = 0.05;}
-    if( FOS_element_size == -13 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; dependency_evolve_factor = 0.01;}
-    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; dependency_evolve_factor = 0.005;}
+    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; dependency_evolve_factor = 0.5;}
+    if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; dependency_evolve_factor = 0.2;}
+    if( FOS_element_size == -13 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; dependency_evolve_factor = 0.1;}
+    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; dependency_evolve_factor = 0.05;}
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
 
 
@@ -696,6 +696,8 @@ void initializeNewPopulationMemory( int population_index )
     individual_NIS[population_index] = (int*) Malloc( population_sizes[population_index]*sizeof(int));
 
     if ( evolve_learning && population_index == 0 ) {
+//        double one_over_param = 1/number_of_parameters;
+        pairs_per_run = number_of_parameters*dependency_evolve_factor;
         number_of_checked_pairs = 0;
         int counter = 0;
         for (i = 0; i < number_of_parameters; i++) {
@@ -708,7 +710,6 @@ void initializeNewPopulationMemory( int population_index )
             }
         }
         number_of_pairs = counter;
-        pairs_per_run = dependency_evolve_factor * number_of_pairs;
         for (int i = counter - 1; i >= 0; --i) {
             //generate a random number [0, n-1]
             int j = rand() % (i + 1);
@@ -1618,11 +1619,17 @@ void estimateParameters( int population_index )
         }
         if ( evolve_learning && number_of_checked_pairs<number_of_pairs ){
             linkage_model[0] = learnLinkageTreeRVGOMEA( 0 );
-
             initializeCovarianceMatrices( 0 );
 
             if( number_of_generations[population_index] == 0 )
                 initializeDistributionMultipliers( population_index );
+
+            if( number_of_populations > 1 ){
+                for (int i = 1; i < number_of_populations; i++){
+                    linkage_model[i] = copyFOS(linkage_model[0]);
+                    initializeCovarianceMatrices( i );
+                }
+            }
         }
         
         estimateParametersML( population_index );
