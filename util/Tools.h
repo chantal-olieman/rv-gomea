@@ -62,7 +62,7 @@ void eigenDecompositionQLalgo2( int n, double **V, double *d, double *e );
 double myhypot( double a, double b );
 void eigenDecompositionHouseholder2( int n, double **V, double *d, double *e );
 void matrixWriteToFile( FILE *file, double **matrix, int n0, int n1 );
-
+double nround (double n, unsigned int c);
 int *mergeSort( double *array, int array_size );
 void mergeSortWithinBounds( double *array, int *sorted, int *tosort, int p, int q );
 void mergeSortWithinBoundsInt( int *array, int *sorted, int *tosort, int p, int q );

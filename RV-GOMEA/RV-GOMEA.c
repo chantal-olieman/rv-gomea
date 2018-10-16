@@ -95,6 +95,7 @@ void makeSelectionsForOnePopulationUsingDiversityOnRank0( int population_index )
 void estimateParameters( int population_index );
 void estimateMeanVectorML( int population_index );
 void estimateDifferentialDependencies( int population_index );
+void estimatePopulationsDifferentialDependencies( int population_index );
 void printMatrix(double **matrix, int cols, int rows);
 void estimateFunction(int population_index );
 int calculateNumberofFunctionParameters(int number);
@@ -265,6 +266,7 @@ void interpretCommandLine( int argc, char **argv )
     dependency_learning = 0;
     differential_learning = 0;
     function_learning = 0;
+    population_learning = 0;
     random_linkage_tree = 0;
     FOS_element_size = -1;
     block_start = 0;
@@ -300,6 +302,7 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -7 ) {static_linkage_tree = 1; dependency_learning = 1;differential_learning = 1;}
     if( FOS_element_size == -8 ) {learn_linkage_tree = 1; dependency_learning = 1; function_learning = 1;}
     if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; function_learning = 1;}
+    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; population_learning = 1;}
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
 
     checkOptions();
@@ -746,6 +749,10 @@ void initializeFOS( int population_index )
             if ( function_learning ) {
                 initializePopulationAndFitnessValues(0);
 //                estimateFunction(0);
+            }
+            if( population_learning ){
+                initializePopulationAndFitnessValues(0);
+                estimatePopulationsDifferentialDependencies(population_index);
             }
             new_FOS = learnLinkageTreeRVGOMEA(population_index);
         }
@@ -1615,14 +1622,14 @@ void estimateFullCovarianceMatrixML( int population_index )
     }
 }
 
-void getMinMaxofPopulation(int variable, int population_index, double min, double max){
-    min = populations[population_index][variable][0];
-    max = populations[population_index][variable][0];
+void getMinMaxofPopulation(int variable, int population_index, double *min, double *max){
+    *min = populations[population_index][0][variable];
+    *max = populations[population_index][0][variable];
     for(int i = 0; i< population_sizes[population_index]; i++){
-        if(populations[population_index][variable][i] < min)
-            min = populations[population_index][variable][i];
-        else if(populations[population_index][variable][i] > max)
-            max = populations[population_index][variable][i];
+        if(populations[population_index][i][variable] < *min)
+            *min = populations[population_index][i][variable];
+        else if(populations[population_index][i][variable] > *max)
+            *max = populations[population_index][i][variable];
     }
 }
 
@@ -1639,11 +1646,14 @@ void estimateDifferentialDependencies( int population_index )
     double *individual_to_compare = (double *) Malloc( number_of_parameters*sizeof( double ) );
 
     double rand = randomRealUniform01();
-    rand = 0.5;
+    rand = 0.7;
     for( k = 0; k < number_of_parameters; k++ )
     {
-        double min = lower_init_ranges[k], max = upper_init_ranges[k];
-        getMinMaxofPopulation(k, population_index, min, max);
+        double min = lower_init_ranges[k], max = upper_init_ranges[k]; // TODO: should make sure min is updated instead of that it stays -115 since that is always the minimum
+        getMinMaxofPopulation(k, population_index, &min, &max);
+        if( nround(min, 2) == nround(max, 2) ){
+            max = upper_init_ranges[k];
+        }
         individual[k] = min + ((max - min)*rand*0.5);
         double parameter_diff = (max - min)*0.5*rand;
         different_individual[k] = parameter_diff+individual[k];
@@ -1675,8 +1685,9 @@ void estimateDifferentialDependencies( int population_index )
             installedProblemEvaluation( problem_index, individual_to_compare, &(change_i_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
             individual_to_compare[i] = individual[i];
             installedProblemEvaluation( problem_index, individual_to_compare, &(change_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
-            double delta_i = abs(original_objective-change_i);
-            double delta_j = abs(change_j-change_i_j);
+            individual_to_compare[j] = individual[j];
+            double delta_i = fabs(original_objective-change_i);
+            double delta_j = fabs(change_j-change_i_j);
 
             double dependency = 0.0;
             if(delta_i != 0.0 && delta_j != 0.0){
@@ -1688,10 +1699,200 @@ void estimateDifferentialDependencies( int population_index )
             dependency_matrix[j][i] = dependency;
         }
     }
-    //printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free( individual );
     free( different_individual );
     free( individual_to_compare );
+}
+
+void quicksort(int *index_order, int population_index, int parameter_index , int first, int last){
+    int i, j, pivot, temp;
+
+    if(first<last){
+        pivot=first;
+        i=first;
+        j=last;
+
+        while(i<j){
+            while(populations[population_index][index_order[i]][parameter_index]<=populations[population_index][index_order[pivot]][parameter_index]&&i<last)
+                i++;
+            while(populations[population_index][index_order[j]][parameter_index]>populations[population_index][index_order[pivot]][parameter_index])
+                j--;
+            if(i<j){
+                temp = index_order[i];
+                index_order[i]=index_order[j];
+                index_order[j]=temp;
+            }
+        }
+        temp=index_order[pivot];
+        index_order[pivot]=index_order[j];
+        index_order[j]=temp;
+        quicksort(index_order,population_index, parameter_index,first,j-1);
+        quicksort(index_order,population_index, parameter_index,j+1,last);
+
+    }
+}
+
+void  get_population_averages( int population_index, int dim1, int dim2 , double *averages){
+    int size = population_sizes[population_index];
+    int havle_size = size/2;
+    int quarter_size = havle_size/2;
+
+    int *indeces = (int *) Malloc( size*sizeof( int ) );
+    for (int i = 0; i < size; i++){
+        indeces[i] = i;
+    }
+    // seperate on dim1
+    quicksort(indeces, population_index, dim1, 0, size-1);
+
+    // seperate on dim2
+    quicksort(indeces, population_index, dim2, 0, havle_size-1);
+    quicksort(indeces, population_index, dim2, havle_size, size-1);
+
+    double dim1_value1 = lower_init_ranges[dim1] + ((upper_init_ranges[dim1]-lower_init_ranges[dim1])*0.25);
+    double dim1_value2 = lower_init_ranges[dim1] + ((upper_init_ranges[dim1]-lower_init_ranges[dim1])*0.75);
+    double dim2_value1 = lower_init_ranges[dim2] + ((upper_init_ranges[dim2]-lower_init_ranges[dim2])*0.25);
+    double dim2_value2 = lower_init_ranges[dim2] + ((upper_init_ranges[dim2]-lower_init_ranges[dim2])*0.75);
+    double max_distance_dim = ((dim1_value1-dim1_value2)/2)*((dim2_value1-dim2_value2)/2);
+
+//    printf("quarter\n");
+    printf("%f , %f \n", dim1_value1, dim2_value1);
+//    printf("%f , %f \n", dim1_value1, dim2_value2);
+//    printf("%f , %f \n", dim1_value2, dim2_value1);
+//    printf("%f , %f \n", dim1_value2, dim2_value2);
+
+    // setting parameters
+    int even = 0;
+    if(havle_size%2 == 1){
+        even = 1;
+    }
+    int quarter = 0;
+//    printf("quarter\n");
+    double total_scalar = 0;
+    for(int i = 0; i < quarter_size; i ++){
+//            printf("dim1, %f, dim2, %f \n", populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1], populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+        double distance =  (dim1_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1])*(dim1_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1]);
+        distance +=  (dim2_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2])*(dim2_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+        if( distance < max_distance_dim ){
+            double scalar = fabs((distance) / max_distance_dim);
+            total_scalar += scalar;
+            printf("%f scalar\n",scalar);
+            averages[quarter] += objective_values[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]]*scalar;
+            printf("dim1, %f, dim2, %f \n", populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1], populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+
+        }
+    }
+    averages[quarter] = averages[quarter]/total_scalar;
+    total_scalar = 0;
+    quarter = 1;
+//    printf("quarter\n");
+    total_scalar = 0;
+    for(int i = 0; i < quarter_size; i ++){
+//            printf("dim1, %f, dim2, %f \n", populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1], populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+        double distance =  (dim1_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1])*(dim1_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1]);
+        distance +=  (dim2_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2])*(dim2_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+        if( distance < max_distance_dim ){
+            double scalar = fabs((distance) / max_distance_dim);
+            total_scalar += scalar;
+//            printf("%f scalar\n",scalar);
+            averages[quarter] += objective_values[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]]*scalar;
+//            printf("dim1, %f, dim2, %f \n", populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1], populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+
+        }
+    }
+    averages[quarter] = averages[quarter]/total_scalar;
+    total_scalar = 0;
+    quarter = 2;
+//    printf("quarter\n");
+    total_scalar = 0;
+    for(int i = 0; i < quarter_size; i ++){
+//            printf("dim1, %f, dim2, %f \n", populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1], populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+        double distance =  (dim1_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1])*(dim1_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1]);
+        distance +=  (dim2_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2])*(dim2_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+        if( distance < max_distance_dim ){
+            double scalar = fabs((distance) / max_distance_dim);
+            total_scalar += scalar;
+//            printf("%f scalar\n",scalar);
+            averages[quarter] += objective_values[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]]*scalar;
+//            printf("dim1, %f, dim2, %f \n", populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1], populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+
+        }
+    }
+    averages[quarter] = averages[quarter]/total_scalar;
+    total_scalar = 0;
+    quarter = 3;
+//    printf("quarter\n");
+    total_scalar = 0;
+    for(int i = 0; i < quarter_size; i ++){
+//            printf("dim1, %f, dim2, %f \n", populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1], populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+        double distance =  (dim1_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1])*(dim1_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1]);
+        distance +=  (dim2_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2])*(dim2_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+        if( distance < max_distance_dim ){
+            double scalar = fabs((distance) / max_distance_dim);
+            total_scalar += scalar;
+//            printf("%f scalar\n",scalar);
+            averages[quarter] += objective_values[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]]*scalar;
+//            printf("dim1, %f, dim2, %f \n", populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1], populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+        }
+    }
+    averages[quarter] = averages[quarter]/total_scalar;
+    total_scalar = 0;
+
+
+
+}
+
+
+
+/**
+* Computes the matrix of dependencies for
+* a specified population.
+*/
+void estimatePopulationsDifferentialDependencies( int population_index )
+{
+//    double *min_individual = (double *) Malloc( number_of_parameters*sizeof( double ) );
+//    double *max_individual = (double *) Malloc( number_of_parameters*sizeof( double ) );
+//
+//    double rand = randomRealUniform01();
+//    rand = 0.7;
+//    for( k = 0; k < number_of_parameters; k++ ) {
+//        double min = lower_init_ranges[k], max = upper_init_ranges[k]; // TODO: should make sure min is updated instead of that it stays -115 since that is always the minimum
+//        getMinMaxofPopulation(k, population_index, &min, &max);
+//    }
+
+    double averages[4] = {0.0, 0.0, 0.0, 0.0};
+    double first_avg, constraint_value;
+    installedProblemEvaluation( problem_index, lower_init_ranges, &(first_avg), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+
+    for(int i = 0; i < number_of_parameters; i++ )
+    {
+        for(int j = i; j < number_of_parameters; j++ )
+        {
+            if(i==j){
+                dependency_matrix[i][j] = 0.0;
+                continue;
+            }
+
+            get_population_averages(population_index, i, j, averages);
+//            for (int i = 0; i < 4; i++){
+//                printf("%f ,", averages[i]);
+//            }
+//            printf("\n");
+            double delta_i = fabs(averages[0]-averages[2])/first_avg;
+            double delta_j = fabs(averages[1]-averages[3])/first_avg;
+//            printf("avg[0] - avg[2]: %f, \tavg[1] - avg[3]: %f \n", delta_i, delta_j);
+
+            double dependency = 0.0;
+            if(delta_i != 0.0 && delta_j != 0.0){
+                dependency = fabs(delta_i-delta_j);
+                if(dependency<0)
+                    dependency = dependency*-1;
+            }
+            dependency_matrix[i][j] = dependency;
+            dependency_matrix[j][i] = dependency;
+        }
+    }
+    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 }
 
 int calculateNumberofFunctionParameters(int number){
