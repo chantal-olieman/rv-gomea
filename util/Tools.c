@@ -837,6 +837,13 @@ int *mergeSort( double *array, int array_size )
     return( sorted );
 }
 
+double nround (double n, unsigned int c) {
+    double marge = pow(10, c);
+    double up = n * marge;
+    double ret = round(up) / marge;
+
+    return ret;
+}
 /**
  * Subroutine of merge sort, sorts the part of the array between p and q.
  */
