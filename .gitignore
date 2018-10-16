@@ -57,7 +57,9 @@ cmake-build-debug
 .vscode/
 RV-GOMEA/statistics.dat
 RV-GOMEA/random_seed.dat
+RV-GOMEA/statistics.dat
 
+*.dat
 
 cmake-build-debug/
 .vscodes
