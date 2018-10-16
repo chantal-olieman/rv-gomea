@@ -73,7 +73,7 @@ void mergeSortMergeInt( int *array, int *sorted, int *tosort, int p, int r, int 
 
 int *getRanks(double *array, int array_size );
 int *getRanksFromSorted(int *sorted, int array_size );
-
+double nround (double n, unsigned int c);
 double randomRealUniform01( void );
 int randomInt( int maximum );
 double random1DNormalUnit( void );

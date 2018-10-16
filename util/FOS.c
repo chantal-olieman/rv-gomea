@@ -295,7 +295,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
         }
         r0 = NN_chain[NN_chain_length-2];
         r1 = NN_chain[NN_chain_length-1];
-        if(getSimilarity(r0, r1) <= 0.0005 && dependency_learning && static_linkage_tree){
+        if(getSimilarity(r0, r1) <= 0.05 && dependency_learning ){
             break;
         }
 
@@ -503,9 +503,10 @@ int *matchFOSElements( FOS *new_FOS, FOS *prev_FOS )
             **FOS_element_similarity_matrix;
 
     permutation = (int *) Malloc( new_FOS->length*sizeof(int));
-    FOS_element_similarity_matrix = (int**) Malloc((new_FOS->length-number_of_parameters)*sizeof(int*));
-    for( i = 0; i < new_FOS->length-number_of_parameters; i++ )
+    FOS_element_similarity_matrix = (int**) Malloc((prev_FOS->length-number_of_parameters)*sizeof(int*));
+    for( i = 0; i < prev_FOS->length-number_of_parameters; i++ )
         FOS_element_similarity_matrix[i] = (int*) Malloc((new_FOS->length-number_of_parameters)*sizeof(int));
+
     for( i = 0; i < number_of_parameters; i++ )
     {
         for( j = 0; j < number_of_parameters; j++ )
@@ -517,7 +518,7 @@ int *matchFOSElements( FOS *new_FOS, FOS *prev_FOS )
             }
         }
     }
-    for( i = number_of_parameters; i < new_FOS->length; i++ )
+    for( i = number_of_parameters; i < prev_FOS->length; i++ )
     {
         for( j = number_of_parameters; j < new_FOS->length; j++ )
         {
@@ -543,15 +544,31 @@ int *matchFOSElements( FOS *new_FOS, FOS *prev_FOS )
             FOS_element_similarity_matrix[i-number_of_parameters][j-number_of_parameters] = (int) 10000*(2.0*matches/(prev_FOS->set_length[i]+new_FOS->set_length[j]));
         }
     }
+    if( new_FOS->length != prev_FOS->length) {
+        for( i = number_of_parameters; i < new_FOS->length; i++ )
+        {
+            int max_index = 0;
+            int max_similarity = -1;
+            for( j = number_of_parameters; j < prev_FOS->length; j++ )
+            {
+                if(FOS_element_similarity_matrix[j-number_of_parameters][i-number_of_parameters]>max_similarity){
+                    max_index = j;
+                    max_similarity = FOS_element_similarity_matrix[j-number_of_parameters][i-number_of_parameters];
+                }
+            }
+            permutation[i] = max_index;
+        }
+    }
+    else{
+        hungarian_permutation = hungarianAlgorithm(FOS_element_similarity_matrix, new_FOS->length-number_of_parameters);
+        for( i = 0; i < new_FOS->length-number_of_parameters; i++ )
+            permutation[i+number_of_parameters] = hungarian_permutation[i]+number_of_parameters;
+        free( hungarian_permutation );
+    }
 
-    hungarian_permutation = hungarianAlgorithm(FOS_element_similarity_matrix, new_FOS->length-number_of_parameters);
-    for( i = 0; i < new_FOS->length-number_of_parameters; i++ )
-        permutation[i+number_of_parameters] = hungarian_permutation[i]+number_of_parameters;
-
-    for( i = 0; i < new_FOS->length-number_of_parameters; i++ )
+    for( i = 0; i < prev_FOS->length-number_of_parameters; i++ )
         free( FOS_element_similarity_matrix[i] );
     free( FOS_element_similarity_matrix );
-    free( hungarian_permutation );
 
     return( permutation );
 }
