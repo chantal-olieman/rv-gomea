@@ -1756,8 +1756,8 @@ void  get_population_averages( int population_index, int dim1, int dim2 , double
     double max_distance_dim = ((dim1_value1-dim1_value2)/2)*((dim2_value1-dim2_value2)/2);
 
 //    printf("quarter\n");
-    printf("%f , %f \n", dim1_value1, dim2_value1);
-//    printf("%f , %f \n", dim1_value1, dim2_value2);
+//    printf("%f , %f \n", dim1_value1, dim2_value1);
+    printf("%f , %f \n", dim1_value1, dim2_value2);
 //    printf("%f , %f \n", dim1_value2, dim2_value1);
 //    printf("%f , %f \n", dim1_value2, dim2_value2);
 
@@ -1774,11 +1774,11 @@ void  get_population_averages( int population_index, int dim1, int dim2 , double
         double distance =  (dim1_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1])*(dim1_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1]);
         distance +=  (dim2_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2])*(dim2_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
         if( distance < max_distance_dim ){
-            double scalar = fabs((distance) / max_distance_dim);
+            double scalar = 1 - (fabs((distance) / max_distance_dim));
             total_scalar += scalar;
-            printf("%f scalar\n",scalar);
+//            printf("%f scalar\n",scalar);
             averages[quarter] += objective_values[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]]*scalar;
-            printf("dim1, %f, dim2, %f \n", populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1], populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+//            printf("dim1, %f, dim2, %f \n", populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1], populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
 
         }
     }
@@ -1792,11 +1792,11 @@ void  get_population_averages( int population_index, int dim1, int dim2 , double
         double distance =  (dim1_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1])*(dim1_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1]);
         distance +=  (dim2_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2])*(dim2_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
         if( distance < max_distance_dim ){
-            double scalar = fabs((distance) / max_distance_dim);
+            double scalar = 1 - (fabs((distance) / max_distance_dim));
             total_scalar += scalar;
-//            printf("%f scalar\n",scalar);
+            printf("%f scalar\n",scalar);
             averages[quarter] += objective_values[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]]*scalar;
-//            printf("dim1, %f, dim2, %f \n", populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1], populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
+            printf("dim1, %f, dim2, %f \n", populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1], populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
 
         }
     }
@@ -1810,7 +1810,7 @@ void  get_population_averages( int population_index, int dim1, int dim2 , double
         double distance =  (dim1_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1])*(dim1_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1]);
         distance +=  (dim2_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2])*(dim2_value1 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
         if( distance < max_distance_dim ){
-            double scalar = fabs((distance) / max_distance_dim);
+            double scalar = 1 - (fabs((distance) / max_distance_dim));
             total_scalar += scalar;
 //            printf("%f scalar\n",scalar);
             averages[quarter] += objective_values[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]]*scalar;
@@ -1828,7 +1828,7 @@ void  get_population_averages( int population_index, int dim1, int dim2 , double
         double distance =  (dim1_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1])*(dim1_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim1]);
         distance +=  (dim2_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2])*(dim2_value2 - populations[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]][dim2]);
         if( distance < max_distance_dim ){
-            double scalar = fabs((distance) / max_distance_dim);
+            double scalar = 1 - (fabs((distance) / max_distance_dim));
             total_scalar += scalar;
 //            printf("%f scalar\n",scalar);
             averages[quarter] += objective_values[population_index][indeces[i+(even*(quarter+1)/2)+(quarter*quarter_size)]]*scalar;
@@ -1872,7 +1872,9 @@ void estimatePopulationsDifferentialDependencies( int population_index )
                 dependency_matrix[i][j] = 0.0;
                 continue;
             }
-
+            for (int i = 0; i < 4; i++){
+                averages[i] = 0;
+            }
             get_population_averages(population_index, i, j, averages);
 //            for (int i = 0; i < 4; i++){
 //                printf("%f ,", averages[i]);
