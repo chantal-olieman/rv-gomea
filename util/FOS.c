@@ -295,12 +295,16 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
         }
         r0 = NN_chain[NN_chain_length-2];
         r1 = NN_chain[NN_chain_length-1];
+
+        printf("r0 = %d, r1 = %d\n", r0, r1);
+
         if( ! evolve_learning ){
             if(getSimilarity(r0, r1) <= 0.05 && dependency_learning ){
                 break;
             }
         }
         else{
+            if (r0)
             if(getSimilarity(r0, r1) <= 0.00005){
                 break;
             }
@@ -334,6 +338,20 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
 
         if( r1 < mpm_length && r1 != r0 ) /* This test is required for exceptional cases in which the nearest-neighbor ordering has changed within the chain while merging within that chain */
         {
+            // we know we will merge r0 and r1, now lets check if they are all completely dependent
+            int completely_dependent = 1;
+            for (i = 0; i < mpm_new_number_of_indices[r0]; i++){
+                for (j = 0; j< mpm_new_number_of_indices[r1]; j++){
+                    if (S_matrix[i][j] < 0.00001){
+                        completely_dependent = 0;
+                        break;
+                    }
+                }
+            }
+            if (completely_dependent){
+                printf("dependent");
+            }
+
             indices = (int *) Malloc( (mpm_number_of_indices[r0]+mpm_number_of_indices[r1])*sizeof( int ) );
 
             i = 0;
@@ -432,13 +450,13 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
             FOS_index++;
         }
     }
-//    for( i =0; i < FOS_index; i++){
-//        int setlenght = new_FOS->set_length[i];
-//        for(int j = 0; j < setlenght; j++ ){
-//            printf("%d, ", new_FOS->sets[i][j]);
-//        }
-//        printf("\n");
-//    }
+    for( i =0; i < FOS_index; i++){
+        int setlenght = new_FOS->set_length[i];
+        for(int j = 0; j < setlenght; j++ ){
+            printf("%d, ", new_FOS->sets[i][j]);
+        }
+        printf("\n");
+    }
     new_FOS->length = FOS_index;
 
     free( NN_chain );
