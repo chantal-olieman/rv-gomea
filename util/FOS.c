@@ -295,16 +295,12 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
         }
         r0 = NN_chain[NN_chain_length-2];
         r1 = NN_chain[NN_chain_length-1];
-        if( ! evolve_learning ){
-            if(getSimilarity(r0, r1) <= 0.05 && dependency_learning ){
-                break;
-            }
+
+        if(getSimilarity(r0, r1) <= 0.0005 && dependency_learning ){
+            break;
         }
-        else{
-            if(getSimilarity(r0, r1) <= 0.00005){
-                break;
-            }
-        }
+
+
 
 
         if( r1 >= mpm_length || r0 >= mpm_length || mpm_number_of_indices[r0]+mpm_number_of_indices[r1] > FOS_element_ub )
