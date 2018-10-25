@@ -72,6 +72,7 @@ int      *mpm_number_of_indices,
           static_linkage_tree,                  /* Wheter the FOS is learned at the beginning only */
           differential_learning,                /* Wheter we use differnetial grouping to learn dependencies */
           evolve_learning,
+          differential_groups,
           iteration,
           pruned_tree,
           min_prune_size,

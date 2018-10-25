@@ -147,6 +147,7 @@ FOS *copyFOS( FOS *f )
     return( new_FOS );
 }
 
+
 FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
 {
     char     done;
