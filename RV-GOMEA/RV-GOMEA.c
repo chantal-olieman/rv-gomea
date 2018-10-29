@@ -145,6 +145,7 @@ int    base_population_size,                                /* The size of the f
        pairs_per_run,
        adapt_evolve_size,
        total_dependencies_found,
+     **checked_matrix,
        number_of_checked_pairs,
        maximum_number_of_populations,                       /* The maximum number of populations in the multi-start scheme. */
        number_of_subgenerations_per_population_factor,      /* The subgeneration factor in the multi-start scheme. */
@@ -288,7 +289,7 @@ void interpretCommandLine( int argc, char **argv )
     haveNextNextGaussian = 0;
     adapt_evolve_size = 0;
     total_dependencies_found = 0;
-    dependency_evolve_factor = 1.0;
+    dependency_evolve_factor = 0.50;
     evolve_scaling = 0;
     iteration = 0;
     pruned_tree = 0;
@@ -321,7 +322,7 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -6 ) {learn_linkage_tree = 1; dependency_learning = 1;differential_learning = 1;}
     if( FOS_element_size == -7 ) {static_linkage_tree = 1; dependency_learning = 1;differential_learning = 1;}
-    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; adapt_evolve_size = 1;}
+    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; adapt_evolve_size = 1; pruned_tree = 1; min_prune_size = 1;}
     if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1;differential_learning = 1; differential_groups = 1;}
 
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
@@ -660,6 +661,7 @@ void initializeMemory( void )
     decomposed_covariance_matrices   = (double ****) Malloc( maximum_number_of_populations * sizeof( double ***) );
     full_covariance_matrix           = (double ***) Malloc( maximum_number_of_populations * sizeof( double **) );
     dependency_matrix                = (double **) Malloc( number_of_parameters*sizeof( double * ) );
+    checked_matrix                   = (int **) Malloc( number_of_parameters*sizeof(int * ) );
     first_individual                 = (double *) Malloc( number_of_parameters*sizeof( double ) );
     second_individual                = (double *) Malloc( number_of_parameters*sizeof( double ) );
     fitness_of_first_individual      = (double *) Malloc( (number_of_parameters + 1)*sizeof( double * ) );
@@ -679,8 +681,10 @@ void initializeNewPopulationMemory( int population_index )
     if( population_index == 0 ){
         population_sizes[population_index] = base_population_size;
 
-        for( j = 0; j < number_of_parameters; j++ )
+        for( j = 0; j < number_of_parameters; j++ ){
             dependency_matrix[j] = (double *) Malloc( number_of_parameters*sizeof( double ) );
+            checked_matrix[j] = (int *) Malloc( number_of_parameters*sizeof( int ) );
+        }
     }
     else
         population_sizes[population_index] = 2*population_sizes[population_index-1];
@@ -742,6 +746,8 @@ void initializeNewPopulationMemory( int population_index )
             for (j = i; j < number_of_parameters; j++) {
                 dependency_matrix[i][j] = 0.0;
                 dependency_matrix[j][i] = 0.0;
+                checked_matrix[i][j] = 0;
+                checked_matrix[j][i] = 0;
             }
         }
     }
@@ -1002,7 +1008,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
         new_FOS = learnDifferentialGroups( population_index );
     }
     else{
-        new_FOS = learnLinkageTree( full_covariance_matrix[population_index], dependency_matrix);
+        new_FOS = learnLinkageTree( full_covariance_matrix[population_index], dependency_matrix, checked_matrix);
     }
     if( learn_linkage_tree && number_of_generations[population_index] > 0 )
         inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
@@ -2006,34 +2012,41 @@ void evolveDifferentialDependencies( int population_index ) {
         individual_to_compare[i] = first_individual[i];
         individual_to_compare[j] = first_individual[j];
 
-        double delta_i = fabs(original_objective - change_i);
+        change_i = change_i/original_objective;
+        change_j = change_j/original_objective;
+        change_i_j = change_i_j/original_objective;
+
+        double delta_i = fabs(1.0 - change_i);
         double delta_j = fabs(change_j - change_i_j);
 
         double dependency = 0.0;
         if (delta_i != 0.0 && delta_j != 0.0) {
-            dependency = 1 - (delta_i / delta_j);
-            if (dependency < 0) {
-                dependency = dependency * -1;
+            double difference = fabs(delta_i/delta_j);
+            if(difference>1.0){
+                difference = fabs(delta_j/delta_i);
+            }
+            if (difference < 1.00000)
                 found_dependencies += 1;
-            } else if (dependency > 0.00001)
-                found_dependencies += 1;
-//            printf("dependency: %f \t i: %d, j: %d\n", dependency, i, j);
+            dependency = 1-difference;
         }
         dependency_matrix[i][j] = dependency;
         dependency_matrix[j][i] = dependency;
+        checked_matrix[i][j] = 1;
+        checked_matrix[j][i] = 1;
     }
     total_dependencies_found += found_dependencies;
     total_dependencies_found += found_dependencies;
     number_of_checked_pairs += pairs_per_run;
     if (found_dependencies == 0 && adapt_evolve_size) {
         int found_dependencies_per_run = total_dependencies_found / number_of_checked_pairs;
-        if (found_dependencies_per_run < 2)
+        if (found_dependencies_per_run < 2) {
+//            printf("no good dependencies found\n\n\n");
             number_of_checked_pairs = number_of_pairs;
+        }
     }
-    //todo: find some normalization
-//    printf("pairs_per_run %d \t, dependencies %d \n", pairs_per_run, dependencies_found);
-
-//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//    //todo: find some normalization
+//    if(number_of_checked_pairs>= number_of_pairs)
+//        printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free(individual_to_compare);
 }
 

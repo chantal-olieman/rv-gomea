@@ -53,7 +53,7 @@ typedef struct FOS {
 void printFOS( FOS *fos );
 FOS *readFOSFromFile( FILE *file );
 FOS *copyFOS( FOS *f );
-FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix );
+FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, int **checked_matrix);
 int determineNearestNeighbour( int index, double **S_matrix, int *mpm_number_of_indices, int mpm_length );
 double getSimilarity( int a, int b );
 double **computeMIMatrix( double **covariance_matrix, int n );
