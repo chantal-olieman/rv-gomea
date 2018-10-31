@@ -1850,6 +1850,9 @@ double getDependency(int i, int j, double *individual_to_compare){
 }
 
 
+
+
+
 /**
 * Computes the matrix of dependencies for
 * a specified population.
@@ -2081,7 +2084,7 @@ void estimateCovarianceMatricesML( int population_index )
             for( k = j; k < linkage_model[population_index]->set_length[i]; k++ )
             {
                 varb = linkage_model[population_index]->sets[i][k];
-                
+
                 if( learn_linkage_tree && ! dependency_learning )
                 {
                     cov = full_covariance_matrix[population_index][vara][varb];

@@ -301,12 +301,6 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
         r0 = NN_chain[NN_chain_length-2];
         r1 = NN_chain[NN_chain_length-1];
 
-//        if(getSimilarity(r0, r1) <= 0.00000001 && dependency_learning ) {
-//            break;
-//        }
-
-
-
         if( r1 >= mpm_length || r0 >= mpm_length || mpm_number_of_indices[r0]+mpm_number_of_indices[r1] > FOS_element_ub )
         {
             NN_chain_length = 1;
