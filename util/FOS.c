@@ -516,14 +516,16 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
         }
         FOS_index = new_lenght;
     }
-//    printf("NEW FOS\n");
-//    for( i =0; i < FOS_index; i++){
-//        int setlenght = new_FOS->set_length[i];
-//        for(int j = 0; j < setlenght; j++ ){
-//            printf("%d, ", new_FOS->sets[i][j]);
-//        }
-//        printf("\n");
-//    }
+/*
+    printf("NEW FOS\n");
+    for( i =0; i < FOS_index; i++){
+        int setlenght = new_FOS->set_length[i];
+        for(int j = 0; j < setlenght; j++ ){
+            printf("%d, ", new_FOS->sets[i][j]);
+        }
+        printf("\n");
+    }
+*/
 
     new_FOS->length = FOS_index;
 

@@ -289,7 +289,7 @@ void interpretCommandLine( int argc, char **argv )
     haveNextNextGaussian = 0;
     adapt_evolve_size = 0;
     total_dependencies_found = 0;
-    dependency_evolve_factor = 0.50;
+    dependency_evolve_factor = 1.0;
     evolve_scaling = 0;
     iteration = 0;
     pruned_tree = 0;
@@ -681,9 +681,11 @@ void initializeNewPopulationMemory( int population_index )
     if( population_index == 0 ){
         population_sizes[population_index] = base_population_size;
 
-        for( j = 0; j < number_of_parameters; j++ ){
-            dependency_matrix[j] = (double *) Malloc( number_of_parameters*sizeof( double ) );
-            checked_matrix[j] = (int *) Malloc( number_of_parameters*sizeof( int ) );
+        if( dependency_learning ){
+            for( j = 0; j < number_of_parameters; j++ ){
+                dependency_matrix[j] = (double *) Malloc( number_of_parameters*sizeof( double ) );
+                checked_matrix[j] = (int *) Malloc( number_of_parameters*sizeof( int ) );
+            }
         }
     }
     else
