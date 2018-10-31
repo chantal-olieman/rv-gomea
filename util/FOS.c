@@ -510,7 +510,10 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
         }
         FOS_index = new_lenght;
     }
-/*
+
+    new_FOS->length = FOS_index;
+    
+    printFOS(new_FOS);
     printf("NEW FOS\n");
     for( i =0; i < FOS_index; i++){
         int setlenght = new_FOS->set_length[i];
@@ -519,9 +522,6 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
         }
         printf("\n");
     }
-*/
-
-    new_FOS->length = FOS_index;
 
     free( NN_chain );
 
