@@ -147,7 +147,8 @@ FOS *copyFOS( FOS *f )
     return( new_FOS );
 }
 
-FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
+
+FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, int **checked_matrix)
 {
     char     done;
     int      i, j, r0, r1, rswap, *indices, *order, *sorted,
@@ -263,6 +264,10 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
         }
     }
 
+    int *keep_FOS_element = (int *) Malloc( ((number_of_parameters*2))*sizeof( int ) );
+    for( i = 0; i < number_of_parameters*2; i++ ){
+        keep_FOS_element[i] = 1;
+    }
 
     NN_chain        = (int *) Malloc( (number_of_parameters+2)*sizeof( int ) );
     NN_chain_length = 0;
@@ -295,10 +300,6 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
         }
         r0 = NN_chain[NN_chain_length-2];
         r1 = NN_chain[NN_chain_length-1];
-        if(getSimilarity(r0, r1) <= 0.05 && dependency_learning ){
-            break;
-        }
-
 
         if( r1 >= mpm_length || r0 >= mpm_length || mpm_number_of_indices[r0]+mpm_number_of_indices[r1] > FOS_element_ub )
         {
@@ -325,6 +326,8 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
         }
         NN_chain_length -= 3;
 
+
+
         if( r1 < mpm_length && r1 != r0 ) /* This test is required for exceptional cases in which the nearest-neighbor ordering has changed within the chain while merging within that chain */
         {
             indices = (int *) Malloc( (mpm_number_of_indices[r0]+mpm_number_of_indices[r1])*sizeof( int ) );
@@ -347,6 +350,47 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
             for( j = 0; j < mpm_number_of_indices[r0]+mpm_number_of_indices[r1]; j++ ){
                 new_FOS->sets[FOS_index][j] = indices[sorted[j]];
             }
+
+            if( pruned_tree && mpm_number_of_indices[r0]+mpm_number_of_indices[r1] > min_prune_size){
+                // we know we will merge r0 and r1, now lets check if they are all completely dependent
+                int completely_dependent = 1;
+                int all_checked = 1;
+                for (i = 0; i < mpm_number_of_indices[r0]; i++){
+                    for (j = 0; j< mpm_number_of_indices[r1]; j++){
+                        if (dependency_matrix[mpm[r0][i]][mpm[r1][j]] < 0.00001){
+                            if(checked_matrix[mpm[r0][i]][mpm[r1][j]]==0){
+                                all_checked = 0;
+                            }
+                            completely_dependent = 0;
+                            break;
+                        }
+                    }
+                }
+                if (completely_dependent) {
+                    if (mpm_number_of_indices[r0] > (min_prune_size - 1)) {
+                        int first_set_element = mpm[r0][0];
+                        int set_length = mpm_number_of_indices[r0];
+                        for (i = 0; i < FOS_index; i++) {
+                            if (new_FOS->set_length[i] == set_length && new_FOS->sets[i][0] == first_set_element) {
+                                keep_FOS_element[i] = 0;
+                            }
+                        }
+                    }
+                    if (mpm_number_of_indices[r1] > (min_prune_size - 1)) {
+                        int first_set_element = mpm[r1][0];
+                        int set_length = mpm_number_of_indices[r1];
+                        for (i = 0; i < FOS_index; i++) {
+                            if (new_FOS->set_length[i] == set_length && new_FOS->sets[i][0] == first_set_element) {
+                                keep_FOS_element[i] = 0;
+                            }
+                        }
+                    }
+                }
+                else if((all_checked && !completely_dependent) || getSimilarity(r0, r1)<0.00005){
+                    keep_FOS_element[FOS_index] = 0;
+                }
+            }
+
             free( sorted );
             free( indices );
 
@@ -425,13 +469,58 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix )
             FOS_index++;
         }
     }
+//    printf("original FOS\n");
 //    for( i =0; i < FOS_index; i++){
+//        if (keep_FOS_element[i]){
+//            printf("keep: ");
+//        }
+//        else{
+//            printf("remove: ");
+//        }
 //        int setlenght = new_FOS->set_length[i];
 //        for(int j = 0; j < setlenght; j++ ){
 //            printf("%d, ", new_FOS->sets[i][j]);
 //        }
 //        printf("\n");
 //    }
+
+    if( pruned_tree ){
+        i = 0;
+        if (min_prune_size == 1)
+            j = 0;
+        else
+            j = number_of_parameters;  //todo: change if size 1 is not allowed
+        int new_lenght = 0;
+        while (i < FOS_index){
+            if (keep_FOS_element[i]) {
+                if (i > j){
+                    while(keep_FOS_element[j] && j < FOS_index )
+                        j ++;
+                    new_FOS->set_length[j] = new_FOS->set_length[i];
+                    new_FOS->sets[j] = (int *) Malloc( (new_FOS->set_length[j])*sizeof( int ) );
+                    for(int k = 0; k < new_FOS->set_length[j]; k++ ){
+                        new_FOS->sets[j][k] = new_FOS->sets[i][k];
+                    }
+                    keep_FOS_element[j] = 1;
+                    keep_FOS_element[i] = 0;
+                }
+                new_lenght += 1;
+            }
+            i ++;
+        }
+        FOS_index = new_lenght;
+    }
+/*
+    printf("NEW FOS\n");
+    for( i =0; i < FOS_index; i++){
+        int setlenght = new_FOS->set_length[i];
+        for(int j = 0; j < setlenght; j++ ){
+            printf("%d, ", new_FOS->sets[i][j]);
+        }
+        printf("\n");
+    }
+*/
+
     new_FOS->length = FOS_index;
 
     free( NN_chain );
