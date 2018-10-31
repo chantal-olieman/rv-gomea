@@ -351,7 +351,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                 new_FOS->sets[FOS_index][j] = indices[sorted[j]];
             }
 
-            if( pruned_tree && mpm_number_of_indices[r0]+mpm_number_of_indices[r1] > min_prune_size){
+            if( pruned_tree ){
                 // we know we will merge r0 and r1, now lets check if they are all completely dependent
                 int completely_dependent = 1;
                 int all_checked = 1;
@@ -367,22 +367,20 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                     }
                 }
                 if (completely_dependent) {
-                    if (mpm_number_of_indices[r0] > (min_prune_size - 1)) {
-                        int first_set_element = mpm[r0][0];
-                        int set_length = mpm_number_of_indices[r0];
-                        for (i = 0; i < FOS_index; i++) {
-                            if (new_FOS->set_length[i] == set_length && new_FOS->sets[i][0] == first_set_element) {
-                                keep_FOS_element[i] = 0;
-                            }
+                    //remove r1
+                    int first_set_element = mpm[r0][0];
+                    int set_length = mpm_number_of_indices[r0];
+                    for (i = 0; i < FOS_index; i++) {
+                        if (new_FOS->set_length[i] == set_length && new_FOS->sets[i][0] == first_set_element) {
+                            keep_FOS_element[i] = 0;
                         }
                     }
-                    if (mpm_number_of_indices[r1] > (min_prune_size - 1)) {
-                        int first_set_element = mpm[r1][0];
-                        int set_length = mpm_number_of_indices[r1];
-                        for (i = 0; i < FOS_index; i++) {
-                            if (new_FOS->set_length[i] == set_length && new_FOS->sets[i][0] == first_set_element) {
-                                keep_FOS_element[i] = 0;
-                            }
+                    //remove r0
+                    first_set_element = mpm[r1][0];
+                    set_length = mpm_number_of_indices[r1];
+                    for (i = 0; i < FOS_index; i++) {
+                        if (new_FOS->set_length[i] == set_length && new_FOS->sets[i][0] == first_set_element) {
+                            keep_FOS_element[i] = 0;
                         }
                     }
                 }
@@ -486,10 +484,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
 
     if( pruned_tree ){
         i = 0;
-        if (min_prune_size == 1)
-            j = 0;
-        else
-            j = number_of_parameters;  //todo: change if size 1 is not allowed
+        j = 0;
         int new_lenght = 0;
         while (i < FOS_index){
             if (keep_FOS_element[i]) {

@@ -95,11 +95,8 @@ void makeSelectionsForOnePopulation( int population_index );
 void makeSelectionsForOnePopulationUsingDiversityOnRank0( int population_index );
 void estimateParameters( int population_index );
 void estimateMeanVectorML( int population_index );
-void estimateDifferentialDependencies( int population_index );
 void evolveDifferentialDependencies( int population_index );
 void printMatrix(double **matrix, int cols, int rows);
-void estimateFunction(int population_index );
-int calculateNumberofFunctionParameters(int number);
 void estimateFullCovarianceMatrixML( int population_index );
 void estimateParametersML( int population_index );
 void estimateCovarianceMatricesML( int population_index );
@@ -144,7 +141,6 @@ int    base_population_size,                                /* The size of the f
        evolve_scaling,
        pairs_per_run,
        old_dependency_comparison,
-       adapt_evolve_size,
        total_dependencies_found,
      **checked_matrix,
        number_of_checked_pairs,
@@ -280,7 +276,6 @@ void interpretCommandLine( int argc, char **argv )
     learn_linkage_tree = 0;
     static_linkage_tree = 0;
     dependency_learning = 0;
-    differential_learning = 0;
     evolve_learning = 0;
     random_linkage_tree = 0;
     FOS_element_size = -1;
@@ -288,14 +283,12 @@ void interpretCommandLine( int argc, char **argv )
     pairs_per_run = 0 ;
     evaluations_for_statistics_hit = 0;
     haveNextNextGaussian = 0;
-    adapt_evolve_size = 0;
     total_dependencies_found = 0;
     dependency_evolve_factor = 1.0;
     evolve_scaling = 0;
     iteration = 0;
     pruned_tree = 0;
     differential_groups = 0;
-    min_prune_size = 0;
     old_dependency_comparison = 0;
     parseCommandLine( argc, argv );
 
@@ -322,11 +315,9 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -3 ) static_linkage_tree = 1;
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
-    if( FOS_element_size == -6 ) {learn_linkage_tree = 1; dependency_learning = 1;differential_learning = 1;}
-    if( FOS_element_size == -7 ) {static_linkage_tree = 1; dependency_learning = 1;differential_learning = 1;}
-    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; adapt_evolve_size = 1; pruned_tree = 1; min_prune_size = 1;}
-    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; adapt_evolve_size = 1; pruned_tree = 1; min_prune_size = 1; old_dependency_comparison = 1;}
-    if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1;differential_learning = 1; differential_groups = 1;}
+    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1;}
+    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; old_dependency_comparison = 1;}
+    if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; differential_groups = 1;}
 
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
 
@@ -818,10 +809,6 @@ void initializeFOS( int population_index )
     else if( static_linkage_tree )
     {
         if( population_index == 0 ) {
-            if (differential_learning) {
-                initializePopulationAndFitnessValues(0);
-                estimateDifferentialDependencies(population_index);
-            }
             if ( evolve_learning ) {
                 initializePopulationAndFitnessValues(0);
             }
@@ -1003,9 +990,6 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 {
     int i;
     FOS *new_FOS;
-    if( differential_learning && learn_linkage_tree )
-        estimateDifferentialDependencies( population_index );
-
     if( evolve_learning ){
         evolveDifferentialDependencies( population_index );
     }
@@ -1026,6 +1010,13 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
         free( linkage_model[population_index]->set_length );
         free( linkage_model[population_index]);
     }
+    if ( evolve_learning ){
+        for( i = 1; i < number_of_populations; i++){
+            linkage_model[i] = copyFOS(new_FOS);
+        }
+    }
+
+
     return( new_FOS );
 }
 
@@ -1840,111 +1831,25 @@ double getDependency(int i, int j, double *individual_to_compare){
     installedProblemEvaluation( problem_index, individual_to_compare, &(change_i_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
     individual_to_compare[i] = first_individual[i];
     individual_to_compare[j] = first_individual[j];
-    double delta_i = fabs(original_objective-change_i);
-    double delta_j = fabs(change_j-change_i_j);
+
+    change_i = change_i/original_objective;
+    change_j = change_j/original_objective;
+    change_i_j = change_i_j/original_objective;
+
+    double delta_i = fabs(1.0 - change_i);
+    double delta_j = fabs(change_j - change_i_j);
+
 
     double dependency = 0.0;
-    if(delta_i != 0.0 && delta_j != 0.0){
-        dependency = 1-(delta_i/delta_j);
-        if(dependency<0)
-            dependency = dependency*-1;
+    if (delta_i != 0.0 && delta_j != 0.0) {
+        double difference = fabs(delta_i / delta_j);
+        if (difference > 1.0) {
+            difference = fabs(delta_j / delta_i);
+        }
+        dependency = 1-difference;
     }
+
     return dependency;
-}
-
-
-
-
-
-/**
-* Computes the matrix of dependencies for
-* a specified population.
-*/
-void estimateDifferentialDependencies( int population_index )
-{
-    int i, j, k;
-    double *individual_to_compare = (double *) Malloc( number_of_parameters*sizeof( double ) );
-    double constraint_value;
-
-    double rand = randomRealUniform01();
-    rand = 0.7;
-
-    for( k = 0; k < number_of_parameters; k++ )
-    {
-        double min = lower_init_ranges[k], max = upper_init_ranges[k];
-        getMinMaxofPopulation(k, population_index, &min, &max);
-        if( nround(min, 2) == nround(max, 2) ){
-            max = upper_init_ranges[k];
-        }
-        first_individual[k] = min + ((max - min)*rand*0.5);
-        double parameter_diff = (max - min)*0.5*rand;
-        second_individual[k] = parameter_diff+first_individual[k];
-        individual_to_compare[k] = first_individual[k];
-    }
-    iteration += 1;
-
-    double objective_value;
-    // fill evaluation storage
-    installedProblemEvaluation( problem_index, individual_to_compare, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
-    fitness_of_first_individual[number_of_parameters] = objective_value;
-    for( k = 0; k < number_of_parameters; k++ )
-    {
-        individual_to_compare[k] = second_individual[k];
-        installedProblemEvaluation( problem_index, individual_to_compare, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
-        fitness_of_first_individual[k] = objective_value;
-        individual_to_compare[k] = first_individual[k];
-    }
-
-    double original_objective = fitness_of_first_individual[number_of_parameters];
-
-    for( i = 0; i < number_of_parameters; i++ )
-    {
-        for( j = i; j < number_of_parameters; j++ )
-        {
-            if(i==j){
-                dependency_matrix[i][j] = 0.0;
-                continue;
-            }
-
-            double change_i, change_j, change_i_j;
-            change_i = fitness_of_first_individual[i];
-            change_j = fitness_of_first_individual[j];
-
-            individual_to_compare[i] = second_individual[i];
-            individual_to_compare[j] = second_individual[j];
-            installedProblemEvaluation( problem_index, individual_to_compare, &(change_i_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
-            individual_to_compare[i] = first_individual[i];
-            individual_to_compare[j] = first_individual[j];
-
-            double delta_i = fabs(original_objective-change_i);
-            double delta_j = fabs(change_j-change_i_j);
-
-            double dependency = 0.0;
-            if(delta_i != 0.0 && delta_j != 0.0){
-                dependency = 1-(delta_i/delta_j);
-                if(dependency<0)
-                    dependency = dependency*-1;
-            }
-
-            dependency_matrix[i][j] = dependency;
-            dependency_matrix[j][i] = dependency;
-        }
-    }
-//    if( min != max && max != 0.0){
-//        for( i = 0; i < number_of_parameters; i++ ) {
-//            for (j = i; j < number_of_parameters; j++) {
-//                if(i==j){
-//                    dependency_matrix[i][j] = 0.0;
-//                }
-//                else{
-//                    dependency_matrix[i][j] = (dependency_matrix[i][j]-min)/(max-min);
-//                    dependency_matrix[j][i] = dependency_matrix[i][j];
-//                }
-//            }
-//        }
-//    }
-//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
-    free( individual_to_compare );
 }
 
 
@@ -1972,7 +1877,6 @@ void evolveDifferentialDependencies( int population_index ) {
             second_individual[k] = parameter_diff + first_individual[k];
             individual_to_compare[k] = first_individual[k];
         }
-        iteration += 1;
 
         double objective_value;
         // fill evaluation storage
@@ -1992,6 +1896,7 @@ void evolveDifferentialDependencies( int population_index ) {
         }
     }
 
+    iteration += 1;
     int max_index = number_of_checked_pairs + pairs_per_run;
     if (max_index >= number_of_pairs) {
         max_index = number_of_pairs;
@@ -2053,10 +1958,9 @@ void evolveDifferentialDependencies( int population_index ) {
     }
     total_dependencies_found += found_dependencies;
     number_of_checked_pairs += pairs_per_run;
-    if (found_dependencies == 0 && adapt_evolve_size) {
-        int found_dependencies_per_run = total_dependencies_found / (number_of_checked_pairs/pairs_per_run);
+    if (found_dependencies == 0) {
+        int found_dependencies_per_run = total_dependencies_found / iteration;
                if (found_dependencies_per_run < 1) {
-//            printf("no good dependencies found\n\n\n");
             number_of_checked_pairs = number_of_pairs;
         }
     }
