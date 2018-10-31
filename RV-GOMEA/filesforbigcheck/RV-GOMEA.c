@@ -2052,11 +2052,10 @@ void evolveDifferentialDependencies( int population_index ) {
         checked_matrix[j][i] = 1;
     }
     total_dependencies_found += found_dependencies;
-    printf("dependencies  = %d\n", found_dependencies);
     number_of_checked_pairs += pairs_per_run;
     if (found_dependencies == 0 && adapt_evolve_size) {
-        int found_dependencies_per_run = total_dependencies_found / number_of_checked_pairs;
-        if (found_dependencies_per_run < 1) {
+        int found_dependencies_per_run = total_dependencies_found / (number_of_checked_pairs/pairs_per_run);
+               if (found_dependencies_per_run < 1) {
 //            printf("no good dependencies found\n\n\n");
             number_of_checked_pairs = number_of_pairs;
         }
