@@ -384,7 +384,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                         }
                     }
                 }
-                else if((all_checked && !completely_dependent) || getSimilarity(r0, r1)<0.00005){
+                else if((all_checked && !completely_dependent) || getSimilarity(r0, r1)<0.0005){
                     keep_FOS_element[FOS_index] = 0;
                 }
             }
@@ -508,6 +508,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
 
     new_FOS->length = FOS_index;
 
+//    printf("making Tree\n");
 //    printFOS(new_FOS);
 //    printf("NEW FOS\n");
 //    for( i =0; i < FOS_index; i++){

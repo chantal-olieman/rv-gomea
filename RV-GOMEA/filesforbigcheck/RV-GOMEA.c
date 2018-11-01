@@ -140,7 +140,7 @@ int    base_population_size,                                /* The size of the f
        number_of_pairs,
        evolve_scaling,
        pairs_per_run,
-       old_dependency_comparison,
+       minimal_dependencies_per_run,
        total_dependencies_found,
      **checked_matrix,
        number_of_checked_pairs,
@@ -281,6 +281,7 @@ void interpretCommandLine( int argc, char **argv )
     FOS_element_size = -1;
     block_start = 0;
     pairs_per_run = 0 ;
+    minimal_dependencies_per_run = 2;
     evaluations_for_statistics_hit = 0;
     haveNextNextGaussian = 0;
     total_dependencies_found = 0;
@@ -289,7 +290,6 @@ void interpretCommandLine( int argc, char **argv )
     iteration = 0;
     pruned_tree = 0;
     differential_groups = 0;
-    old_dependency_comparison = 0;
     parseCommandLine( argc, argv );
 
     if( use_guidelines )
@@ -316,7 +316,8 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1;}
-    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; old_dependency_comparison = 1;}
+    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 1;}
+    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 3;}
     if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; differential_groups = 1;}
 
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
@@ -1927,19 +1928,12 @@ void evolveDifferentialDependencies( int population_index ) {
 
         double delta_i, delta_j;
 
-        if(old_dependency_comparison){
-            delta_i = fabs(original_objective - change_i);
-            delta_j = fabs(change_j - change_i_j);
-        }
-        else{
+        change_i = change_i/original_objective;
+        change_j = change_j/original_objective;
+        change_i_j = change_i_j/original_objective;
 
-            change_i = change_i/original_objective;
-            change_j = change_j/original_objective;
-            change_i_j = change_i_j/original_objective;
-
-            delta_i = fabs(1.0 - change_i);
-            delta_j = fabs(change_j - change_i_j);
-        }
+        delta_i = fabs(1.0 - change_i);
+        delta_j = fabs(change_j - change_i_j);
 
         double dependency = 0.0;
         if (delta_i != 0.0 && delta_j != 0.0) {
@@ -1958,9 +1952,10 @@ void evolveDifferentialDependencies( int population_index ) {
     }
     total_dependencies_found += found_dependencies;
     number_of_checked_pairs += pairs_per_run;
+//    printf("found dependencies: %d, agv dependencies: %d\n", found_dependencies, total_dependencies_found/iteration);
     if (found_dependencies == 0) {
         int found_dependencies_per_run = total_dependencies_found / iteration;
-               if (found_dependencies_per_run < 1) {
+               if (found_dependencies_per_run < minimal_dependencies_per_run) {
             number_of_checked_pairs = number_of_pairs;
         }
     }
