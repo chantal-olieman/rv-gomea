@@ -736,7 +736,7 @@ void initializeNewPopulationMemory( int population_index )
         number_of_pairs = counter;
         for (int i = counter - 1; i >= 0; --i) {
             //generate a random number [0, n-1]
-            int j = rand() % (i + 1);
+            int j = randomInt(i+1);
 
             //swap the last element with element at random index
             int *temp = dependency_pairs[i];

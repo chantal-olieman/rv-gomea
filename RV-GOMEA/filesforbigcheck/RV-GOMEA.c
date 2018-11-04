@@ -140,7 +140,10 @@ int    base_population_size,                                /* The size of the f
        number_of_pairs,
        evolve_scaling,
        pairs_per_run,
-       minimal_dependencies_per_run,
+       partial_evals,
+        minimal_dependencies_per_run,
+       differential_grouping_evals,
+       old_dependency_comparison,
        total_dependencies_found,
      **checked_matrix,
        number_of_checked_pairs,
@@ -289,7 +292,10 @@ void interpretCommandLine( int argc, char **argv )
     evolve_scaling = 0;
     iteration = 0;
     pruned_tree = 0;
+    partial_evals = 0;
+    differential_grouping_evals = 0;
     differential_groups = 0;
+    old_dependency_comparison = 0;
     parseCommandLine( argc, argv );
 
     if( use_guidelines )
@@ -545,7 +551,7 @@ void checkOptions( void )
 
         exit( 0 );
     }
-    
+
     if( rotation_angle > 0 && ( !learn_linkage_tree && FOS_element_size > 1 && FOS_element_size != block_size && FOS_element_size != number_of_parameters) )
     {
         printf("\n");
@@ -730,7 +736,7 @@ void initializeNewPopulationMemory( int population_index )
         number_of_pairs = counter;
         for (int i = counter - 1; i >= 0; --i) {
             //generate a random number [0, n-1]
-            int j = rand() % (i + 1);
+            int j = randomInt(i+1);
 
             //swap the last element with element at random index
             int *temp = dependency_pairs[i];
@@ -1151,19 +1157,26 @@ void writeGenerationalStatisticsForOnePopulation( int population_index )
     if( total_number_of_writes == 0 )
     {
         file = fopen( "statistics.dat", "w" );
-
-        sprintf( string, "# Generation  Evaluations  Time(s)  Best-obj. Best-cons. [Pop.index  Subgen.  Pop.size  Dis.mult.[0]  Pop.best.obj. Pop.avg.obj.  Pop.var.obj. Pop.worst.obj.  Pop.best.con. Pop.avg.con.  Pop.var.con. Pop.worst.con.]\n" );
+        if(evolve_learning)
+            sprintf( string, "# Generation  Evaluations  Time(s)  Best-obj. Best-cons. Differential-grouping-evaluations. [Pop.index  Subgen.  Pop.size  Dis.mult.[0]  Pop.best.obj. Pop.avg.obj.  Pop.var.obj. Pop.worst.obj.  Pop.best.con. Pop.avg.con.  Pop.var.con. Pop.worst.con.]\n" );
+        else{
+            sprintf( string, "# Generation  Evaluations  Time(s)  Best-obj. Best-cons. [Pop.index  Subgen.  Pop.size  Dis.mult.[0]  Pop.best.obj. Pop.avg.obj.  Pop.var.obj. Pop.worst.obj.  Pop.best.con. Pop.avg.con.  Pop.var.con. Pop.worst.con.]\n" );
+        }
         fputs( string, file );
     }
     else
         file = fopen( "statistics.dat", "a" );
 
-    sprintf( string, "%10d %11lf %11.3lf %15.10e %13e  ", total_number_of_generations, number_of_evaluations, getTimer(), elitist_objective_value, elitist_constraint_value );
+    if(evolve_learning)
+        sprintf( string, "%10d %11lf %11.3lf %15.10e %13e   %d ", total_number_of_generations, number_of_evaluations, getTimer(), elitist_objective_value, elitist_constraint_value , differential_grouping_evals );
+    else{
+        sprintf( string, "%10d %11lf %11.3lf %15.10e %13e  ", total_number_of_generations, number_of_evaluations, getTimer(), elitist_objective_value, elitist_constraint_value );
+    }
     fputs( string, file );
 
     //sprintf( string, "[ %4d %6d %10d %13e %13e %13e %13e %13e %13e %13e %13e %13e ]", population_index, number_of_generations[population_index], population_sizes[population_index], distribution_multipliers[population_index][0], population_objective_best, population_objective_avg, population_objective_var, population_objective_worst, population_constraint_best, population_constraint_avg, population_constraint_var, population_constraint_worst );
     //fputs( string, file );
-    
+
     sprintf( string, "\n");
     fputs( string, file );
 
@@ -1737,7 +1750,7 @@ void estimateParameters( int population_index )
                 }
             }
         }
-        
+
         estimateParametersML( population_index );
     }
 }
@@ -1763,7 +1776,7 @@ void estimateMeanVectorML( int population_index )
 {
     int i, j;
     double new_mean;
-    
+
     for( i = 0; i < number_of_parameters; i++ )
     {
         new_mean = 0.0;
@@ -1879,15 +1892,32 @@ void evolveDifferentialDependencies( int population_index ) {
             individual_to_compare[k] = first_individual[k];
         }
 
-        double objective_value;
+        double objective_value, old_constraint, old_objective;
         // fill evaluation storage
-        installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value),
+        installedProblemEvaluation(problem_index, first_individual, &(old_objective), &(old_constraint),
                                    number_of_parameters, NULL, NULL, 0, 0);
-        fitness_of_first_individual[number_of_parameters] = objective_value;
+        differential_grouping_evals = 1+ number_of_parameters;
+        fitness_of_first_individual[number_of_parameters] = old_objective;
+
+        int *touched_indices = (int *) Malloc(3 * sizeof(int));
+        touched_indices[1] = 0;
+        touched_indices[2] = 1;
+        fitness_of_first_individual[0] = old_objective;
         for (k = 0; k < number_of_parameters; k++) {
             individual_to_compare[k] = second_individual[k];
-            installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value),
-                                       number_of_parameters, NULL, NULL, 0, 0);
+            if(partial_evals){
+                touched_indices[0] = k;
+                for (int p = 0; p < number_of_parameters; p++) {
+                    printf("%f,  %f, const: %f, obj: %f, indices: %d \n", first_individual[p], individual_to_compare[p], old_constraint, old_objective, touched_indices[0]);
+                }
+                printf("\n");
+                installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value), 3, touched_indices, first_individual, old_objective, old_constraint);
+                printf("%f, \t", objective_value);
+                installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0);
+                printf("%f, \n", objective_value);
+            } else{
+                installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0);
+            }
             fitness_of_first_individual[k] = objective_value;
             individual_to_compare[k] = first_individual[k];
         }
@@ -1923,6 +1953,7 @@ void evolveDifferentialDependencies( int population_index ) {
         individual_to_compare[j] = second_individual[j];
         installedProblemEvaluation(problem_index, individual_to_compare, &(change_i_j), &(constraint_value),
                                    number_of_parameters, NULL, NULL, 0, 0);
+        differential_grouping_evals+=1;
         individual_to_compare[i] = first_individual[i];
         individual_to_compare[j] = first_individual[j];
 
@@ -1952,7 +1983,6 @@ void evolveDifferentialDependencies( int population_index ) {
     }
     total_dependencies_found += found_dependencies;
     number_of_checked_pairs += pairs_per_run;
-//    printf("found dependencies: %d, agv dependencies: %d\n", found_dependencies, total_dependencies_found/iteration);
     if (found_dependencies == 0) {
         int found_dependencies_per_run = total_dependencies_found / iteration;
                if (found_dependencies_per_run < minimal_dependencies_per_run) {
@@ -2179,11 +2209,11 @@ void generateAndEvaluateNewSolutionsToFillPopulation( int population_index )
             for( k = 1; k <= number_of_AMS_solutions; k++ )
                 individual_improved[k] |= applyAMS(population_index, k);
         }
-        
+
         for( i = 1; i < population_sizes[population_index]; i++ )
             if( !individual_improved[i] ) individual_NIS[population_index][i]++;
             else individual_NIS[population_index][i] = 0;
-        
+
         getBestInPopulation( population_index, &best_individual_index );
         for( k = 1; k < population_sizes[population_index]; k++ )
             if( individual_NIS[population_index][k] > maximum_no_improvement_stretch )
@@ -2430,7 +2460,7 @@ void applyForcedImprovements( int population_index, int individual_index, int do
 
     improvement = 0;
     alpha = 1.0;
-    
+
     while( alpha >= 0.01 )
     {
         alpha *= 0.5;
@@ -2609,7 +2639,7 @@ double getStDevRatioForFOSElement( int population_index, double *parameters, int
     for( i = 0; i < num_indices; i++ )
         x_min_mu[i] = parameters[i]-mean_vectors[population_index][indices[i]];
     result = 0.0;
-    
+
     if( use_univariate_FOS )
     {
         result = fabs( x_min_mu[0]/sqrt(decomposed_covariance_matrices[population_index][FOS_index][0][0]) );
@@ -2624,7 +2654,7 @@ double getStDevRatioForFOSElement( int population_index, double *parameters, int
             if( fabs( z[i] ) > result )
                 result = fabs( z[i] );
         }
-        
+
         free( z );
         for( i = 0; i < num_indices; i++ )
             free( inverse[i] );
@@ -2682,7 +2712,7 @@ void ezilaitiniMemory( void )
         free( mean_vectors[i] );
 
         free( mean_shift_vector[i] );
-        
+
         if( !learn_linkage_tree )
         {
             for( j = 0; j < linkage_model[i]->length; j++)
@@ -2693,9 +2723,9 @@ void ezilaitiniMemory( void )
             }
             free( decomposed_covariance_matrices[i] );
         }
-        
+
         free( individual_NIS[i] );
-        
+
         ezilaitiniDistributionMultipliers( i );
 
         ezilaitiniFOS( linkage_model[i] );
@@ -2744,7 +2774,7 @@ void ezilaitiniDistributionMultipliers( int population_index )
 void ezilaitiniCovarianceMatrices( int population_index )
 {
     int i,j,k;
-    
+
     i = population_index;
     for( j = 0; j < linkage_model[i]->length; j++ )
     {
@@ -2785,7 +2815,7 @@ void ezilaitiniParametersForSampling( int population_index )
     if( learn_linkage_tree && !dependency_learning )
     {
         ezilaitiniCovarianceMatrices( population_index );
-        
+
         for( i = 0; i < number_of_parameters; i++ )
             free( full_covariance_matrix[population_index][i] );
         free( full_covariance_matrix[population_index] );
@@ -2893,7 +2923,13 @@ void run( void )
     ezilaitini();
 
     printf("time %lf ", getTimer());
+    if(evolve_learning){
+        printf("differential_evals %d ", differential_grouping_evals);
+    }
+
     printf("generations %d\n", total_number_of_generations);
+
+
 }
 
 /**
