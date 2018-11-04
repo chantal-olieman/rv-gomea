@@ -1950,19 +1950,30 @@ void evolveDifferentialDependencies( int population_index ) {
         delta_j = fabs(change_j - change_i_j);
 
         double dependency = 0.0;
-        if (delta_i != 0.0 && delta_j != 0.0) {
-            double difference = fabs(delta_i/delta_j);
-            if(difference>1.0){
-                difference = fabs(delta_j/delta_i);
-            }
+        //if (delta_i != 0.0 && delta_j != 0.0) {
+        double inverted_difference;
 
-            dependency = 1-difference;
-            if (difference < 0.999999) //0.999999
-                found_dependencies += 1;
-            else{
-                dependency = 0.0;
-            }
+        if(delta_j == 0.0) {
+            double temp = delta_i;
+            delta_i = delta_j;
+            delta_j = temp;
         }
+        if(delta_j != 0.0){
+            inverted_difference = fabs(delta_i/delta_j);
+            if(inverted_difference > 1.0){
+                inverted_difference = fabs(delta_j/delta_i);
+            }
+        } else{
+            inverted_difference = 1.0;
+        }
+
+        dependency = 1-inverted_difference;
+        if (inverted_difference < 0.999999) //0.999999
+            found_dependencies += 1;
+        else{
+            dependency = 0.0;
+        }
+        //}
         dependency_matrix[i][j] = dependency;
         dependency_matrix[j][i] = dependency;
         checked_matrix[i][j] = 1;
@@ -1972,7 +1983,7 @@ void evolveDifferentialDependencies( int population_index ) {
     number_of_checked_pairs += pairs_per_run;
     if (found_dependencies == 0) {
         int found_dependencies_per_run = total_dependencies_found / iteration;
-               if (found_dependencies_per_run < minimal_dependencies_per_run) {
+        if (found_dependencies_per_run < minimal_dependencies_per_run) {
             number_of_checked_pairs = number_of_pairs;
         }
     }
