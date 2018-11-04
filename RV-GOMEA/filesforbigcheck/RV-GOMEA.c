@@ -140,7 +140,6 @@ int    base_population_size,                                /* The size of the f
        number_of_pairs,
        evolve_scaling,
        pairs_per_run,
-       partial_evals,
         minimal_dependencies_per_run,
        differential_grouping_evals,
        old_dependency_comparison,
@@ -292,7 +291,6 @@ void interpretCommandLine( int argc, char **argv )
     evolve_scaling = 0;
     iteration = 0;
     pruned_tree = 0;
-    partial_evals = 0;
     differential_grouping_evals = 0;
     differential_groups = 0;
     old_dependency_comparison = 0;
@@ -1898,26 +1896,11 @@ void evolveDifferentialDependencies( int population_index ) {
                                    number_of_parameters, NULL, NULL, 0, 0);
         differential_grouping_evals = 1+ number_of_parameters;
         fitness_of_first_individual[number_of_parameters] = old_objective;
-
-        int *touched_indices = (int *) Malloc(3 * sizeof(int));
-        touched_indices[1] = 0;
-        touched_indices[2] = 1;
         fitness_of_first_individual[0] = old_objective;
         for (k = 0; k < number_of_parameters; k++) {
             individual_to_compare[k] = second_individual[k];
-            if(partial_evals){
-                touched_indices[0] = k;
-                for (int p = 0; p < number_of_parameters; p++) {
-                    printf("%f,  %f, const: %f, obj: %f, indices: %d \n", first_individual[p], individual_to_compare[p], old_constraint, old_objective, touched_indices[0]);
-                }
-                printf("\n");
-                installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value), 3, touched_indices, first_individual, old_objective, old_constraint);
-                printf("%f, \t", objective_value);
-                installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0);
-                printf("%f, \n", objective_value);
-            } else{
-                installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0);
-            }
+            installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value), 1, &(k), &(first_individual[k]), old_objective, old_constraint);
+
             fitness_of_first_individual[k] = objective_value;
             individual_to_compare[k] = first_individual[k];
         }
@@ -1952,7 +1935,7 @@ void evolveDifferentialDependencies( int population_index ) {
         individual_to_compare[i] = second_individual[i];
         individual_to_compare[j] = second_individual[j];
         installedProblemEvaluation(problem_index, individual_to_compare, &(change_i_j), &(constraint_value),
-                                   number_of_parameters, NULL, NULL, 0, 0);
+                                   1, &(j), &(first_individual[j]), fitness_of_first_individual[i], 0);
         differential_grouping_evals+=1;
         individual_to_compare[i] = first_individual[i];
         individual_to_compare[j] = first_individual[j];
@@ -1972,9 +1955,13 @@ void evolveDifferentialDependencies( int population_index ) {
             if(difference>1.0){
                 difference = fabs(delta_j/delta_i);
             }
+
+            dependency = 1-difference;
             if (difference < 0.999999) //0.999999
                 found_dependencies += 1;
-            dependency = 1-difference;
+            else{
+                dependency = 0.0;
+            }
         }
         dependency_matrix[i][j] = dependency;
         dependency_matrix[j][i] = dependency;
