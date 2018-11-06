@@ -976,6 +976,7 @@ FOS *learnDifferentialGroups(int population_index){
         new_FOS_length += 1;
     }
     new_FOS->length = new_FOS_length;
+//    printFOS(new_FOS);
 //    printf("original FOS\n");
 //    for( i =0; i < new_FOS_length; i++){
 //        int setlenght = new_FOS->set_length[i];
@@ -1949,6 +1950,9 @@ void evolveDifferentialDependencies( int population_index ) {
         delta_i = fabs(1.0 - change_i);
         delta_j = fabs(change_j - change_i_j);
 
+        delta_i = nround(delta_i, 12);
+        delta_j = nround(delta_j, 12);
+
         double dependency = 0.0;
         //if (delta_i != 0.0 && delta_j != 0.0) {
         double inverted_difference;
@@ -1961,16 +1965,17 @@ void evolveDifferentialDependencies( int population_index ) {
         if(delta_j != 0.0){
             inverted_difference = fabs(delta_i/delta_j);
             if(inverted_difference > 1.0){
-                inverted_difference = fabs(delta_j/delta_i);
+                inverted_difference = fabs((double)delta_j/delta_i);
             }
         } else{
             inverted_difference = 1.0;
         }
 
         dependency = 1-inverted_difference;
-        if (inverted_difference < 0.999999) //0.999999
+        if (inverted_difference < 1) {//0.999999{
             found_dependencies += 1;
-        else{
+//            printf("there is a dependency\t delta i: %20.18f \t delta j: %20.18f \t diff: %20.18f \n" , delta_i, delta_j, inverted_difference);
+        } else{
             dependency = 0.0;
         }
         //}
@@ -1987,6 +1992,7 @@ void evolveDifferentialDependencies( int population_index ) {
             number_of_checked_pairs = number_of_pairs;
         }
     }
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 //    //todo: find some normalization
 //    if(number_of_checked_pairs>= number_of_pairs)
 //        printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
