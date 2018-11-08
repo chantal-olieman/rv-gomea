@@ -63,3 +63,6 @@ RV-GOMEA/statistics.dat
 
 cmake-build-debug/
 .vscodes
+ 
+/plot-cias/circles/
+/plot-cias/heatmaps/
