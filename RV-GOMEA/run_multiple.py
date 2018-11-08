@@ -5,8 +5,9 @@ result_times = [[],[],[],[]]
 result_evals = [[],[],[],[]]
 runs = 10
 
-linkage_options = [1, -8]
-populations = [72]
+linkage_options = [1, -8, -9]
+populations = [18, 32, 40, 50]
+vtr = {18:237, 32:2550, 40:6385, 50:13700}
 blackbox = ""
 rotation = 0
 problem = 16
@@ -16,7 +17,7 @@ for population in populations:
     evals = []
     for linkage in linkage_options:
         learned_linkage = f"./RV-GOMEA -s -r {blackbox} -f {linkage} {problem} {population} 0 1 {rotation} " \
-                          f"0.35 10 25 0.9 1 0 50700 100 0.0 30"
+                          f"0.35 10 25 0.9 1 0 {vtr[population]} 100 0.0 30"
         print(f"settings: {learned_linkage}")
         linkage_evals = []
         linkage_time = []

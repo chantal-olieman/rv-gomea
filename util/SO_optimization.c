@@ -415,6 +415,7 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 13: sumOfEllipsoidsFunctionPartialProblemEvaluation( parameters, objective_value, constraint_value, number_of_touched_parameters, touched_parameters_indices, touched_parameters, parameters_before, objective_value_before, constraint_value_before ); break;
         case 14: ciasBRFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 15: trapSphereFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 16: ciasRelaxedFunctionProblemEvaluation( parameters, objective_value, constraint_value );break;
         }
         number_of_evaluations += number_of_touched_parameters/(double)number_of_parameters;
     }
@@ -1003,10 +1004,10 @@ void quicksort(int *index_order, double *added_parameters, int first, int last){
 
 void ciasRelaxedFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
 {
-    int    i, j, nc;
+    int    i, j;
     double result;
 
-    nc = number_of_parameters/2;
+//    nc = number_of_parameters/2;
 
     for( i = 0; i < number_of_parameters; i++ )
     {
@@ -1016,28 +1017,9 @@ void ciasRelaxedFunctionProblemEvaluation( double *parameters, double *objective
         if( parameters[i] > 1 )
             parameters[i] = 1;
     }
-//    printf("unsorted:\n");
-//    int *indices = (int *) Malloc( (number_of_parameters/2) * sizeof( int ) );
-//    double *parameter_sum = (double *) Malloc( (number_of_parameters/2) * sizeof(double ) );
-//    double *new_parameters = (double *) Malloc( (number_of_parameters) * sizeof(double ) );
-//    for( i = 0; i < number_of_parameters; i+=2 ){
-//        printf("%f, %f\n", parameters[i], parameters[i+1]);
-//        parameter_sum[i/2] = parameters[i] + parameters[i+1];
-//        indices[i/2] = i/2;
-//    }
-//    quicksort(indices, parameter_sum, 0, 3);
-//    for( i = 0; i < number_of_parameters/2; i++) {
-//        new_parameters[i] = parameters[indices[i]*2];
-//        new_parameters[i+1] = parameters[(indices[i]*2)+1];
-//    }
-//    for( i = 0; i < number_of_parameters; i++){
-//        parameters[i] = new_parameters[i];
-//    }
-//    printf("sorted\n");
 
     result = 0.0;
     for( i = 0; i < number_of_parameters; i+=2 ){
-//        printf("%f, %f\n", parameters[i], parameters[i+1]);
         for( j = 0; j < i; j+=2 ){
             result += pow(fmax(1e-5, distanceEuclidean2D(parameters[i],parameters[i+1],parameters[j],parameters[j+1])), -4.0);
         }
@@ -1045,17 +1027,46 @@ void ciasRelaxedFunctionProblemEvaluation( double *parameters, double *objective
     result = result;
     *objective_value  = result;
     *constraint_value = 0;
-
-
-//    for( i = 0; i < number_of_parameters; i+=2 ){
-//        printf("%f, ", parameters[i]);
-//    }
-//    printf("\n");
-//    for( i = 0; i < number_of_parameters; i+=2 ){
-//        printf("%f, ", parameters[i+1]);
-//    }
-//    printf("\nevaluated, objective = %f\n", result);
 }
+
+void ciasRelaxedFunctionPartialProblemEvaluation(  double *parameters, double *objective_value, double *constraint_value, int number_of_touched_parameters, int *touched_parameters_indices, double *touched_parameters, double *parameters_before, double objective_value_before, double constraint_value_before ){
+    int    i, j;
+    double result;
+
+//    nc = number_of_parameters/2;
+
+    for( i = 0; i < number_of_touched_parameters; i++ )
+    {
+        if( touched_parameters[i] < 0 )
+            touched_parameters[i] = 0;
+
+        if( touched_parameters[i] > 1 )
+            touched_parameters[i] = 1;
+    }
+    result = 0.0;
+
+//    result = objective_value_before;
+//    for( i = 0; i < number_of_touched_parameters; i+=2 )
+//    {
+//        for( j = 0; j < number_of_parameters; j+=2 )
+//        {
+//            if( j == touched_parameters_indices[i] ) continue;
+//            result -= pow(fmax(1e-5, distanceEuclidean2D(parameters_before[i],parameters_before[i+1],parameters[j],parameters[j+1]) ), -4.0);
+//            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[touched_parameters_indices[i]],parameters[touched_parameters_indices[i]+1],parameters[j],parameters[j+1])), -4.0);
+//        }
+//    }
+
+    for( i = 0; i < number_of_parameters; i+=2 ){
+        for( j = 0; j < i; j+=2 ){
+            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[i],parameters[i+1],parameters[j],parameters[j+1])), -4.0);
+        }
+    }
+
+    result = result;
+    *objective_value  = result;
+    *constraint_value = 0;
+}
+
 
 double ciasRelaxedFunctionLowerRangeBound( int dimension )
 {

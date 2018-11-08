@@ -48,6 +48,22 @@ pylab.savefig(f"heatmaps/{dim}_heatmap.png")
 pylab.show()
 
 combination_map = {(0.0, 0.0): 0, (0.0, 1.0): 1, (0.5, 0.5): 2, (1.0, 0.0): 3, (1.0, 1.0): 4}
+total_heatmap = np.ones((dim, dim))
+for key, value in heatmaps.items():
+    print(key)
+    for i in range(int(dim/2)):
+        for j in range(i, int(dim/2)):
+            x_tuple = combination_map[tuple([key[i], key[int(dim/2)+i]])]
+            y_tuple = combination_map[tuple([key[j], key[int(dim/2)+j]])]
+            total_heatmap[2*x_tuple][2*y_tuple] += value[2*i][2*j]
+            total_heatmap[(2*x_tuple)+1][(2*y_tuple)] += value[(2*i)+1][(2*j)]
+            total_heatmap[(2*x_tuple)][(2*y_tuple)+1] += value[(2*i)][(2*j)+1]
+            total_heatmap[(2*x_tuple)+1][(2*y_tuple)+1] += value[(2*i)+1][(2*j)+1]
+
+pylab.imshow(total_heatmap)
+pylab.title(f"Dependency of total heatmap")
+pylab.savefig(f"heatmaps/{dim}_heatmap.png")
+pylab.show()
 
 print(len(heatmaps))
 for key, value in heatmaps.items():

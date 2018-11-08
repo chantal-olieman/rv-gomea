@@ -1877,8 +1877,8 @@ void evolveDifferentialDependencies( int population_index ) {
     int i, j, k;
     double *individual_to_compare = (double *) Malloc(number_of_parameters * sizeof(double));
     double constraint_value;
-    if( number_of_generations[0] < number_of_parameters){
-        return;
+    if(  problem_index == 16 ){
+        pairs_per_run = number_of_pairs;
     }
 
     if (iteration == 0) {
@@ -1997,6 +1997,9 @@ void evolveDifferentialDependencies( int population_index ) {
             number_of_checked_pairs = number_of_pairs;
         }
     }
+//    if (number_of_checked_pairs >= number_of_pairs){
+//        number_of_checked_pairs = 0;
+//    }
 //    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 //    //todo: find some normalization
 //    if(number_of_checked_pairs>= number_of_pairs)
@@ -2936,6 +2939,14 @@ void run( void )
 
     printf("generations %d\n", total_number_of_generations);
 
+//    for (int k = 0; k < number_of_parameters; k++) {
+//        printf("first: %f \t second: %f\t eventual: %f\n", first_individual[k], second_individual[k], elitist_solution[k]);
+//    }
+//
+//
+    number_of_checked_pairs = 0;
+    iteration = 0;
+    evolveDifferentialDependencies(0);
     for(int i = 0; i < number_of_parameters; i+=2){
         printf("%f, ", elitist_solution[i]);
     }
@@ -2945,7 +2956,7 @@ void run( void )
     printf("\n");
 
     printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
-//    printf("%d \n", number_of_generations[0]);
+    printf("%d \n", number_of_generations[0]);
 
     ezilaitini();
 }

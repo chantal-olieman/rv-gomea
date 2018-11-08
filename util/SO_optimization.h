@@ -112,6 +112,7 @@ void trapSphereFunctionProblemEvaluation( double *parameters, double *objective_
 double trapSphereFunctionLowerRangeBound( int dimension );
 double trapSphereFunctionUpperRangeBound( int dimension );
 void ciasRelaxedFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value );
+void ciasRelaxedFunctionPartialProblemEvaluation( double *parameters, double *objective_value, double *constraint_value, int number_of_touched_parameters, int *touched_parameters_indices, double *touched_parameters, double *parameters_before, double objective_value_before, double constraint_value_before );
 double ciasRelaxedFunctionLowerRangeBound( int dimension );
 double ciasRelaxedFunctionUpperRangeBound( int dimension );
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
