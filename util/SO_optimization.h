@@ -111,11 +111,16 @@ double ciasBRFunctionUpperRangeBound( int dimension );
 void trapSphereFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value );
 double trapSphereFunctionLowerRangeBound( int dimension );
 double trapSphereFunctionUpperRangeBound( int dimension );
+void ciasRelaxedFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value );
+double ciasRelaxedFunctionLowerRangeBound( int dimension );
+double ciasRelaxedFunctionUpperRangeBound( int dimension );
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 /*-=-=-=-=-=-=-=-=-=-=-=- Section Global Variables -=-=-=-=-=-=-=-=-=-=-=-=-*/
 double elitist_objective_value,
-       elitist_constraint_value;
+       elitist_constraint_value,
+       *elitist_solution;
+int sorting_parameters;
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 #endif

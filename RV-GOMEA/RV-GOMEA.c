@@ -294,6 +294,7 @@ void interpretCommandLine( int argc, char **argv )
     differential_grouping_evals = 0;
     differential_groups = 0;
     old_dependency_comparison = 0;
+    sorting_parameters = 1;
     parseCommandLine( argc, argv );
 
     if( use_guidelines )
@@ -320,6 +321,7 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1;}
+    if( FOS_element_size == -13 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sorting_parameters = 0;}
     if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 1;}
     if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 3;}
     if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; differential_groups = 1;}
@@ -671,6 +673,7 @@ void initializeMemory( void )
     number_of_generations            = (int *) Malloc( maximum_number_of_populations*sizeof( int ) );
     linkage_model                    = (FOS **) Malloc( maximum_number_of_populations*sizeof( FOS *) );
     individual_NIS                   = ( int ** ) Malloc( maximum_number_of_populations*sizeof( int * ) );
+    elitist_solution                 = (double *) Malloc( number_of_parameters*sizeof( double ) );
 }
 
 void initializeNewPopulationMemory( int population_index )
@@ -1874,6 +1877,9 @@ void evolveDifferentialDependencies( int population_index ) {
     int i, j, k;
     double *individual_to_compare = (double *) Malloc(number_of_parameters * sizeof(double));
     double constraint_value;
+    if( number_of_generations[0] < number_of_parameters){
+        return;
+    }
 
     if (iteration == 0) {
         double rand = randomRealUniform01();
@@ -1970,7 +1976,6 @@ void evolveDifferentialDependencies( int population_index ) {
         } else{
             inverted_difference = 1.0;
         }
-
         dependency = 1-inverted_difference;
         if (inverted_difference < 1) {//0.999999{
             found_dependencies += 1;
@@ -2924,8 +2929,6 @@ void run( void )
 
     printf("obj_val %6.2e ", elitist_objective_value);
 
-    ezilaitini();
-
     printf("time %lf ", getTimer());
     if(evolve_learning){
         printf("differential_evals %d ", differential_grouping_evals);
@@ -2933,7 +2936,18 @@ void run( void )
 
     printf("generations %d\n", total_number_of_generations);
 
+    for(int i = 0; i < number_of_parameters; i+=2){
+        printf("%f, ", elitist_solution[i]);
+    }
+    for(int i = 0; i < number_of_parameters; i+=2){
+        printf("%f, ", elitist_solution[i+1]);
+    }
+    printf("\n");
 
+    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//    printf("%d \n", number_of_generations[0]);
+
+    ezilaitini();
 }
 
 /**

@@ -5,18 +5,18 @@ result_times = [[],[],[],[]]
 result_evals = [[],[],[],[]]
 runs = 10
 
-linkage_options = [1, -7]
-populations = [1215]
+linkage_options = [1, -8]
+populations = [72]
 blackbox = ""
 rotation = 0
-problem = 0
+problem = 16
 
 for population in populations:
     times = []
     evals = []
     for linkage in linkage_options:
-        learned_linkage = f"./RV-GOMEA -s -r {blackbox} -f {linkage} {problem} {population} -115 -100 {rotation} " \
-                          f"0.35 10 25 0.9 1 0 1e-10 100 0.0 300"
+        learned_linkage = f"./RV-GOMEA -s -r {blackbox} -f {linkage} {problem} {population} 0 1 {rotation} " \
+                          f"0.35 10 25 0.9 1 0 50700 100 0.0 30"
         print(f"settings: {learned_linkage}")
         linkage_evals = []
         linkage_time = []
@@ -44,15 +44,10 @@ for population in populations:
         result_times[i+1].append(times[i])
     for i in range(len(evals)):
         result_evals[i+1].append(evals[i])
-    file = open("output_time_sphere.txt", "w")
-    file.write(str(result_times))
-    file = open("output_evals_sphere.txt", "w")
-    file.write(str(result_evals))
+    print(result_evals)
+    print(result_times)
 
 
 
-file = open("output_time_sphere.txt", "w")
-file.write(str(result_times))
-file = open("output_evals_sphere.txt", "w")
-file.write(str(result_evals))
+
 print("done")

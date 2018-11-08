@@ -99,6 +99,7 @@ char *installedProblemName( int index )
     case 13: return( (char *) "Sum of ellipsoids" );
     case 14: return( (char *) "Circles in a Square" );
     case 15: return( (char *) "TrapSphere" );
+    case 16: return( (char *) "Circles in a Square 2" );
     }
 
     return( NULL );
@@ -159,6 +160,7 @@ double installedProblemLowerRangeBound( int index, int dimension )
     case 13: return( sumOfEllipsoidsFunctionLowerRangeBound( dimension ) );
     case 14: return( ciasBRFunctionLowerRangeBound( dimension ) );
     case 15: return( trapSphereFunctionLowerRangeBound( dimension ) );
+    case 16: return( ciasRelaxedFunctionLowerRangeBound( dimension ) );
     }
 
     return( 0.0 );
@@ -187,6 +189,7 @@ double installedProblemUpperRangeBound( int index, int dimension )
     case 13: return( sumOfEllipsoidsFunctionUpperRangeBound( dimension ) );
     case 14: return( ciasBRFunctionUpperRangeBound( dimension ) );
     case 15: return( trapSphereFunctionUpperRangeBound( dimension ) );
+    case 16: return( ciasRelaxedFunctionUpperRangeBound( dimension ) );
     }
 
     return( 0.0 );
@@ -349,6 +352,9 @@ void installedProblemEvaluation( int index, double *parameters, double *objectiv
     {
         elitist_objective_value = *objective_value;
         elitist_constraint_value = *constraint_value;
+        for(int k = 0; k < number_of_parameters; k++){
+            elitist_solution[k] = parameters[k];
+        }
     }
 
     if( touched_parameters_indices != NULL )
@@ -385,6 +391,7 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 13: sumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 14: ciasBRFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 15: trapSphereFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 16: ciasRelaxedFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         }
         number_of_evaluations++;
     }
@@ -891,6 +898,7 @@ void ciasBRFunctionProblemEvaluation( double *parameters, double *objective_valu
 
     for( i = 0; i < number_of_parameters; i++ )
     {
+        printf("parameters: %.16f\n", parameters[i]);
         if( parameters[i] < 0 )
             parameters[i] = 0;
 
@@ -960,6 +968,101 @@ double trapSphereFunctionLowerRangeBound( int dimension )
 }
 
 double trapSphereFunctionUpperRangeBound( int dimension )
+{
+    return( 1e+308 );
+}
+
+
+void quicksort(int *index_order, double *added_parameters, int first, int last){
+    int i, j, pivot, temp;
+
+    if(first<last){
+        pivot=first;
+        i=first;
+        j=last;
+
+        while(i<j){
+            while(added_parameters[index_order[i]]<=added_parameters[index_order[pivot]]&&i<last)
+                i++;
+            while(added_parameters[index_order[j]]> added_parameters[index_order[pivot]])
+                j--;
+            if(i<j){
+                temp = index_order[i];
+                index_order[i]=index_order[j];
+                index_order[j]=temp;
+            }
+        }
+        temp=index_order[pivot];
+        index_order[pivot]=index_order[j];
+        index_order[j]=temp;
+        quicksort(index_order,added_parameters,first,j-1);
+        quicksort(index_order,added_parameters,j+1,last);
+
+    }
+}
+
+void ciasRelaxedFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
+{
+    int    i, j, nc;
+    double result;
+
+    nc = number_of_parameters/2;
+
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        if( parameters[i] < 0 )
+            parameters[i] = 0;
+
+        if( parameters[i] > 1 )
+            parameters[i] = 1;
+    }
+//    printf("unsorted:\n");
+//    int *indices = (int *) Malloc( (number_of_parameters/2) * sizeof( int ) );
+//    double *parameter_sum = (double *) Malloc( (number_of_parameters/2) * sizeof(double ) );
+//    double *new_parameters = (double *) Malloc( (number_of_parameters) * sizeof(double ) );
+//    for( i = 0; i < number_of_parameters; i+=2 ){
+//        printf("%f, %f\n", parameters[i], parameters[i+1]);
+//        parameter_sum[i/2] = parameters[i] + parameters[i+1];
+//        indices[i/2] = i/2;
+//    }
+//    quicksort(indices, parameter_sum, 0, 3);
+//    for( i = 0; i < number_of_parameters/2; i++) {
+//        new_parameters[i] = parameters[indices[i]*2];
+//        new_parameters[i+1] = parameters[(indices[i]*2)+1];
+//    }
+//    for( i = 0; i < number_of_parameters; i++){
+//        parameters[i] = new_parameters[i];
+//    }
+//    printf("sorted\n");
+
+    result = 0.0;
+    for( i = 0; i < number_of_parameters; i+=2 ){
+//        printf("%f, %f\n", parameters[i], parameters[i+1]);
+        for( j = 0; j < i; j+=2 ){
+            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[i],parameters[i+1],parameters[j],parameters[j+1])), -4.0);
+        }
+    }
+    result = result;
+    *objective_value  = result;
+    *constraint_value = 0;
+
+
+//    for( i = 0; i < number_of_parameters; i+=2 ){
+//        printf("%f, ", parameters[i]);
+//    }
+//    printf("\n");
+//    for( i = 0; i < number_of_parameters; i+=2 ){
+//        printf("%f, ", parameters[i+1]);
+//    }
+//    printf("\nevaluated, objective = %f\n", result);
+}
+
+double ciasRelaxedFunctionLowerRangeBound( int dimension )
+{
+    return( -1e+308 );
+}
+
+double ciasRelaxedFunctionUpperRangeBound( int dimension )
 {
     return( 1e+308 );
 }
