@@ -289,6 +289,7 @@ void interpretCommandLine( int argc, char **argv )
     total_dependencies_found = 0;
     dependency_evolve_factor = 1.0;
     evolve_scaling = 0;
+    epsilon = 0.0;
     iteration = 0;
     pruned_tree = 0;
     differential_grouping_evals = 0;
@@ -320,10 +321,14 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -3 ) static_linkage_tree = 1;
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
-    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1;}
-    if( FOS_element_size == -13 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sorting_parameters = 0;}
-    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 1;}
-    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 3;}
+    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1;}
+    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.5;}
+    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.1;}
+    if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.05;}
+    if( FOS_element_size == -13 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 0;}
+    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1;}
+    if( FOS_element_size == -16 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 1;}
+    if( FOS_element_size == -15 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 3;}
     if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; differential_groups = 1;}
 
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
@@ -722,7 +727,7 @@ void initializeNewPopulationMemory( int population_index )
 
 //        double one_over_param = 1/number_of_parameters;
         pairs_per_run = dependency_evolve_factor*number_of_parameters;
-
+        pairs_per_run = pairs_per_run*evolve_learning;
         number_of_checked_pairs = 0;
         int counter = 0;
         for (i = 0; i < number_of_parameters; i++) {
@@ -1877,9 +1882,6 @@ void evolveDifferentialDependencies( int population_index ) {
     int i, j, k;
     double *individual_to_compare = (double *) Malloc(number_of_parameters * sizeof(double));
     double constraint_value;
-    if(  problem_index == 16 ){
-        pairs_per_run = number_of_pairs;
-    }
 
     if (iteration == 0) {
         double rand = randomRealUniform01();
@@ -2003,7 +2005,6 @@ void evolveDifferentialDependencies( int population_index ) {
 //    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 //    //todo: find some normalization
 //    if(number_of_checked_pairs>= number_of_pairs)
-//        printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free(individual_to_compare);
 }
 
@@ -2946,17 +2947,17 @@ void run( void )
 //
     number_of_checked_pairs = 0;
     iteration = 0;
-    evolveDifferentialDependencies(0);
-    for(int i = 0; i < number_of_parameters; i+=2){
-        printf("%f, ", elitist_solution[i]);
-    }
-    for(int i = 0; i < number_of_parameters; i+=2){
-        printf("%f, ", elitist_solution[i+1]);
-    }
-    printf("\n");
-
-    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
-    printf("%d \n", number_of_generations[0]);
+//    evolveDifferentialDependencies(0);
+//    for(int i = 0; i < number_of_parameters; i+=2){
+//        printf("%f, ", elitist_solution[i]);
+//    }
+//    for(int i = 0; i < number_of_parameters; i+=2){
+//        printf("%f, ", elitist_solution[i+1]);
+//    }
+//    printf("\n");
+//
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//    printf("%d \n", number_of_generations[0]);
 
     ezilaitini();
 }

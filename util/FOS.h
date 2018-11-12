@@ -80,6 +80,7 @@ int      *mpm_number_of_indices,
           FOS_element_size;                     /* If positive, the size of blocks of consecutive variables in the FOS. If negative, determines specific kind of linkage tree FOS. */
 double ***MI_matrices,
         **S_matrix,
+          epsilon,
          *S_vector;                             /* Avoids quadratic memory requirements when a linkage tree is learned based on a random distance measure. */
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 

@@ -351,7 +351,12 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                 new_FOS->sets[FOS_index][j] = indices[sorted[j]];
             }
 
-            if( pruned_tree ){
+//            printf("similar: %f, epsilon: %f \n",getSimilarity(r0, r1), epsilon);
+            if(getSimilarity(r0, r1) <= epsilon){
+                keep_FOS_element[FOS_index] = 0;
+//                printf("NotKeeping: %d \n",FOS_index);
+            }
+            if( pruned_tree && keep_FOS_element[FOS_index] ){
                 // we know we will merge r0 and r1, now lets check if they are all completely dependent
                 int completely_dependent = 1;
                 int all_checked = 1;
@@ -384,10 +389,11 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                         }
                     }
                 }
-                else if((all_checked) || getSimilarity(r0, r1)<=0.0){
+                else if((all_checked)){
                     keep_FOS_element[FOS_index] = 0;
                 }
             }
+
 
             free( sorted );
             free( indices );
@@ -482,7 +488,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
 //        printf("\n");
 //    }
 
-    if( pruned_tree ){
+    if( pruned_tree || epsilon > 0.0 ){
         i = 0;
         j = 0;
         int new_lenght = 0;

@@ -2,9 +2,9 @@ import pylab
 import os
 import numpy as np
 
-runs = 200
-dim = 10
-gomea_command = f"./RV-GOMEA-check-at-end -s -r -f -8 16 {dim} 0 1 0 0.35 10 25 0.9 1 0 20.5 100 0.0 20"
+runs = 1
+dim = 50
+gomea_command = f"./RV-GOMEA -s -r -f -8 16 {dim} 0 1 0 0.35 10 25 0.9 1 0 13000 100 0.0 30"
 heatmap = np.ones((dim, dim))
 print(gomea_command)
 directory = f"{os.getcwd()}/circles/{dim}"
@@ -20,14 +20,14 @@ for i in range(runs):
     print(gomea_result[0])
     result_vec_count[tuple(individual)] = result_vec_count.get(tuple(individual), 0) + 1
     # plot solution
-    # x = individual[:int(len(individual) / 2)]
-    # y = individual[int(len(individual) / 2):]
-    # pylab.scatter(x, y)
-    # pylab.title(f"Cias points for n = {len(x)}")
-    # pylab.ylabel(f"y")
-    # pylab.xlabel("x")
-    # pylab.savefig(f"{directory}/{dim}_{i+1}.png")
-    # pylab.show()
+    x = individual[:int(len(individual) / 2)]
+    y = individual[int(len(individual) / 2):]
+    pylab.scatter(x, y)
+    pylab.title(f"Cias points for n = {len(x)}")
+    pylab.ylabel(f"y")
+    pylab.xlabel("x")
+    pylab.savefig(f"{directory}/{dim}_{i+1}.png")
+    pylab.show()
     # plot heatmap x / y
 
     matrix = []
@@ -46,15 +46,15 @@ pylab.imshow(heatmap)
 pylab.title(f"Dependency of points for n = {dim/2}\n ")
 pylab.savefig(f"heatmaps/{dim}_heatmap.png")
 pylab.show()
-
-combination_map = {(0.0, 0.0): 0, (0.0, 1.0): 1, (0.5, 0.5): 2, (1.0, 0.0): 3, (1.0, 1.0): 4}
-
-print(len(heatmaps))
-for key, value in heatmaps.items():
-    if result_vec_count[key] > 3 or key == tuple([0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 0.0, 0.5, 1.0, 1.0]):
-        print(result_vec_count[key])
-        print(value)
-        pylab.imshow(value)
-        pylab.title(f"Dependency of points for n = {dim/2}\n {key}")
-        pylab.savefig(f"heatmaps/{dim}_heatmap.png")
-        pylab.show()
+#
+# combination_map = {(0.0, 0.0): 0, (0.0, 1.0): 1, (0.5, 0.5): 2, (1.0, 0.0): 3, (1.0, 1.0): 4}
+#
+# print(len(heatmaps))
+# for key, value in heatmaps.items():
+#     if result_vec_count[key] > 3 or key == tuple([0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 0.0, 0.5, 1.0, 1.0]):
+#         print(result_vec_count[key])
+#         print(value)
+#         pylab.imshow(value)
+#         pylab.title(f"Dependency of points for n = {dim/2}\n {key}")
+#         pylab.savefig(f"heatmaps/{dim}_heatmap.png")
+#         pylab.show()

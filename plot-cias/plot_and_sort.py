@@ -4,7 +4,7 @@ import numpy as np
 
 runs = 200
 dim = 10
-gomea_command = f"./RV-GOMEA-check-at-end -s -r -f -8 16 {dim} 0 1 0 0.35 10 25 0.9 1 0 20.5 100 0.0 20"
+gomea_command = f"./RV-GOMEA-check-at-end -s -r -f -8 16 {dim} 0 1 0 0.35 100 1 0.9 1 0 20.5 100 0.0 20"
 heatmap = np.ones((dim, dim))
 print(gomea_command)
 directory = f"{os.getcwd()}/circles/{dim}"
