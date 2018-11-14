@@ -415,7 +415,7 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 13: sumOfEllipsoidsFunctionPartialProblemEvaluation( parameters, objective_value, constraint_value, number_of_touched_parameters, touched_parameters_indices, touched_parameters, parameters_before, objective_value_before, constraint_value_before ); break;
         case 14: ciasBRFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 15: trapSphereFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
-        case 16: ciasRelaxedFunctionProblemEvaluation( parameters, objective_value, constraint_value );break;
+        case 16: ciasRelaxedFunctionPartialProblemEvaluation( parameters, objective_value, constraint_value, number_of_touched_parameters, touched_parameters_indices, touched_parameters, parameters_before, objective_value_before, constraint_value_before ); break;
         }
         number_of_evaluations += number_of_touched_parameters/(double)number_of_parameters;
     }
@@ -1007,8 +1007,6 @@ void ciasRelaxedFunctionProblemEvaluation( double *parameters, double *objective
     int    i, j;
     double result;
 
-//    nc = number_of_parameters/2;
-
     for( i = 0; i < number_of_parameters; i++ )
     {
         if( parameters[i] < 0 )
@@ -1033,18 +1031,21 @@ void ciasRelaxedFunctionPartialProblemEvaluation(  double *parameters, double *o
     int    i, j;
     double result;
 
-//    nc = number_of_parameters/2;
-
-    for( i = 0; i < number_of_touched_parameters; i++ )
+    for( i = 0; i < number_of_parameters; i++ )
     {
-        if( touched_parameters[i] < 0 )
-            touched_parameters[i] = 0;
+        if( parameters[i] < 0 )
+            parameters[i] = 0;
 
-        if( touched_parameters[i] > 1 )
-            touched_parameters[i] = 1;
+        if( parameters[i] > 1 )
+            parameters[i] = 1;
     }
-    result = 0.0;
 
+    result = 0.0;
+    for( i = 0; i < number_of_parameters; i+=2 ){
+        for( j = 0; j < i; j+=2 ){
+            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[i],parameters[i+1],parameters[j],parameters[j+1])), -4.0);
+        }
+    }
 //    result = objective_value_before;
 //    for( i = 0; i < number_of_touched_parameters; i+=2 )
 //    {
@@ -1056,15 +1057,10 @@ void ciasRelaxedFunctionPartialProblemEvaluation(  double *parameters, double *o
 //        }
 //    }
 
-    for( i = 0; i < number_of_parameters; i+=2 ){
-        for( j = 0; j < i; j+=2 ){
-            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[i],parameters[i+1],parameters[j],parameters[j+1])), -4.0);
-        }
-    }
-
     result = result;
     *objective_value  = result;
     *constraint_value = 0;
+
 }
 
 

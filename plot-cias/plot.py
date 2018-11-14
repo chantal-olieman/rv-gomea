@@ -3,8 +3,8 @@ import os
 import numpy as np
 
 runs = 1
-dim = 50
-gomea_command = f"./RV-GOMEA -s -r -f -8 16 {dim} 0 1 0 0.35 10 25 0.9 1 0 13000 100 0.0 30"
+dim = 40
+gomea_command = f"./RV-GOMEA -s -r -f -8 16 {dim} 0 1 0 0.35 10 25 0.9 1 0 423 100 0.0 300"
 heatmap = np.ones((dim, dim))
 print(gomea_command)
 directory = f"{os.getcwd()}/circles/{dim}"
@@ -20,6 +20,7 @@ for i in range(runs):
     print(gomea_result[0])
     result_vec_count[tuple(individual)] = result_vec_count.get(tuple(individual), 0) + 1
     # plot solution
+    print(individual)
     x = individual[:int(len(individual) / 2)]
     y = individual[int(len(individual) / 2):]
     pylab.scatter(x, y)
