@@ -8,6 +8,9 @@ dim = 10
 vtr_file = open(f"{os.getcwd()}/optimal/optima.txt")
 vtr = json.load(vtr_file)
 
+original_vtr_file = open(f"{os.getcwd()}/optimal/optima_original.txt")
+vtr = json.load(vtr_file)
+
 gomea_command = f"./RV-GOMEA -s -r -b -f -8 16 {dim*2} 0 1 0 0.35 10 25 0.9 1 0 {float(vtr[str(dim)])*1.0001} 100 0.0 30"
 dim = dim*2
 heatmap = np.ones((dim, dim))
