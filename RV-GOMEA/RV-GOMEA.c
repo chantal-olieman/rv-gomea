@@ -322,11 +322,11 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1;}
+    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1;}
     if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.5;}
     if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.1;}
     if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.05;}
     if( FOS_element_size == -13 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 0;}
-    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1;}
     if( FOS_element_size == -16 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 1;}
     if( FOS_element_size == -15 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 3;}
     if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; differential_groups = 1;}
@@ -2948,16 +2948,16 @@ void run( void )
     number_of_checked_pairs = 0;
     iteration = 0;
 //    evolveDifferentialDependencies(0);
-//    for(int i = 0; i < number_of_parameters; i+=2){
-//        printf("%f, ", elitist_solution[i]);
-//    }
-//    for(int i = 0; i < number_of_parameters; i+=2){
-//        printf("%f, ", elitist_solution[i+1]);
-//    }
-//    printf("\n");
-//
-//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
-//    printf("%d \n", number_of_generations[0]);
+    for(int i = 0; i < number_of_parameters; i+=2){
+        printf("%f, ", elitist_solution[i]);
+    }
+    for(int i = 0; i < number_of_parameters; i+=2){
+        printf("%f, ", elitist_solution[i+1]);
+    }
+    printf("\n");
+
+    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+    printf("%d \n", number_of_generations[0]);
 
     ezilaitini();
 }

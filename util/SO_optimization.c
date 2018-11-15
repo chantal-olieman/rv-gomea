@@ -1019,7 +1019,7 @@ void ciasRelaxedFunctionProblemEvaluation( double *parameters, double *objective
     result = 0.0;
     for( i = 0; i < number_of_parameters; i+=2 ){
         for( j = 0; j < i; j+=2 ){
-            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[i],parameters[i+1],parameters[j],parameters[j+1])), -4.0);
+            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[i],parameters[i+1],parameters[j],parameters[j+1])), -10.0);
         }
     }
     result = result;
@@ -1040,22 +1040,22 @@ void ciasRelaxedFunctionPartialProblemEvaluation(  double *parameters, double *o
             parameters[i] = 1;
     }
 
-    result = 0.0;
-    for( i = 0; i < number_of_parameters; i+=2 ){
-        for( j = 0; j < i; j+=2 ){
-            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[i],parameters[i+1],parameters[j],parameters[j+1])), -4.0);
-        }
-    }
-//    result = objective_value_before;
-//    for( i = 0; i < number_of_touched_parameters; i+=2 )
-//    {
-//        for( j = 0; j < number_of_parameters; j+=2 )
-//        {
-//            if( j == touched_parameters_indices[i] ) continue;
-//            result -= pow(fmax(1e-5, distanceEuclidean2D(parameters_before[i],parameters_before[i+1],parameters[j],parameters[j+1]) ), -4.0);
-//            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[touched_parameters_indices[i]],parameters[touched_parameters_indices[i]+1],parameters[j],parameters[j+1])), -4.0);
+//    result = 0.0;
+//    for( i = 0; i < number_of_parameters; i+=2 ){
+//        for( j = 0; j < i; j+=2 ){
+//            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[i],parameters[i+1],parameters[j],parameters[j+1])), -4.0);
 //        }
 //    }
+    result = objective_value_before;
+    for( i = 0; i < number_of_touched_parameters; i+=2 )
+    {
+        for( j = 0; j < number_of_parameters; j+=2 )
+        {
+            if( j == touched_parameters_indices[i] ) continue;
+            result -= pow(fmax(1e-5, distanceEuclidean2D(parameters_before[i],parameters_before[i+1],parameters[j],parameters[j+1]) ), -10.0);
+            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[touched_parameters_indices[i]],parameters[touched_parameters_indices[i]+1],parameters[j],parameters[j+1])), -10.0);
+        }
+    }
 
     result = result;
     *objective_value  = result;
