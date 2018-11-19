@@ -912,7 +912,10 @@ FOS *learnDifferentialGroups(int population_index){
     int i, j, k;
     double *individual_to_compare = (double *) Malloc( number_of_parameters*sizeof( double ) );
     double constraint_value;
-
+    double temp_problem_index = problem_index;
+    if(problem_index == 14 || problem_index == 17){
+        temp_problem_index = 16;
+    }
     double rand = randomRealUniform01();
     rand = 0.7;
 
@@ -932,12 +935,12 @@ FOS *learnDifferentialGroups(int population_index){
 
     double objective_value;
     // fill evaluation storage
-    installedProblemEvaluation( problem_index, individual_to_compare, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+    installedProblemEvaluation( temp_problem_index, individual_to_compare, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
     fitness_of_first_individual[number_of_parameters] = objective_value;
     for( k = 0; k < number_of_parameters; k++ )
     {
         individual_to_compare[k] = second_individual[k];
-        installedProblemEvaluation( problem_index, individual_to_compare, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+        installedProblemEvaluation( temp_problem_index, individual_to_compare, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
         fitness_of_first_individual[k] = objective_value;
         individual_to_compare[k] = first_individual[k];
     }
@@ -1882,6 +1885,10 @@ void evolveDifferentialDependencies( int population_index ) {
     int i, j, k;
     double *individual_to_compare = (double *) Malloc(number_of_parameters * sizeof(double));
     double constraint_value;
+    double temp_problem_index = problem_index;
+    if(problem_index == 14 || problem_index == 17){
+        temp_problem_index = 16;
+    }
 
     if (iteration == 0) {
         double rand = randomRealUniform01();
@@ -1901,14 +1908,14 @@ void evolveDifferentialDependencies( int population_index ) {
 
         double objective_value, old_constraint, old_objective;
         // fill evaluation storage
-        installedProblemEvaluation(problem_index, first_individual, &(old_objective), &(old_constraint),
+        installedProblemEvaluation(temp_problem_index, first_individual, &(old_objective), &(old_constraint),
                                    number_of_parameters, NULL, NULL, 0, 0);
         differential_grouping_evals = 1+ number_of_parameters;
         fitness_of_first_individual[number_of_parameters] = old_objective;
         fitness_of_first_individual[0] = old_objective;
         for (k = 0; k < number_of_parameters; k++) {
             individual_to_compare[k] = second_individual[k];
-            installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value), 1, &(k), &(first_individual[k]), old_objective, old_constraint);
+            installedProblemEvaluation(temp_problem_index, individual_to_compare, &(objective_value), &(constraint_value), 1, &(k), &(first_individual[k]), old_objective, old_constraint);
 
             fitness_of_first_individual[k] = objective_value;
             individual_to_compare[k] = first_individual[k];
@@ -1943,7 +1950,7 @@ void evolveDifferentialDependencies( int population_index ) {
 
         individual_to_compare[i] = second_individual[i];
         individual_to_compare[j] = second_individual[j];
-        installedProblemEvaluation(problem_index, individual_to_compare, &(change_i_j), &(constraint_value),
+        installedProblemEvaluation(temp_problem_index, individual_to_compare, &(change_i_j), &(constraint_value),
                                    1, &(j), &(first_individual[j]), fitness_of_first_individual[i], 0);
         differential_grouping_evals+=1;
         individual_to_compare[i] = first_individual[i];
@@ -2948,16 +2955,16 @@ void run( void )
     number_of_checked_pairs = 0;
     iteration = 0;
 //    evolveDifferentialDependencies(0);
-    for(int i = 0; i < number_of_parameters; i+=2){
-        printf("%f, ", elitist_solution[i]);
-    }
-    for(int i = 0; i < number_of_parameters; i+=2){
-        printf("%f, ", elitist_solution[i+1]);
-    }
-    printf("\n");
-
-    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
-    printf("%d \n", number_of_generations[0]);
+//    for(int i = 0; i < number_of_parameters; i+=2){
+//        printf("%f, ", elitist_solution[i]);
+//    }
+//    for(int i = 0; i < number_of_parameters; i+=2){
+//        printf("%f, ", elitist_solution[i+1]);
+//    }
+//    printf("\n");
+//
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//    printf("%d \n", number_of_generations[0]);
 
     ezilaitini();
 }
