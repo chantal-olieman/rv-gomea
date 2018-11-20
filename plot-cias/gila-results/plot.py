@@ -3,7 +3,7 @@ import pylab
 
 
 def read_in_and_write(measure_type):
-    file = open(f"{measure_type}.txt")
+    file = open(f"{measure_type}_2.txt")
     results = json.load(file)
     index = 0
     population = results[index]

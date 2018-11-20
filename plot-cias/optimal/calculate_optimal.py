@@ -7,7 +7,7 @@ results = {}
 
 def read_in_solution(num_circles):
     solution = []
-    file = open(f"/ufs/chantal/Downloads/csq_coords/csq{num_circles}.txt")
+    file = open(f"/home/chantal/Documents/coordinates/csq{num_circles}.txt")
     content = file.readlines()
     for i in range(num_circles):
         circle = content[i].split()
@@ -43,8 +43,9 @@ def calculate_relaxes_fitness(solution):
             x_diff = solution[i * 2] - solution[j * 2]
             y_diff = solution[(i * 2) + 1] - solution[(j * 2) + 1]
             distance = pow((x_diff * x_diff + y_diff * y_diff), 0.5)
-            total += pow(distance, -10)
+            total += pow(distance, -4)
     return total
+
 
 def calculate_original_fitness(solution):
     min_distance = 1
@@ -88,7 +89,7 @@ pylab.xlabel("x")
 pylab.show()
 
 solution = []
-file = open(f"/ufs/chantal/Downloads/csq_coords/csq{dim}.txt")
+file = open(f"/home/chantal/Documents/coordinates/csq{dim}.txt")
 content = file.readlines()
 for i in range(dim):
     circle = content[i].split()
