@@ -140,6 +140,9 @@ int    base_population_size,                                /* The size of the f
        number_of_pairs,
        evolve_scaling,
        pairs_per_run,
+        current_waiting_position,
+        number_of_waiting_cycles,
+        continued_learning,
         minimal_dependencies_per_run,
        differential_grouping_evals,
        old_dependency_comparison,
@@ -292,9 +295,12 @@ void interpretCommandLine( int argc, char **argv )
     epsilon = 0.0;
     iteration = 0;
     pruned_tree = 0;
+    continued_learning = 0;
     differential_grouping_evals = 0;
     differential_groups = 0;
     old_dependency_comparison = 0;
+    number_of_waiting_cycles = 2;
+    current_waiting_position = 0;
     sorting_parameters = 1;
     parseCommandLine( argc, argv );
 
@@ -321,14 +327,15 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -3 ) static_linkage_tree = 1;
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
-    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1;}
-    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1;}
-    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.5;}
-    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.1;}
-    if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.05;}
-    if( FOS_element_size == -13 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 0;}
+    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1;}
+    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1;}
+//    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.5;}
+//    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.1;}
+//    if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.05;}
+//    if( FOS_element_size == -13 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 0;}
     if( FOS_element_size == -16 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 1;}
     if( FOS_element_size == -15 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 3;}
+    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1;}
     if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; differential_groups = 1;}
 
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
@@ -1744,23 +1751,27 @@ void estimateParameters( int population_index )
             if( number_of_generations[population_index] == 0 )
                 initializeDistributionMultipliers( population_index );
         }
-        if ( evolve_learning && (number_of_checked_pairs<number_of_pairs ||  number_of_generations[population_index] == 0 ) ){
-            if( number_of_checked_pairs<number_of_pairs ){
-                linkage_model[0] = learnLinkageTreeRVGOMEA( 0 );
-                initializeCovarianceMatrices( 0 );
-            }
+        if ( evolve_learning && (number_of_waiting_cycles== 2 || continued_learning) ){
+            if((current_waiting_position == 0 || number_of_generations[population_index] == 0 )){
+                if( current_waiting_position == 0 ){
+                    linkage_model[0] = learnLinkageTreeRVGOMEA( 0 );
+                    initializeCovarianceMatrices( 0 );
+                }
 
-            if( number_of_generations[population_index] == 0 )
-                initializeDistributionMultipliers( population_index );
+                if( number_of_generations[population_index] == 0 )
+                    initializeDistributionMultipliers( population_index );
 
-            if( number_of_populations > 1 ){
-                for (int i = 1; i < number_of_populations; i++){
-                    linkage_model[i] = copyFOS(linkage_model[0]);
-                    initializeCovarianceMatrices( i );
+                if( number_of_populations > 1 ){
+                    for (int i = 1; i < number_of_populations; i++){
+                        linkage_model[i] = copyFOS(linkage_model[0]);
+                        initializeCovarianceMatrices( i );
+                    }
                 }
             }
+            else if (current_waiting_position > 0){
+                current_waiting_position -= 1;
+            }
         }
-
         estimateParametersML( population_index );
     }
 }
@@ -1890,7 +1901,7 @@ void evolveDifferentialDependencies( int population_index ) {
         temp_problem_index = 16;
     }
 
-    if (iteration == 0) {
+    if (number_of_checked_pairs == 0) {
         double rand = randomRealUniform01();
         rand = 0.7;
 
@@ -2003,13 +2014,17 @@ void evolveDifferentialDependencies( int population_index ) {
     if (found_dependencies == 0) {
         int found_dependencies_per_run = total_dependencies_found / iteration;
         if (found_dependencies_per_run < minimal_dependencies_per_run) {
-            number_of_checked_pairs = number_of_pairs;
+            current_waiting_position = number_of_waiting_cycles;
+            number_of_waiting_cycles = number_of_waiting_cycles*2;
         }
     }
-//    if (number_of_checked_pairs >= number_of_pairs){
-//        number_of_checked_pairs = 0;
-//    }
+    if (number_of_checked_pairs >= number_of_pairs){
+        number_of_checked_pairs = 0;
+        current_waiting_position = number_of_waiting_cycles;
+        number_of_waiting_cycles = number_of_waiting_cycles * 2;
+    }
 //    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//    printf("number_of_waiting_cycles: %d \n ", number_of_waiting_cycles);
 //    //todo: find some normalization
 //    if(number_of_checked_pairs>= number_of_pairs)
     free(individual_to_compare);
