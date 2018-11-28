@@ -735,6 +735,19 @@ void initializeMemory( void )
     linkage_model                    = (FOS **) Malloc( maximum_number_of_populations*sizeof( FOS *) );
     individual_NIS                   = ( int ** ) Malloc( maximum_number_of_populations*sizeof( int * ) );
     elite_solution                   = (double ** ) Malloc( number_of_parameters*sizeof(double * ) );
+    primes                           = (double ** ) Malloc( 1+number_of_parameters*sizeof(double * ) );
+}
+
+int isPrime(int n){
+    for(int i = 2; i < n; i ++){
+        if(n%i == 0){
+            return 0;
+        }
+        else if(((int)n/i)+1 < i ){
+            return 1;
+        }
+    }
+    return 1;
 }
 
 void initializeNewPopulationMemory( int population_index )
@@ -835,6 +848,15 @@ void initializeNewPopulationMemory( int population_index )
     no_improvement_stretch[population_index] = 0;
 
     number_of_generations[population_index] = 0;
+
+
+    if(problem_index == 20 && population_index==0){
+        primes[0] = 0;
+        primes[1] = 0;
+        for(int i = 2; i < number_of_parameters+1; i++){
+            primes[i] = isPrime(i);
+        }
+    }
 }
 
 void initializeNewPopulation()
