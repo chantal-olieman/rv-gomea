@@ -1036,12 +1036,10 @@ void travelingSantaProblemEvaluation( double *parameters, double *objective_valu
         constraint_count += item_matrix[i][0];
         for(int j =0; j < item_matrix[i][0]; j ++) {
             int santa_index = item_matrix[i][j + 1];
-            if(count%10 == 0 && !primes[santa_index]){
-                total_distance += 1.1 * distanceEuclidean2D(prev_x, prev_y, santa_locations[santa_index][0], santa_locations[santa_index][1]);
-            }else{
-                total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[santa_index][0], santa_locations[santa_index][1]);
 
-            }
+            total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[santa_index][0], santa_locations[santa_index][1]);
+
+
             prev_x = santa_locations[santa_index][0];
             prev_y = santa_locations[santa_index][1];
             parameters[santa_index] = count;
