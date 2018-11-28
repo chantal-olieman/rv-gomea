@@ -320,9 +320,6 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1;}
-    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 1;}
-    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 3;}
-    if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; differential_groups = 1;}
 
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
 
@@ -419,6 +416,57 @@ void optionError( char **argv, int index )
     printUsage();
 }
 
+void readCSV(){
+#include <stdio.h>
+#include <stdlib.h>
+
+    int first_line = 0;
+    int last_line = number_of_parameters+1;
+
+
+    FILE *file = fopen("../cities/cities.csv", "r");
+
+    char buf[1024];
+    int line_count = 0;
+    if (!file) {
+        fprintf(stderr, "Can't open file.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while (fgets(buf, sizeof buf, file) != NULL)
+        if (++line_count >= first_line - 1)
+            break;
+    while (fgets(buf, sizeof buf, file) != NULL) {
+        double x, y;
+
+        // read value in third column (asterisk means ignore value)
+        if (sscanf(buf, "%*lf,%lf,%*lf", &x) != 1) {
+            fprintf(stderr, "sscanf failed.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if (sscanf(buf, "%*lf,%*lf,%lf", &y) != 1) {
+            fprintf(stderr, "sscanf failed.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        int index;
+        if (sscanf(buf, "%d,%*lf,%*lf", &index) != 1) {
+            fprintf(stderr, "sscanf failed.\n");
+            exit(EXIT_FAILURE);
+        }
+//        printf("%f, %f, %d\n", x, y, index);
+        santa_locations[index][0] = x;
+        santa_locations[index][1] = y;
+        if (++line_count >= last_line)
+            break;
+    }
+    number_of_parameters = line_count-1;
+    fclose(file);
+}
+
+
+
 /**
  * Parses only the EA parameters from the command line.
  */
@@ -449,6 +497,21 @@ void parseParameters( int argc, char **argv, int *index )
     noError = noError && sscanf( argv[*index+12], "%d", &maximum_no_improvement_stretch );
     noError = noError && sscanf( argv[*index+13], "%lf", &fitness_variance_tolerance );
     noError = noError && sscanf( argv[*index+14], "%lf", &maximum_number_of_seconds );
+    if(problem_index == 20){
+        number_of_parameters = 197780;
+        santa_locations = (double **) Malloc( (number_of_parameters)*sizeof( double * ) );
+        for(int i =0; i < number_of_parameters+1; i ++){
+            santa_locations[i] = (double *) Malloc( ( 2 )*sizeof( double  ) );
+        }
+        readCSV();
+        lower_user_range = 0;
+        upper_user_range = number_of_parameters;
+        for(int i =0; i < number_of_parameters; i ++){
+            printf("index: %d, X: %f, Y: %f\n", i, santa_locations[i][0], santa_locations[i][1]);
+        }
+
+    }
+
 
     if( !noError )
     {
@@ -659,7 +722,7 @@ void initializeMemory( void )
     mean_shift_vector                = (double **) Malloc( maximum_number_of_populations*sizeof( double * ) );
     decomposed_covariance_matrices   = (double ****) Malloc( maximum_number_of_populations * sizeof( double ***) );
     full_covariance_matrix           = (double ***) Malloc( maximum_number_of_populations * sizeof( double **) );
-    dependency_matrix                = (double **) Malloc( number_of_parameters*sizeof( double * ) );
+    dependency_matrix                = (double **) Malloc( number_of_parameters*sizeof( double * ) );(double **) Malloc( number_of_parameters*sizeof( double * ) );
     checked_matrix                   = (int **) Malloc( number_of_parameters*sizeof(int * ) );
     first_individual                 = (double *) Malloc( number_of_parameters*sizeof( double ) );
     second_individual                = (double *) Malloc( number_of_parameters*sizeof( double ) );
@@ -671,6 +734,7 @@ void initializeMemory( void )
     number_of_generations            = (int *) Malloc( maximum_number_of_populations*sizeof( int ) );
     linkage_model                    = (FOS **) Malloc( maximum_number_of_populations*sizeof( FOS *) );
     individual_NIS                   = ( int ** ) Malloc( maximum_number_of_populations*sizeof( int * ) );
+    elite_solution                   = (double ** ) Malloc( number_of_parameters*sizeof(double * ) );
 }
 
 void initializeNewPopulationMemory( int population_index )
@@ -2895,7 +2959,6 @@ void runAllPopulations()
             if( total_number_of_generations == 0 && write_generational_solutions )
                 writeGenerationalSolutions( 0 );
         }
-
         generationalStepAllPopulations();
 
         if( write_generational_statistics )
@@ -2906,6 +2969,10 @@ void runAllPopulations()
 
         total_number_of_generations++;
     }
+}
+
+void write_out_submission(){
+
 }
 
 /**
@@ -2930,9 +2997,21 @@ void run( void )
     if(evolve_learning){
         printf("differential_evals %d ", differential_grouping_evals);
     }
-
     printf("generations %d\n", total_number_of_generations);
 
+    int *solution = (int *) Malloc( number_of_parameters * sizeof( int ) );
+    for(int i = 0; i < number_of_parameters; i ++){
+        solution[(int)elite_solution[i]] = i;
+    }
+
+    FILE *file = fopen("../cities/my_submission.csv", "w");
+
+    fprintf(file, "%s\n", "Path");
+    for(int i = 0; i < number_of_parameters; i ++){
+        fprintf(file, "%d\n", solution[i]);
+        printf("%d, ", solution[i]);
+    }
+    fprintf(file, "%d\n", 0);
 
 }
 

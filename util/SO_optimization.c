@@ -99,6 +99,7 @@ char *installedProblemName( int index )
     case 13: return( (char *) "Sum of ellipsoids" );
     case 14: return( (char *) "Circles in a Square" );
     case 15: return( (char *) "TrapSphere" );
+    case 20: return( (char *) "TravelingSanta" );
     }
 
     return( NULL );
@@ -159,6 +160,7 @@ double installedProblemLowerRangeBound( int index, int dimension )
     case 13: return( sumOfEllipsoidsFunctionLowerRangeBound( dimension ) );
     case 14: return( ciasBRFunctionLowerRangeBound( dimension ) );
     case 15: return( trapSphereFunctionLowerRangeBound( dimension ) );
+    case 20: return( travelingSantaLowerRangeBound( dimension ) );
     }
 
     return( 0.0 );
@@ -187,6 +189,7 @@ double installedProblemUpperRangeBound( int index, int dimension )
     case 13: return( sumOfEllipsoidsFunctionUpperRangeBound( dimension ) );
     case 14: return( ciasBRFunctionUpperRangeBound( dimension ) );
     case 15: return( trapSphereFunctionUpperRangeBound( dimension ) );
+    case 20: return( travelingSantaUpperRangeBound( dimension ) );
     }
 
     return( 0.0 );
@@ -342,6 +345,9 @@ void installedProblemEvaluation( int index, double *parameters, double *objectiv
             vtr_hit_status = 1;
             elitist_objective_value = *objective_value;
             elitist_constraint_value = *constraint_value;
+            for(int i = 0; i < number_of_parameters; i ++){
+                elite_solution[i] = parameters[i];
+            }
         }
     }
 
@@ -349,6 +355,9 @@ void installedProblemEvaluation( int index, double *parameters, double *objectiv
     {
         elitist_objective_value = *objective_value;
         elitist_constraint_value = *constraint_value;
+        for(int i = 0; i < number_of_parameters; i ++){
+            elite_solution[i] = parameters[i];
+        }
     }
 
     if( touched_parameters_indices != NULL )
@@ -385,6 +394,7 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 13: sumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 14: ciasBRFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 15: trapSphereFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 20: travelingSantaProblemEvaluation( parameters, objective_value, constraint_value ); break;
         }
         number_of_evaluations++;
     }
@@ -408,6 +418,7 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 13: sumOfEllipsoidsFunctionPartialProblemEvaluation( parameters, objective_value, constraint_value, number_of_touched_parameters, touched_parameters_indices, touched_parameters, parameters_before, objective_value_before, constraint_value_before ); break;
         case 14: ciasBRFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 15: trapSphereFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 20: travelingSantaProblemEvaluation( parameters, objective_value, constraint_value ); break;
         }
         number_of_evaluations += number_of_touched_parameters/(double)number_of_parameters;
     }
@@ -963,5 +974,65 @@ double trapSphereFunctionUpperRangeBound( int dimension )
 {
     return( 1e+308 );
 }
+
+
+void travelingSantaProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
+{
+    double total_distance = 0.0;
+    int **item_matrix = (int **) Malloc((1+number_of_parameters)*sizeof( int * ) );
+    for( int i = 0; i < number_of_parameters+1; i ++ ){
+        item_matrix[i] = (int *) Malloc((1+number_of_parameters)*sizeof( int ) );
+        item_matrix[i][0] = 0;
+    }
+    int constraint_count = 0;
+    for(int i =1; i < number_of_parameters; i ++){
+        int order = (int) parameters[i];
+        if(order >= number_of_parameters){
+            order = number_of_parameters-1;
+        }
+        if(order < 1){
+            order = 1;
+        }
+        item_matrix[order][0] += 1;
+        item_matrix[order][item_matrix[order][0]] = i;
+        printf("%d, ", order);
+    }
+    printf("\n");
+    double prev_x = santa_locations[0][0];
+    double prev_y = santa_locations[0][1];
+    int count = 1;
+    parameters[0] = 0;
+    for(int i =0; i < number_of_parameters; i ++){
+        constraint_count += item_matrix[i][0];
+        for(int j =0; j < item_matrix[i][0]; j ++) {
+            int santa_index = item_matrix[i][j + 1];
+            total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[santa_index][0], santa_locations[santa_index][1]);
+            prev_x = santa_locations[santa_index][0];
+            prev_y = santa_locations[santa_index][1];
+            parameters[santa_index] = count;
+            count+=1;
+        }
+    }
+
+//    total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[0][0], santa_locations[0][1]);
+    *objective_value = total_distance;
+    *constraint_value = 0;
+    for( int i = 0; i < number_of_parameters+1; i ++ ){
+        free(item_matrix[i]);
+    }
+    free(item_matrix);
+//    printf("made and now removing: %f, pop: \n", *objective_value);
+}
+
+double travelingSantaLowerRangeBound( int dimension )
+{
+    return( -1e+308 );
+}
+
+double travelingSantaUpperRangeBound( int dimension )
+{
+    return( 1e+308 );
+}
+
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/

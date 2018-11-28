@@ -109,13 +109,18 @@ void ciasBRFunctionProblemEvaluation( double *parameters, double *objective_valu
 double ciasBRFunctionLowerRangeBound( int dimension );
 double ciasBRFunctionUpperRangeBound( int dimension );
 void trapSphereFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value );
+void travelingSantaProblemEvaluation( double *parameters, double *objective_value, double *constraint_value );
 double trapSphereFunctionLowerRangeBound( int dimension );
+double travelingSantaLowerRangeBound( int dimension );
 double trapSphereFunctionUpperRangeBound( int dimension );
+double travelingSantaUpperRangeBound( int dimension );
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 /*-=-=-=-=-=-=-=-=-=-=-=- Section Global Variables -=-=-=-=-=-=-=-=-=-=-=-=-*/
 double elitist_objective_value,
-       elitist_constraint_value;
+       elitist_constraint_value,
+        *elite_solution,
+        **santa_locations;
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 #endif
