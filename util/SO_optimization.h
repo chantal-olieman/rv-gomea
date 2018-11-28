@@ -121,6 +121,7 @@ double elitist_objective_value,
        elitist_constraint_value,
         *elite_solution,
         **santa_locations;
+int *primes;
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 #endif

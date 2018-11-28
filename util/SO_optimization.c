@@ -998,9 +998,25 @@ void travelingSantaProblemEvaluation( double *parameters, double *objective_valu
         item_matrix[i] = (int *) Malloc((1+number_of_parameters)*sizeof( int ) );
         item_matrix[i][0] = 0;
     }
+    int temp_params = (int *) Malloc((number_of_parameters)*sizeof( int ) );
+
+    for(int i =1; i < number_of_parameters; i ++){
+        temp_params[i] = i;
+    }
+
+    for (int i = number_of_parameters - 1; i >= 0; --i) {
+        //generate a random number [0, n-1]
+        int j = randomInt(i+1);
+
+        //swap the last element with element at random index
+        int *temp = temp_params[i];
+        temp_params[i] = temp_params[j];
+        temp_params[j] = temp;
+    }
+
     int constraint_count = 0;
     for(int i =1; i < number_of_parameters; i ++){
-        int order = (int) parameters[i];
+        int order = (int) parameters[temp_params[i]];
         if(order >= number_of_parameters){
             order = number_of_parameters-1;
         }
@@ -1008,7 +1024,7 @@ void travelingSantaProblemEvaluation( double *parameters, double *objective_valu
             order = 1;
         }
         item_matrix[order][0] += 1;
-        item_matrix[order][item_matrix[order][0]] = i;
+        item_matrix[order][item_matrix[order][0]] = temp_params[i];
 //        printf("%d, ", order);
     }
 //    printf("\n");
@@ -1020,7 +1036,12 @@ void travelingSantaProblemEvaluation( double *parameters, double *objective_valu
         constraint_count += item_matrix[i][0];
         for(int j =0; j < item_matrix[i][0]; j ++) {
             int santa_index = item_matrix[i][j + 1];
-            total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[santa_index][0], santa_locations[santa_index][1]);
+            if(count%10 == 0 && !primes[santa_index]){
+                total_distance += 1.1 * distanceEuclidean2D(prev_x, prev_y, santa_locations[santa_index][0], santa_locations[santa_index][1]);
+            }else{
+                total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[santa_index][0], santa_locations[santa_index][1]);
+
+            }
             prev_x = santa_locations[santa_index][0];
             prev_y = santa_locations[santa_index][1];
             parameters[santa_index] = count;
