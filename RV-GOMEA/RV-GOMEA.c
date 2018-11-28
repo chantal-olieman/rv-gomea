@@ -2971,9 +2971,6 @@ void runAllPopulations()
     }
 }
 
-void write_out_submission(){
-
-}
 
 /**
  * Runs the IDEA.

@@ -348,6 +348,7 @@ void installedProblemEvaluation( int index, double *parameters, double *objectiv
             for(int i = 0; i < number_of_parameters; i ++){
                 elite_solution[i] = parameters[i];
             }
+            printf("new VTR objective: %f\n", elitist_objective_value);
         }
     }
 
@@ -358,6 +359,19 @@ void installedProblemEvaluation( int index, double *parameters, double *objectiv
         for(int i = 0; i < number_of_parameters; i ++){
             elite_solution[i] = parameters[i];
         }
+        int *solution = (int *) Malloc( number_of_parameters * sizeof( int ) );
+        for(int i = 0; i < number_of_parameters; i ++){
+            solution[(int)elite_solution[i]] = i;
+        }
+        printf("new objective: %f\n", *objective_value);
+        FILE *file = fopen("../cities/my_submission.csv", "w");
+
+        fprintf(file, "%s\n", "Path");
+        for(int i = 0; i < number_of_parameters; i ++){
+            fprintf(file, "%d\n", solution[i]);
+        }
+        fprintf(file, "%d\n", 0);
+        free(solution);
     }
 
     if( touched_parameters_indices != NULL )
@@ -995,9 +1009,9 @@ void travelingSantaProblemEvaluation( double *parameters, double *objective_valu
         }
         item_matrix[order][0] += 1;
         item_matrix[order][item_matrix[order][0]] = i;
-        printf("%d, ", order);
+//        printf("%d, ", order);
     }
-    printf("\n");
+//    printf("\n");
     double prev_x = santa_locations[0][0];
     double prev_y = santa_locations[0][1];
     int count = 1;
