@@ -356,22 +356,28 @@ void installedProblemEvaluation( int index, double *parameters, double *objectiv
     {
         elitist_objective_value = *objective_value;
         elitist_constraint_value = *constraint_value;
-        for(int i = 0; i < number_of_parameters; i ++){
-            elite_solution[i] = parameters[i];
-        }
-        int *solution = (int *) Malloc( number_of_parameters * sizeof( int ) );
-        for(int i = 0; i < number_of_parameters; i ++){
-            solution[(int)elite_solution[i]] = i;
-        }
-        printf("new objective: %f\n", *objective_value);
-        FILE *file = fopen("../cities/my_submission.csv", "w");
 
-        fprintf(file, "%s\n", "Path");
-        for(int i = 0; i < number_of_parameters; i ++){
-            fprintf(file, "%d\n", solution[i]);
+
+//        printf("new objective: %f, constraint: %f \n", *objective_value, *constraint_value);
+        if(elitist_constraint_value <= 0 ){
+            for(int i = 0; i < number_of_parameters; i ++){
+                elite_solution[i] = parameters[i];
+                printf("%f,  ", parameters[i]);
+            }
+            int *solution = (int *) Malloc( number_of_parameters * sizeof( int ) );
+            for(int i = 0; i < number_of_parameters; i ++){
+                solution[(int)elite_solution[i]-1] = i+1;
+            }
+            printf("new objective: %f\n", *objective_value);
+            FILE *file = fopen("../cities/my_submission_temp.csv", "w");
+            fprintf(file, "%s\n", "Path");
+            fprintf(file, "%d\n", 0);
+            for(int i = 0; i < number_of_parameters; i ++){
+                fprintf(file, "%d\n", solution[i]);
+            }
+            fprintf(file, "%d\n", 0);
+            fclose(file);
         }
-        fprintf(file, "%d\n", 0);
-        free(solution);
     }
 
     if( touched_parameters_indices != NULL )
@@ -989,7 +995,7 @@ double trapSphereFunctionUpperRangeBound( int dimension )
     return( 1e+308 );
 }
 
-/*
+
 void travelingSantaProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
 {
     double total_distance = 0.0;
@@ -1000,75 +1006,7 @@ void travelingSantaProblemEvaluation( double *parameters, double *objective_valu
     }
     int *temp_params = (int *) Malloc((number_of_parameters)*sizeof( int ) );
 
-    for(int i =1; i < number_of_parameters; i ++){
-        temp_params[i] = i;
-    }
-
-    for (int i = number_of_parameters - 1; i >= 0; --i) {
-        //generate a random number [0, n-1]
-        int j = randomInt(i+1);
-
-        //swap the last element with element at random index
-        int *temp = temp_params[i];
-        temp_params[i] = temp_params[j];
-        temp_params[j] = temp;
-    }
-
-    int constraint_count = 0;
-    for(int i =1; i < number_of_parameters; i ++){
-        int order = (int) parameters[temp_params[i]];
-        if(order >= number_of_parameters){
-            order = number_of_parameters-1;
-        }
-        if(order < 1){
-            order = 1;
-        }
-        item_matrix[order][0] += 1;
-        item_matrix[order][item_matrix[order][0]] = temp_params[i];
-//        printf("%d, ", order);
-    }
-//    printf("\n");
-    double prev_x = santa_locations[0][0];
-    double prev_y = santa_locations[0][1];
-    int count = 1;
-    parameters[0] = 0;
     for(int i =0; i < number_of_parameters; i ++){
-        constraint_count += item_matrix[i][0];
-        for(int j =0; j < item_matrix[i][0]; j ++) {
-            int santa_index = item_matrix[i][j + 1];
-
-            total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[santa_index][0], santa_locations[santa_index][1]);
-
-
-            prev_x = santa_locations[santa_index][0];
-            prev_y = santa_locations[santa_index][1];
-            parameters[santa_index] = count;
-            count+=1;
-        }
-    }
-
-//    total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[0][0], santa_locations[0][1]);
-    *objective_value = total_distance;
-    *constraint_value = 0;
-    for( int i = 0; i < number_of_parameters+1; i ++ ){
-        free(item_matrix[i]);
-    }
-    free(item_matrix);
-//    printf("made and now removing: %f, pop: \n", *objective_value);
-}
-*/
-
-void travelingSantaProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
-{
-    double total_distance = 0.0;
-    int **item_matrix = (int **) Malloc((1+number_of_parameters)*sizeof( int * ) );
-    for( int i = 0; i < number_of_parameters+1; i ++ ){
-        item_matrix[i] = (int *) Malloc((1+number_of_parameters)*sizeof( int ) );
-        item_matrix[i][0] = 0;
-    }
-    int *temp_params = (int *) Malloc((number_of_parameters)*sizeof( int ) );
-
-    for(int i =1; i < number_of_parameters; i ++){
         temp_params[i] = i;
     }
 
@@ -1089,8 +1027,8 @@ void travelingSantaProblemEvaluation( double *parameters, double *objective_valu
         if(order >= number_of_parameters){
             order = number_of_parameters-1;
         }
-        if(order < 1){
-            order = 1;
+        if(order < 0){
+            order = 0;
         }
         item_matrix[order][0] += 1;
         item_matrix[order][item_matrix[order][0]] = temp_params[i];
@@ -1100,31 +1038,125 @@ void travelingSantaProblemEvaluation( double *parameters, double *objective_valu
     double prev_x = santa_locations[0][0];
     double prev_y = santa_locations[0][1];
     int count = 1;
-    parameters[0] = 0;
     for(int i =0; i < number_of_parameters; i ++){
         constraint_count += item_matrix[i][0];
         for(int j =0; j < item_matrix[i][0]; j ++) {
-            int santa_index = item_matrix[i][j + 1]+1;
+            int santa_index = item_matrix[i][j + 1] + 1;
+            if(count % 10 == 0 && !primes[santa_index]){
+                total_distance += 1.1*distanceEuclidean2D(prev_x, prev_y, santa_locations[santa_index][0], santa_locations[santa_index][1]);
+            } else{
+                total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[santa_index][0], santa_locations[santa_index][1]);
 
-            total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[santa_index][0], santa_locations[santa_index][1]);
-
-
+            }
             prev_x = santa_locations[santa_index][0];
             prev_y = santa_locations[santa_index][1];
             parameters[santa_index-1] = count;
             count+=1;
         }
     }
-
 //    total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[0][0], santa_locations[0][1]);
-    *objective_value = total_distance;
+    *objective_value = total_distance+(constraint_count*00);
     *constraint_value = 0;
     for( int i = 0; i < number_of_parameters+1; i ++ ){
         free(item_matrix[i]);
     }
     free(item_matrix);
-//    printf("made and now removing: %f, pop: \n", *objective_value);
+//    printf("made and now removing: %d, pop: \n", number_of_parameters);
 }
+
+//void travelingSantaProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
+//{
+//    double total_distance = 0.0;
+//    int *visited = (int *) Malloc((number_of_parameters)*sizeof( int ) );
+//    for( int i = 0; i < number_of_parameters; i ++ ){
+//        visited[i] = 0;
+//    }
+//
+//    int constraint_count = 0;
+//
+////    printf("\n");
+//    double prev_x = santa_locations[0][0];
+//    double prev_y = santa_locations[0][1];
+//    int count = 1;
+//    for(int i =0; i < number_of_parameters; i ++){
+//        int order = parameters[i];
+//        if(order >= number_of_parameters){
+//            order = number_of_parameters-1;
+//        }
+//        if(order < 0){
+//            order = 0;
+//        }
+//        parameters[i] = order;
+//        if(count % 10 == 0 && !primes[order+1]){
+//            total_distance += 1.1*distanceEuclidean2D(prev_x, prev_y, santa_locations[order+1][0], santa_locations[order+1][1]);
+//        } else{
+//            total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[order+1][0], santa_locations[order+1][1]);
+//        }
+//        prev_x = santa_locations[order+1][0];
+//        prev_y = santa_locations[order+1][1];
+//        if(! visited[order])
+//            visited[order] = 1;
+//        else
+//            constraint_count += 1;
+//    }
+//    if(constraint_count>1000){
+//        for( int i = 0; i < number_of_parameters; i ++ ){
+//            visited[i] = 0;
+//        }
+//        for(int i = 0; i < number_of_parameters; i ++){
+//            if(!visited[(int)parameters[i]]){
+//                visited[(int) parameters[i]] = 1;
+//            } else{
+//                int index = 1+(int)parameters[i];
+//                while(visited[index]){
+//                    index +=1;
+//                    if(index>= number_of_parameters){
+//                        index = 0;
+//                    }
+//                }
+//                parameters[i] = (double)index;
+//                visited[index] = 1;
+//            }
+//        }
+//        //re evaluate
+//        for( int i = 0; i < number_of_parameters; i ++ ){
+//            visited[i] = 0;
+//        }
+//
+//        int constraint_count = 0;
+//
+//        double prev_x = santa_locations[0][0];
+//        double prev_y = santa_locations[0][1];
+//        int count = 1;
+//        for(int i =0; i < number_of_parameters; i ++){
+//            int order = parameters[i];
+//            if(order >= number_of_parameters){
+//                order = number_of_parameters-1;
+//            }
+//            if(order < 0){
+//                order = 0;
+//            }
+//            parameters[i] = order;
+//            if(count % 10 == 0 && !primes[order+1]){
+//                total_distance += 1.1*distanceEuclidean2D(prev_x, prev_y, santa_locations[order+1][0], santa_locations[order+1][1]);
+//            } else{
+//                total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[order+1][0], santa_locations[order+1][1]);
+//            }
+//            prev_x = santa_locations[order+1][0];
+//            prev_y = santa_locations[order+1][1];
+//            if(! visited[order])
+//                visited[order] = 1;
+//            else
+//                constraint_count += 1;
+//        }
+//    }
+//
+////    total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[0][0], santa_locations[0][1]);
+//    *objective_value = total_distance+(constraint_count*0);
+//    *constraint_value = constraint_count;
+//    free(visited);
+////    printf("made and now removing: %d, pop: \n", number_of_parameters);
+//}
 
 double travelingSantaLowerRangeBound( int dimension )
 {
