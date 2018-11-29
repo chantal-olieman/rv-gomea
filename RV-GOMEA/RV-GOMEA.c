@@ -461,7 +461,9 @@ void readCSV(){
         if (++line_count >= last_line)
             break;
     }
-    number_of_parameters = line_count-1;
+    number_of_parameters = line_count-2;
+//    int *index_order = (int *) Malloc( (number_of_parameters)*sizeof( int  ) );
+//    quicksort(intdex_order, 1, number_of_parameters);
     fclose(file);
 }
 
@@ -506,7 +508,7 @@ void parseParameters( int argc, char **argv, int *index )
         readCSV();
         lower_user_range = 0;
         upper_user_range = number_of_parameters;
-        for(int i =0; i < number_of_parameters; i ++){
+        for(int i =0; i < number_of_parameters+1; i ++){
             printf("index: %d, X: %f, Y: %f\n", i, santa_locations[i][0], santa_locations[i][1]);
         }
 

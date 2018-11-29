@@ -989,7 +989,7 @@ double trapSphereFunctionUpperRangeBound( int dimension )
     return( 1e+308 );
 }
 
-
+/*
 void travelingSantaProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
 {
     double total_distance = 0.0;
@@ -998,7 +998,7 @@ void travelingSantaProblemEvaluation( double *parameters, double *objective_valu
         item_matrix[i] = (int *) Malloc((1+number_of_parameters)*sizeof( int ) );
         item_matrix[i][0] = 0;
     }
-    int temp_params = (int *) Malloc((number_of_parameters)*sizeof( int ) );
+    int *temp_params = (int *) Malloc((number_of_parameters)*sizeof( int ) );
 
     for(int i =1; i < number_of_parameters; i ++){
         temp_params[i] = i;
@@ -1043,6 +1043,75 @@ void travelingSantaProblemEvaluation( double *parameters, double *objective_valu
             prev_x = santa_locations[santa_index][0];
             prev_y = santa_locations[santa_index][1];
             parameters[santa_index] = count;
+            count+=1;
+        }
+    }
+
+//    total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[0][0], santa_locations[0][1]);
+    *objective_value = total_distance;
+    *constraint_value = 0;
+    for( int i = 0; i < number_of_parameters+1; i ++ ){
+        free(item_matrix[i]);
+    }
+    free(item_matrix);
+//    printf("made and now removing: %f, pop: \n", *objective_value);
+}
+*/
+
+void travelingSantaProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
+{
+    double total_distance = 0.0;
+    int **item_matrix = (int **) Malloc((1+number_of_parameters)*sizeof( int * ) );
+    for( int i = 0; i < number_of_parameters+1; i ++ ){
+        item_matrix[i] = (int *) Malloc((1+number_of_parameters)*sizeof( int ) );
+        item_matrix[i][0] = 0;
+    }
+    int *temp_params = (int *) Malloc((number_of_parameters)*sizeof( int ) );
+
+    for(int i =1; i < number_of_parameters; i ++){
+        temp_params[i] = i;
+    }
+
+    // random permutation
+    for (int i = number_of_parameters - 1; i >= 0; --i) {
+        //generate a random number [0, n-1]
+        int j = randomInt(i+1);
+
+        //swap the last element with element at random index
+        int *temp = temp_params[i];
+        temp_params[i] = temp_params[j];
+        temp_params[j] = temp;
+    }
+
+    int constraint_count = 0;
+    for(int i =0; i < number_of_parameters; i ++){
+        int order = (int) parameters[temp_params[i]];
+        if(order >= number_of_parameters){
+            order = number_of_parameters-1;
+        }
+        if(order < 1){
+            order = 1;
+        }
+        item_matrix[order][0] += 1;
+        item_matrix[order][item_matrix[order][0]] = temp_params[i];
+//        printf("%d, ", order);
+    }
+//    printf("\n");
+    double prev_x = santa_locations[0][0];
+    double prev_y = santa_locations[0][1];
+    int count = 1;
+    parameters[0] = 0;
+    for(int i =0; i < number_of_parameters; i ++){
+        constraint_count += item_matrix[i][0];
+        for(int j =0; j < item_matrix[i][0]; j ++) {
+            int santa_index = item_matrix[i][j + 1]+1;
+
+            total_distance += distanceEuclidean2D(prev_x, prev_y, santa_locations[santa_index][0], santa_locations[santa_index][1]);
+
+
+            prev_x = santa_locations[santa_index][0];
+            prev_y = santa_locations[santa_index][1];
+            parameters[santa_index-1] = count;
             count+=1;
         }
     }
