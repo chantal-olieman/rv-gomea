@@ -2998,7 +2998,7 @@ void runAllPopulations()
         {
             initializeNewPopulation();
             if( total_number_of_generations == 0 && write_generational_statistics )
-                //writeGenerationalStatisticsForOnePopulation( number_of_populations-1 );
+                writeGenerationalStatisticsForOnePopulation( number_of_populations-1 );
 
             if( total_number_of_generations == 0 && write_generational_solutions )
                 writeGenerationalSolutions( 0 );
@@ -3007,7 +3007,7 @@ void runAllPopulations()
         generationalStepAllPopulations();
 
         if( write_generational_statistics )
-            //writeGenerationalStatisticsForOnePopulation( number_of_populations-1 );
+            writeGenerationalStatisticsForOnePopulation( number_of_populations-1 );
 
         if( write_generational_solutions )
             writeGenerationalSolutions( 0 );
