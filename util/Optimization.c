@@ -133,7 +133,7 @@ double *rotateParametersInRange( double *parameters, int from, int to )
 //            printf("start_index: %d\n", i*(block_size-overlapping_block_size));
             cluster = (double*) Malloc( block_size*sizeof( double ) );
             for( j = 0; j < block_size; j++ )
-                cluster[j] = rotated_parameters[from + i*(block_size-overlapping_block_size) + j];
+                cluster[j] = parameters[from + i*(block_size-overlapping_block_size) + j];
             rotated_cluster = matrixVectorMultiplication( rotation_matrix, cluster, block_size, block_size );
             for( j = 0; j < block_size; j++ )
                 rotated_parameters[from + i*(block_size-overlapping_block_size) + j] = rotated_cluster[j];
