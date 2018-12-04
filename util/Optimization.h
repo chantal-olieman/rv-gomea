@@ -64,6 +64,7 @@ int    problem_index,                                 /* The index of the optimi
        number_of_function_parameters,
        number_of_populations,                         /* The number of parallel populations that initially partition the search space. */
        block_size,                                    /* The number of variables in one block of the 'sum of rotated ellipsoid blocks' function. */
+       overlapping_block_size,
        number_of_blocks,                              /* The number of blocks the 'sum of rotated ellipsoid blocks' function. */
        block_start,                                   /* The index at which the first block starts of the 'sum of rotated ellipsoid blocks' function. */
       *number_of_generations,                         /* The current generation count of a subgeneration in the interleaved multi-start scheme. */

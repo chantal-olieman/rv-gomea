@@ -320,8 +320,14 @@ void interpretCommandLine( int argc, char **argv )
     }
     FOS_element_ub = number_of_parameters;
     block_size = number_of_parameters;
-    if( problem_index == 13 || problem_index == 15 ) block_size = 5;
+    if(problem_index == 18) overlapping_block_size = 3;
+    if(problem_index == 18) block_size = 6;
+    if( problem_index == 13 || problem_index == 15 ) block_size = 5, overlapping_block_size = 5;
     number_of_blocks = (number_of_parameters + block_size - 1) / block_size;
+    if(block_size != overlapping_block_size){
+        number_of_blocks = ((number_of_parameters + overlapping_block_size - 1) / overlapping_block_size)-1;
+        printf("numner of blocks %d \n", number_of_blocks);
+    }
     if( FOS_element_size == -1 ) FOS_element_size = number_of_parameters;
     if( FOS_element_size == -2 ) learn_linkage_tree = 1;
     if( FOS_element_size == -3 ) static_linkage_tree = 1;
@@ -2023,7 +2029,7 @@ void evolveDifferentialDependencies( int population_index ) {
         current_waiting_position = number_of_waiting_cycles;
         number_of_waiting_cycles = number_of_waiting_cycles * 2;
     }
-//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 //    printf("number_of_waiting_cycles: %d \n ", number_of_waiting_cycles);
 //    //todo: find some normalization
 //    if(number_of_checked_pairs>= number_of_pairs)
@@ -2036,7 +2042,7 @@ void printMatrix(double **matrix, int cols, int rows){
     for( i = 0; i < rows; i++ )
     {
         for( j = 0; j < cols; j++ ) {
-            printf("%f, ", matrix[i][j] );
+            printf("%5.3f, ", matrix[i][j] );
         }
         printf("  \n");
     }
@@ -2921,7 +2927,7 @@ void runAllPopulations()
         {
             initializeNewPopulation();
             if( total_number_of_generations == 0 && write_generational_statistics )
-                writeGenerationalStatisticsForOnePopulation( number_of_populations-1 );
+                //writeGenerationalStatisticsForOnePopulation( number_of_populations-1 );
 
             if( total_number_of_generations == 0 && write_generational_solutions )
                 writeGenerationalSolutions( 0 );
@@ -2930,7 +2936,7 @@ void runAllPopulations()
         generationalStepAllPopulations();
 
         if( write_generational_statistics )
-            writeGenerationalStatisticsForOnePopulation( number_of_populations-1 );
+            //writeGenerationalStatisticsForOnePopulation( number_of_populations-1 );
 
         if( write_generational_solutions )
             writeGenerationalSolutions( 0 );
@@ -2953,7 +2959,7 @@ void run( void )
 
     printf("evals %f ", number_of_evaluations);
 
-    printf("obj_val %6.2e ", elitist_objective_value);
+    printf("obj_val %6.7e ", elitist_objective_value);
 
     printf("time %lf ", getTimer());
     if(evolve_learning){

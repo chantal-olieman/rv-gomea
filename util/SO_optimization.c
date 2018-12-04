@@ -101,6 +101,7 @@ char *installedProblemName( int index )
     case 15: return( (char *) "TrapSphere" );
     case 16: return( (char *) "Circles in a Square 2" );
     case 17: return( (char *) "Circles in a Square unrelaxed" );
+    case 18: return( (char *) "Overlapping sum of ellipsoids" );
     }
 
     return( NULL );
@@ -163,6 +164,7 @@ double installedProblemLowerRangeBound( int index, int dimension )
     case 15: return( trapSphereFunctionLowerRangeBound( dimension ) );
     case 16: return( ciasRelaxedFunctionLowerRangeBound( dimension ) );
     case 17: return( ciasFunctionLowerRangeBound( dimension ) );
+    case 18: return( overlappingSumOfEllipsoidsFunctionLowerRangeBound( dimension ) );
     }
 
     return( 0.0 );
@@ -193,6 +195,7 @@ double installedProblemUpperRangeBound( int index, int dimension )
     case 15: return( trapSphereFunctionUpperRangeBound( dimension ) );
     case 16: return( ciasRelaxedFunctionUpperRangeBound( dimension ) );
     case 17: return( ciasFunctionUpperRangeBound( dimension ) );
+    case 18: return( overlappingSumOfEllipsoidsFunctionUpperRangeBound( dimension ) );
     }
 
     return( 0.0 );
@@ -396,6 +399,7 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 15: trapSphereFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 16: ciasRelaxedFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 17: ciasFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 18: overlappingSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         }
         number_of_evaluations++;
     }
@@ -421,6 +425,7 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 15: trapSphereFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 16: ciasRelaxedFunctionPartialProblemEvaluation( parameters, objective_value, constraint_value, number_of_touched_parameters, touched_parameters_indices, touched_parameters, parameters_before, objective_value_before, constraint_value_before ); break;
         case 17: ciasFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 18: overlappingSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         }
         number_of_evaluations += number_of_touched_parameters/(double)number_of_parameters;
     }
@@ -891,6 +896,32 @@ double sumOfEllipsoidsFunctionLowerRangeBound( int dimension )
 }
 
 double sumOfEllipsoidsFunctionUpperRangeBound( int dimension )
+{
+    return( 1e+308 );
+}
+
+void overlappingSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
+{
+    int    i, j;
+    double result;
+
+    result = 0.0;
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        j = i % block_size;
+        result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*parameters[i]*parameters[i];
+    }
+
+    *objective_value  = result;
+    *constraint_value = 0;
+}
+
+double overlappingSumOfEllipsoidsFunctionLowerRangeBound( int dimension )
+{
+    return( -1e+308 );
+}
+
+double overlappingSumOfEllipsoidsFunctionUpperRangeBound( int dimension )
 {
     return( 1e+308 );
 }

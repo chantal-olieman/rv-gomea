@@ -118,6 +118,9 @@ double ciasRelaxedFunctionLowerRangeBound( int dimension );
 double ciasFunctionLowerRangeBound( int dimension );
 double ciasRelaxedFunctionUpperRangeBound( int dimension );
 double ciasFunctionUpperRangeBound( int dimension );
+void overlappingSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value ) ;
+double overlappingSumOfEllipsoidsFunctionLowerRangeBound( int dimension );
+double overlappingSumOfEllipsoidsFunctionUpperRangeBound( int dimension );
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 /*-=-=-=-=-=-=-=-=-=-=-=- Section Global Variables -=-=-=-=-=-=-=-=-=-=-=-=-*/
