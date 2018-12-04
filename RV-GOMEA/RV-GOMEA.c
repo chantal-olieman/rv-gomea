@@ -1061,7 +1061,6 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                 for (int j = 0; j < number_of_blocks; j++){
                     new_FOS->sets[j]            = (int *) Malloc( (block_size)*sizeof( int * ) );
                     new_FOS->set_length[j] = (block_size);
-                    printf("sizes %d \n", (j*(block_size-overlapping_block_size)));
                     for(int i = 0; i < (block_size); i ++){
                         new_FOS->sets[j][i] = (j*(block_size-overlapping_block_size))+i;
                     }
@@ -1099,7 +1098,6 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                     new_FOS->sets[0][i] = i;
                 }
             }
-            printFOS(new_FOS);
         }
     }
     if( learn_linkage_tree && number_of_generations[population_index] > 0 )
