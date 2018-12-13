@@ -322,8 +322,8 @@ void interpretCommandLine( int argc, char **argv )
     }
     FOS_element_ub = number_of_parameters;
     block_size = number_of_parameters;
-    if(problem_index == 18) overlapping_block_size = 5;
-    if(problem_index == 18) block_size = 20;
+    if(problem_index == 18) overlapping_block_size = 2;
+    if(problem_index == 18) block_size = 8;
     if( problem_index == 13 || problem_index == 15 ) block_size = 5, overlapping_block_size = 5;
     number_of_blocks = (number_of_parameters + block_size - 1) / block_size;
     if(block_size != overlapping_block_size){
@@ -348,7 +348,7 @@ void interpretCommandLine( int argc, char **argv )
 //    if( FOS_element_size == -13 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 0;}
     if( FOS_element_size == -16 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 1;}
     if( FOS_element_size == -15 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 3;}
-    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1;}
+    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 0;}
     if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; differential_groups = 1;}
 
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
@@ -1098,6 +1098,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                     new_FOS->sets[0][i] = i;
                 }
             }
+            printFOS(new_FOS);
         }
     }
     if( learn_linkage_tree && number_of_generations[population_index] > 0 )
