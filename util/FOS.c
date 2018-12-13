@@ -371,7 +371,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                         }
                     }
                 }
-                if (completely_dependent) {
+                if (1) {
                     //remove r1
                     int first_set_element = mpm[r0][0];
                     int set_length = mpm_number_of_indices[r0];

@@ -322,8 +322,8 @@ void interpretCommandLine( int argc, char **argv )
     }
     FOS_element_ub = number_of_parameters;
     block_size = number_of_parameters;
-    if(problem_index == 18) overlapping_block_size = 2;
-    if(problem_index == 18) block_size = 8;
+    if(problem_index == 18) overlapping_block_size = 1;
+    if(problem_index == 18) block_size = 5;
     if( problem_index == 13 || problem_index == 15 ) block_size = 5, overlapping_block_size = 5;
     number_of_blocks = (number_of_parameters + block_size - 1) / block_size;
     if(block_size != overlapping_block_size){
@@ -341,13 +341,18 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1;}
     if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1; overlapping_sets = 1;}
     if( FOS_element_size == -13 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1; overlapping_sets = 2;}
-    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1; overlapping_sets = number_of_parameters;}
+    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1; overlapping_sets = 3;}
+    if( FOS_element_size == -15 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1; overlapping_sets = number_of_parameters;}
+    if( FOS_element_size == -17 ) {static_linkage_tree = 1; overlapping_sets = 1;}
+    if( FOS_element_size == -18 ) {static_linkage_tree = 1; overlapping_sets = 2;}
+    if( FOS_element_size == -19 ) {static_linkage_tree = 1; overlapping_sets = number_of_parameters;}
+//    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.5;}
 //    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.5;}
 //    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.1;}
 //    if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.05;}
 //    if( FOS_element_size == -13 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 0;}
-    if( FOS_element_size == -16 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 1;}
-    if( FOS_element_size == -15 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 3;}
+//    if( FOS_element_size == -16 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 1;}
+//    if( FOS_element_size == -15 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 3;}
     if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 0;}
     if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; differential_groups = 1;}
 
@@ -1086,6 +1091,40 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                     }
                 }
 
+            }
+            else if( overlapping_sets == 3 ){
+                new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                new_FOS->length             = (int) number_of_blocks*1.75;
+                new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                for (int j = 0; j < number_of_blocks; j++){
+                    new_FOS->sets[j]            = (int *) Malloc( (block_size)*sizeof( int * ) );
+                    new_FOS->set_length[j] = (block_size);
+                    for(int i = 0; i < (block_size); i ++){
+                        new_FOS->sets[j][i] = (j*(block_size-overlapping_block_size))+i;
+                    }
+                }
+                int blocks = (int)number_of_blocks/2;
+                for (int j = 0; j < (int)number_of_blocks/2; j++){
+                    new_FOS->sets[j+number_of_blocks]            = (int *) Malloc( (2* block_size)*sizeof( int * ) );
+                    new_FOS->set_length[j+number_of_blocks] = (2*(block_size))-overlapping_block_size;
+                    for(int i = 0; i < (block_size*2); i ++){
+                        if((j*2*(block_size-overlapping_block_size))+ i == number_of_parameters){
+                            break;
+                        }
+                        new_FOS->sets[j+number_of_blocks][i] = (j*2*(block_size-overlapping_block_size))+i;
+                    }
+                }
+                for (int j = 0; j < (int)number_of_blocks/4; j++){
+                    new_FOS->sets[blocks + j+ number_of_blocks]            = (int *) Malloc( (4* block_size)*sizeof( int * ) );
+                    new_FOS->set_length[ blocks + j+ number_of_blocks] = (4*(block_size))-(3*overlapping_block_size);
+                    for(int i = 0; i < (block_size*4); i ++){
+                        if((j*4*(block_size-overlapping_block_size))+ i == number_of_parameters){
+                            break;
+                        }
+                        new_FOS->sets[blocks + j+ number_of_blocks][i] = (j*4*(block_size-overlapping_block_size))+i;
+                    }
+                }
             }
             else {
                 new_FOS = (FOS *) Malloc(sizeof(FOS));
