@@ -325,7 +325,7 @@ void interpretCommandLine( int argc, char **argv )
     block_size = number_of_parameters;
     if(problem_index == 18) overlapping_block_size = 1;
     if(problem_index == 18) block_size = 5;
-    if(problem_index == 19) {scale_factor = number_of_parameters; number_of_parameters = 40; block_size = 5; overlapping_block_size=5;}
+    if(problem_index == 19) {scale_factor = number_of_parameters; number_of_parameters = 15; block_size = 5; overlapping_block_size=5;}
     if( problem_index == 13 || problem_index == 15 ) block_size = 5, overlapping_block_size = 5;
     number_of_blocks = (number_of_parameters + block_size - 1) / block_size;
     if(block_size != overlapping_block_size){
@@ -2242,7 +2242,7 @@ void evolveDifferentialDependencies( int population_index ) {
         current_waiting_position = number_of_waiting_cycles;
         number_of_waiting_cycles = number_of_waiting_cycles * 2;
     }
-//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 //    printf("number_of_waiting_cycles: %d \n ", number_of_waiting_cycles);
 //    //todo: find some normalization
 //    if(number_of_checked_pairs>= number_of_pairs)
@@ -3120,6 +3120,7 @@ void generationalStepAllPopulationsRecursiveFold( int population_index_smallest,
 
                 if( checkSubgenerationTerminationConditions() )
                 {
+                    elitist_population_index = population_index;
                     for( j = 0; j < number_of_populations; j++ )
                         populations_terminated[j] = 1;
                     return;
@@ -3186,20 +3187,22 @@ void run( void )
 //    }
 //
 //
-    number_of_checked_pairs = 0;
-    iteration = 0;
-//    evolveDifferentialDependencies(0);
-//    for(int i = 0; i < number_of_parameters; i+=2){
-//        printf("%f, ", elitist_solution[i]);
-//    }
-//    for(int i = 0; i < number_of_parameters; i+=2){
-//        printf("%f, ", elitist_solution[i+1]);
-//    }
-//    printf("\n");
-//
-//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
-//    printf("%d \n", number_of_generations[0]);
+    if (problem_index == 17){
+        number_of_checked_pairs = 0;
+        iteration = 0;
+        evolveDifferentialDependencies(elitist_population_index);
+        for(int i = 0; i < number_of_parameters; i+=2){
+            printf("%f, ", elitist_solution[i]);
+        }
+        for(int i = 0; i < number_of_parameters; i+=2){
+            printf("%f, ", elitist_solution[i+1]);
+        }
+        printf("\n");
 
+        printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+        printf("%d \n", number_of_generations[0]);
+    }
+    printf("elite generation: %d\n", elitist_population_index);
     ezilaitini();
 }
 
