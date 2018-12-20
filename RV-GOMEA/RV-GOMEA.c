@@ -47,6 +47,8 @@
 #include "../util/SO_optimization.h"
 #include "../util/Optimization.h"
 #include "../util/FOS.h"
+#define REP(i,end) for (int i = 0; i < end; i++)
+#define pn printf("\n")
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 
@@ -295,6 +297,7 @@ void interpretCommandLine( int argc, char **argv )
     evolve_scaling = 0;
     epsilon = 0.0;
     iteration = 0;
+    printed = 0;
     pruned_tree = 0;
     continued_learning = 0;
     differential_grouping_evals = 0;
@@ -325,7 +328,7 @@ void interpretCommandLine( int argc, char **argv )
     block_size = number_of_parameters;
     if(problem_index == 18) overlapping_block_size = 1;
     if(problem_index == 18) block_size = 5;
-    if(problem_index == 19) {scale_factor = number_of_parameters; number_of_parameters = 40; block_size = 5; overlapping_block_size=5;}
+    if(problem_index == 19) {scale_factor = number_of_parameters; number_of_parameters = 25 ; block_size = 5; overlapping_block_size=5;}
     if( problem_index == 13 || problem_index == 15 ) block_size = 5, overlapping_block_size = 5;
     number_of_blocks = (number_of_parameters + block_size - 1) / block_size;
     if(block_size != overlapping_block_size){
@@ -340,8 +343,8 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -3 ) static_linkage_tree = 1;
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
-    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1;}
-    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; allow_incomplete_dependence=1;}
+    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1;}
+    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; allow_incomplete_dependence=1;}
     if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1;}
     if( FOS_element_size == -12 ) {static_linkage_tree = 1; overlapping_sets = 1;}
     if( FOS_element_size == -13 ) {static_linkage_tree = 1; overlapping_sets = 2;}
@@ -2241,8 +2244,28 @@ void evolveDifferentialDependencies( int population_index ) {
         number_of_checked_pairs = 0;
         current_waiting_position = number_of_waiting_cycles;
         number_of_waiting_cycles = number_of_waiting_cycles * 2;
+        //normalize
+//        double max_dependency = 0;
+//        for(i =0; i <number_of_parameters;i++){
+//            for(j =0; j <number_of_parameters;j++){
+//                max_dependency = max(max_dependency, dependency_matrix[i][j]);
+//            }
+//        }
+//        for(i =0; i <number_of_parameters;i++){
+//            for(j =0; j <number_of_parameters;j++){
+//                if(i != j && dependency_matrix[i][j] != 0.0){
+//                    dependency_matrix[i][j] = (double ) dependency_matrix[i][j]/max_dependency;
+//                }
+//            }
+//        }
+
     }
 //    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+
+    //normalize
+
+
+
 //    printf("number_of_waiting_cycles: %d \n ", number_of_waiting_cycles);
 //    //todo: find some normalization
 //    if(number_of_checked_pairs>= number_of_pairs)
