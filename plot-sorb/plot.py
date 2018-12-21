@@ -5,7 +5,7 @@ import numpy as np
 
 runs = 1
 dim = 25
-scale = 7
+scale = 6
 
 gomea_command = f"./RV-GOMEA  -b -f -8 -s -r 19 {scale} -115 -100 45 0.35 10 25 0.9 1 0 1e-10 100 0.0 1"
 

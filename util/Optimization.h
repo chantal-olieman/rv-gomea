@@ -46,6 +46,7 @@
 /*-=-=-=-=-=-=-=-=-=-=-=-= Section Header Functions -=-=-=-=-=-=-=-=-=-=-=-=*/
 void initializeObjectiveRotationMatrix( void );
 void ezilaitiniObjectiveRotationMatrix( void );
+void initializeObjectiveRotationMatrixPointer(  int block_size_var);
 double *rotateAllParameters( double *parameters );
 double *rotateParametersInRange( double *parameters, int from, int to );
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
@@ -74,6 +75,7 @@ double number_of_evaluations,                         /* The current number of t
        vtr,                                           /* The value-to-reach (function value of best solution that is feasible). */
        rotation_angle,                                /* The angle of rotation to be applied to the problem. */
      **rotation_matrix,                               /* The rotation matrix to be applied before evaluating. */
+     **overlapping_rotation_matrix,                               /* The rotation matrix to be applied before evaluating. */
       *lower_range_bounds,                            /* The respected lower bounds on parameters. */
       *upper_range_bounds,                            /* The respected upper bounds on parameters. */
       *lower_init_ranges,                             /* The initialization range lower bound. */
