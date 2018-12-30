@@ -328,7 +328,7 @@ void interpretCommandLine( int argc, char **argv )
     block_size = number_of_parameters;
     if(problem_index == 18) overlapping_block_size = 1;
     if(problem_index == 18) block_size = 5;
-    if(problem_index == 19) {scale_factor = number_of_parameters; number_of_parameters = 25 ; block_size = 5; overlapping_block_size=5;}
+    if(problem_index == 19) { block_size = 5; overlapping_block_size = 5;}
     if( problem_index == 13 || problem_index == 15 ) block_size = 5, overlapping_block_size = 5;
     number_of_blocks = (number_of_parameters + block_size - 1) / block_size;
     if(block_size != overlapping_block_size){
@@ -2260,7 +2260,7 @@ void evolveDifferentialDependencies( int population_index ) {
 //        }
 
     }
-    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 
     //normalize
 

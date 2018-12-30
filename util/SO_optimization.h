@@ -133,8 +133,7 @@ double elitist_objective_value,
 int sorting_parameters,
         overlapping_dim,
         printed,
-        elitist_population_index,
-        scale_factor;
+        elitist_population_index;
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 #endif
