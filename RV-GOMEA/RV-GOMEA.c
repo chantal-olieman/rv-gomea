@@ -145,6 +145,7 @@ int    base_population_size,                                /* The size of the f
         current_waiting_position,
         number_of_waiting_cycles,
         overlapping_sets,
+        recalculate_spread,
         continued_learning,
         minimal_dependencies_per_run,
        differential_grouping_evals,
@@ -307,6 +308,7 @@ void interpretCommandLine( int argc, char **argv )
     current_waiting_position = 0;
     sorting_parameters = 1;
     overlapping_sets = 0;
+    recalculate_spread = 0;
     overlapping_dim = 2;
     allow_incomplete_dependence = 0;
     parseCommandLine( argc, argv );
@@ -348,7 +350,8 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1;}
     if( FOS_element_size == -12 ) {static_linkage_tree = 1; overlapping_sets = 1;}
     if( FOS_element_size == -13 ) {static_linkage_tree = 1; overlapping_sets = 2;}
-    if( FOS_element_size == -14 ) {static_linkage_tree = 1; overlapping_sets = 3;}
+    if( FOS_element_size == -14 ) {static_linkage_tree = 1; overlapping_sets = 2; recalculate_spread = 1;}
+    if( FOS_element_size == -16 ) {static_linkage_tree = 1; overlapping_sets = 2; recalculate_spread = 2;}
     if( FOS_element_size == -15 ) {static_linkage_tree = 1; overlapping_sets = number_of_parameters;}
     if( FOS_element_size == -17 ) {static_linkage_tree = 1; overlapping_sets = 1;}
     if( FOS_element_size == -18 ) {static_linkage_tree = 1; overlapping_sets = 2;}
@@ -2478,7 +2481,16 @@ void generateAndEvaluateNewSolutionsToFillPopulation( int population_index )
             }
 
             FOS_element_caused_improvement[j] = adaptDistributionMultipliers( population_index, j );
-//            estimateParametersML( population_index );
+            if(recalculate_spread == 1){
+                computeParametersForSampling( population_index );
+                estimateParametersML( population_index );
+                computeRanksForOnePopulation(population_index);
+            }
+            if(recalculate_spread == 2){
+                computeParametersForSampling( population_index );
+                estimateParameters( population_index );
+                computeRanksForOnePopulation(population_index);
+            }
         }
         free( fos_order );
 
