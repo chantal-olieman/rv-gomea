@@ -2263,7 +2263,7 @@ void evolveDifferentialDependencies( int population_index ) {
 //        }
 
     }
-//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 
     //normalize
 
