@@ -2480,17 +2480,18 @@ void generateAndEvaluateNewSolutionsToFillPopulation( int population_index )
                 individual_improved[k] |= generateNewSolutionFromFOSElement( population_index, j, k, apply_AMS );
             }
 
-            FOS_element_caused_improvement[j] = adaptDistributionMultipliers( population_index, j );
             if(recalculate_spread == 1){
-                computeParametersForSampling( population_index );
+                computeRanksForOnePopulation( population_index );
+                makeSelectionsForOnePopulation( population_index );
                 estimateParametersML( population_index );
-                computeRanksForOnePopulation(population_index);
-            }
-            if(recalculate_spread == 2){
                 computeParametersForSampling( population_index );
-                estimateParameters( population_index );
-                computeRanksForOnePopulation(population_index);
             }
+            FOS_element_caused_improvement[j] = adaptDistributionMultipliers( population_index, j );
+//            if(recalculate_spread == 2){
+//                computeParametersForSampling( population_index );
+//                estimateParameters( population_index );
+//                computeRanksForOnePopulation(population_index);
+//            }
         }
         free( fos_order );
 
