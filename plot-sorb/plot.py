@@ -4,8 +4,8 @@ import json
 import numpy as np
 
 runs = 1
-dim = 25
-scale = 6
+dim = 20
+scale = 20
 
 gomea_command = f"./RV-GOMEA  -b -f -8 -s -r 19 {scale} -115 -100 45 0.35 10 25 0.9 1 0 1e-10 100 0.0 1"
 
@@ -35,7 +35,7 @@ for i in range(runs):
     #     heatmaps[tuple(individual)] = matrix
 
 pylab.imshow(heatmap)
-pylab.title(f"Heatmap of soreb for 10^{scale}\n ")
+pylab.title(f"Heatmap of soreb for {scale} dim\n ")
 pylab.savefig(f"heatmaps/{scale}_heatmap.png")
 pylab.show()
 

@@ -359,6 +359,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                 keep_FOS_element[FOS_index] = 0;
 //                printf("NotKeeping: %d \n",FOS_index);
             }
+            if(FOS_index == (number_of_parameters*2)-2){
+                printf("dependency between biggest sets: %f\n", getSimilarity(r0, r1));
+            }
             if( pruned_tree && keep_FOS_element[FOS_index] ){
                 // we know we will merge r0 and r1, now lets check if they are all completely dependent
                 int completely_dependent = 1;

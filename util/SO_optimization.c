@@ -1190,7 +1190,7 @@ void scaledSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double 
             } else{
                 j = 0;
             }
-            result += pow( 10.0, 6*((double) j/(double)(block_size-1)))*rotated_parameters[i]*rotated_parameters[i];
+            result += pow( 10.0, 6.0*((double) j/(double)(block_size-1)))*rotated_parameters[i]*rotated_parameters[i];
         }
 
     }

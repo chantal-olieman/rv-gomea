@@ -348,10 +348,10 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1;}
     if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; allow_incomplete_dependence=1;}
     if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1;}
-    if( FOS_element_size == -12 ) {static_linkage_tree = 1; overlapping_sets = 1;}
+        if( FOS_element_size == -12 ) {static_linkage_tree = 1; overlapping_sets = 1;}
     if( FOS_element_size == -13 ) {static_linkage_tree = 1; overlapping_sets = 2;}
     if( FOS_element_size == -14 ) {static_linkage_tree = 1; overlapping_sets = 2; recalculate_spread = 1;}
-    if( FOS_element_size == -16 ) {static_linkage_tree = 1; overlapping_sets = 2; recalculate_spread = 2;}
+    if( FOS_element_size == -16 ) {FOS_element_size = 5; recalculate_spread = 1;}
     if( FOS_element_size == -15 ) {static_linkage_tree = 1; overlapping_sets = number_of_parameters;}
     if( FOS_element_size == -17 ) {static_linkage_tree = 1; overlapping_sets = 1;}
     if( FOS_element_size == -18 ) {static_linkage_tree = 1; overlapping_sets = 2;}
@@ -1246,7 +1246,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                 }
             }
         }
-        printFOS(new_FOS);
+//        printFOS(new_FOS);
     }
     if( learn_linkage_tree && number_of_generations[population_index] > 0 )
         inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
@@ -2175,7 +2175,7 @@ void evolveDifferentialDependencies( int population_index ) {
     }
 
     int found_dependencies = 0;
-
+    double max_dependency = 0.0;
     for (k = number_of_checked_pairs; k < max_index; k++) {
         i = dependency_pairs[k][0];
         j = dependency_pairs[k][1];
@@ -2231,6 +2231,7 @@ void evolveDifferentialDependencies( int population_index ) {
         //}
         dependency_matrix[i][j] = dependency;
         dependency_matrix[j][i] = dependency;
+        max_dependency = max(dependency, max_dependency);
         checked_matrix[i][j] = 1;
         checked_matrix[j][i] = 1;
     }
@@ -2264,7 +2265,7 @@ void evolveDifferentialDependencies( int population_index ) {
 
     }
     printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
-
+    printf("max dependency: %f \n", max_dependency);
     //normalize
 
 
@@ -2480,13 +2481,14 @@ void generateAndEvaluateNewSolutionsToFillPopulation( int population_index )
                 individual_improved[k] |= generateNewSolutionFromFOSElement( population_index, j, k, apply_AMS );
             }
 
+            FOS_element_caused_improvement[j] = adaptDistributionMultipliers( population_index, j );
+
             if(recalculate_spread == 1){
                 computeRanksForOnePopulation( population_index );
                 makeSelectionsForOnePopulation( population_index );
                 estimateParametersML( population_index );
                 computeParametersForSampling( population_index );
             }
-            FOS_element_caused_improvement[j] = adaptDistributionMultipliers( population_index, j );
 //            if(recalculate_spread == 2){
 //                computeParametersForSampling( population_index );
 //                estimateParameters( population_index );
