@@ -121,13 +121,19 @@ double ciasFunctionUpperRangeBound( int dimension );
 void overlappingSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value ) ;
 double overlappingSumOfEllipsoidsFunctionLowerRangeBound( int dimension );
 double overlappingSumOfEllipsoidsFunctionUpperRangeBound( int dimension );
+void scaledSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value ) ;
+double scaledSumOfEllipsoidsFunctionLowerRangeBound( int dimension );
+double scaledSumOfEllipsoidsFunctionUpperRangeBound( int dimension );
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 /*-=-=-=-=-=-=-=-=-=-=-=- Section Global Variables -=-=-=-=-=-=-=-=-=-=-=-=-*/
 double elitist_objective_value,
        elitist_constraint_value,
        *elitist_solution;
-int sorting_parameters;
+int sorting_parameters,
+        overlapping_dim,
+        printed,
+        elitist_population_index;
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 #endif

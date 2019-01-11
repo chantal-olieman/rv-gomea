@@ -295,8 +295,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                 && (NN_chain[NN_chain_length] != NN_chain[NN_chain_length-2]) )
                 NN_chain[NN_chain_length] = NN_chain[NN_chain_length-2];
             NN_chain_length++;
-            if( NN_chain_length > number_of_parameters )
+            if( NN_chain_length > number_of_parameters ){
                 break;
+            }
         }
         r0 = NN_chain[NN_chain_length-2];
         r1 = NN_chain[NN_chain_length-1];
@@ -313,7 +314,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                     if( mpm_number_of_indices[i] + mpm_number_of_indices[NN_chain[0]] <= FOS_element_ub ) done = 0;
                     if( mpm_number_of_indices[i] < mpm_number_of_indices[NN_chain[0]] ) NN_chain[0] = i;
                 }
-                if( done ) break;
+                if( done ){
+                    break;
+                }
             }
             continue;
         }
@@ -356,6 +359,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                 keep_FOS_element[FOS_index] = 0;
 //                printf("NotKeeping: %d \n",FOS_index);
             }
+            if(FOS_index == (number_of_parameters*2)-2){
+                printf("dependency between biggest sets: %f\n", getSimilarity(r0, r1));
+            }
             if( pruned_tree && keep_FOS_element[FOS_index] ){
                 // we know we will merge r0 and r1, now lets check if they are all completely dependent
                 int completely_dependent = 1;
@@ -371,7 +377,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                         }
                     }
                 }
-                if (completely_dependent) {
+                if (completely_dependent || allow_incomplete_dependence ) {
                     //remove r1
                     int first_set_element = mpm[r0][0];
                     int set_length = mpm_number_of_indices[r0];
@@ -389,9 +395,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                         }
                     }
                 }
-                else if((all_checked)){
-                    keep_FOS_element[FOS_index] = 0;
-                }
+//                    else if((all_checked)){
+//                        keep_FOS_element[FOS_index] = 0;
+//                    }
             }
 
 
@@ -467,8 +473,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
             mpm_number_of_indices = mpm_new_number_of_indices;
             mpm_length            = mpm_new_length;
 
-            if( mpm_length == 1 )
+            if( mpm_length == 1 ){
                 done = 1;
+            }
 
             FOS_index++;
         }
@@ -515,7 +522,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
     new_FOS->length = FOS_index;
 
 //    printf("making Tree\n");
-    printFOS(new_FOS);
+//    printFOS(new_FOS);
 //    printf("NEW FOS\n");
 //    for( i =0; i < FOS_index; i++){
 //        int setlenght = new_FOS->set_length[i];

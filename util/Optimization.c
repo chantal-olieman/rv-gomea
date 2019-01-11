@@ -103,6 +103,70 @@ void initializeObjectiveRotationMatrix( void )
     free( matrix );
 }
 
+/**
+ * Computes the rotation matrix to be applied to any solution
+ * before evaluating it (i.e. turns the evaluation functions
+ * into rotated evaluation functions).
+ */
+void initializeObjectiveRotationMatrixPointer( int block_size_var )
+{
+    int      i, j, index0, index1;
+    double **matrix, **product, theta, cos_theta, sin_theta;
+
+    if( rotation_angle == 0.0 )
+        return;
+
+    matrix = (double **) Malloc( block_size_var*sizeof( double * ) );
+    for( i = 0; i < block_size_var; i++ )
+        matrix[i] = (double *) Malloc( block_size_var*sizeof( double ) );
+
+    overlapping_rotation_matrix = (double **) Malloc( block_size_var*sizeof( double * ) );
+    for( i = 0; i < block_size_var; i++ )
+        overlapping_rotation_matrix[i] = (double *) Malloc( block_size_var*sizeof( double ) );
+
+    /* Initialize the rotation matrix to the identity matrix */
+    for( i = 0; i < block_size_var; i++ )
+    {
+        for( j = 0; j < block_size_var; j++ )
+            overlapping_rotation_matrix[i][j] = 0.0;
+        overlapping_rotation_matrix[i][i] = 1.0;
+    }
+
+    /* Construct all rotation matrices (quadratic number) and multiply */
+    theta     = (rotation_angle/180.0)*PI;
+    cos_theta = cos( theta );
+    sin_theta = sin( theta );
+    for( index0 = 0; index0 < block_size_var-1; index0++ )
+    {
+        for( index1 = index0+1; index1 < block_size_var; index1++ )
+        {
+            for( i = 0; i < block_size_var; i++ )
+            {
+                for( j = 0; j < block_size_var; j++ )
+                    matrix[i][j] = 0.0;
+                matrix[i][i] = 1.0;
+            }
+            matrix[index0][index0] = cos_theta;
+            matrix[index0][index1] = -sin_theta;
+            matrix[index1][index0] = sin_theta;
+            matrix[index1][index1] = cos_theta;
+
+            product = matrixMatrixMultiplication( matrix, overlapping_rotation_matrix, block_size_var, block_size_var, block_size_var );
+            for( i = 0; i < block_size_var; i++ )
+                for( j = 0; j < block_size_var; j++ )
+                    overlapping_rotation_matrix[i][j] = product[i][j];
+
+            for( i = 0; i < block_size_var; i++ )
+                free( product[i] );
+            free( product );
+        }
+    }
+
+    for( i = 0; i < block_size_var; i++ )
+        free( matrix[i] );
+    free( matrix );
+}
+
 void ezilaitiniObjectiveRotationMatrix( void )
 {
     int i;
@@ -133,7 +197,7 @@ double *rotateParametersInRange( double *parameters, int from, int to )
 //            printf("start_index: %d\n", i*(block_size-overlapping_block_size));
             cluster = (double*) Malloc( block_size*sizeof( double ) );
             for( j = 0; j < block_size; j++ )
-                cluster[j] = rotated_parameters[from + i*(block_size-overlapping_block_size) + j];
+                cluster[j] = parameters[from + i*(block_size-overlapping_block_size) + j];
             rotated_cluster = matrixVectorMultiplication( rotation_matrix, cluster, block_size, block_size );
             for( j = 0; j < block_size; j++ )
                 rotated_parameters[from + i*(block_size-overlapping_block_size) + j] = rotated_cluster[j];

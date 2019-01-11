@@ -74,6 +74,7 @@ int      *mpm_number_of_indices,
           evolve_learning,
           differential_groups,
           iteration,
+            allow_incomplete_dependence,
           pruned_tree,
           dependency_learning,                   /* Wheter we learn dependencies from fitness evaluation of MI */
           random_linkage_tree,                  /* Whether the fixed linkage tree is learned based on a random distance measure. */
