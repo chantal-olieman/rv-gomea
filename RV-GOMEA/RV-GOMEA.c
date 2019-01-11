@@ -1246,7 +1246,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                 }
             }
         }
-//        printFOS(new_FOS);
+        printFOS(new_FOS);
     }
     if( learn_linkage_tree && number_of_generations[population_index] > 0 )
         inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
@@ -2264,8 +2264,8 @@ void evolveDifferentialDependencies( int population_index ) {
 //        }
 
     }
-    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
-    printf("max dependency: %f \n", max_dependency);
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//    printf("max dependency: %f \n", max_dependency);
     //normalize
 
 

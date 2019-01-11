@@ -1237,7 +1237,7 @@ void scaledSumOfEllipsoidsFunctionPartialProblemEvaluation( double *parameters, 
         int block_location = touched_parameters_indices[i] % block_size;
         if(block_location == 0 || block_location == block_size -1){
             if( block_location == block_size-1){
-                j = 4;
+                j = block_size-1;
             } else{
                 j = 0;
             }
