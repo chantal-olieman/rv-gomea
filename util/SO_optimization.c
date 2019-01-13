@@ -284,14 +284,14 @@ void installedProblemEvaluation( int index, double *parameters, double *objectiv
     }
     else
     {
-        if( black_box_evaluations || touched_parameters_indices == NULL  )
+        if( black_box_evaluations || touched_parameters_indices == NULL )
         {
             rotated_parameters = rotateAllParameters( parameters );
             installedProblemEvaluationWithoutRotation( index, rotated_parameters, objective_value, constraint_value, number_of_parameters, NULL, NULL, NULL, 0, 0 );
         }
         else
         {
-            if( (problem_index == 13 || problem_index == 19 )&& (learn_linkage_tree || static_linkage_tree || use_univariate_FOS) ) // indices must be sorted
+            if( (problem_index == 13 )&& (learn_linkage_tree || static_linkage_tree || use_univariate_FOS) ) // indices must be sorted
             {
                 if( touched_parameters_indices != NULL )
                     free( touched_parameters );
@@ -332,6 +332,9 @@ void installedProblemEvaluation( int index, double *parameters, double *objectiv
                 }
                 free( block_indices );
                 free( touched_parameters_before );
+            }
+            else if ( problem_index == 19 ){
+                installedProblemEvaluationWithoutRotation( index, parameters, objective_value, constraint_value, number_of_touched_parameters, touched_parameters_indices, touched_parameters, parameters_before, objective_value_before, constraint_value_before );
             }
             else
             {
@@ -1157,6 +1160,8 @@ void scaledSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double 
 
     rotated_parameters = rotateAllParameters(parameters);
 
+
+
     result = 0.0;
     for( i = 0; i < number_of_parameters; i++ )
     {
@@ -1186,11 +1191,11 @@ void scaledSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double 
         int block_location = i%block_size;
         if(block_location == 0 || block_location == block_size -1){
             if( block_location == block_size-1){
-               j = 4;
+                j = block_size-1;
             } else{
                 j = 0;
             }
-            result += pow( 10.0, 6.0*((double) j/(double)(block_size-1)))*rotated_parameters[i]*rotated_parameters[i];
+            result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters[i]*rotated_parameters[i];
         }
 
     }
@@ -1206,16 +1211,26 @@ void scaledSumOfEllipsoidsFunctionPartialProblemEvaluation( double *parameters, 
     int    i, j;
     double result, *cluster, *rotated_cluster;
 
+    double *all_parameters_before = ( double *) Malloc(number_of_parameters * sizeof(double));
+    for( i = 0; i < number_of_touched_parameters; i++ ) all_parameters_before[i] = parameters[i];
+    for( i = 0; i < number_of_touched_parameters; i++ ) all_parameters_before[touched_parameters_indices[i]] = parameters_before[i];
+
+
+    double *rotated_parameters = rotateAllParameters(parameters);
+    double *rotated_parameters_before = rotateAllParameters(all_parameters_before);
+
     result = objective_value_before;
 
     for( i = 0; i < number_of_touched_parameters; i++ )
     {
         j = touched_parameters_indices[i] % block_size;
-        result -= pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*parameters_before[i]*parameters_before[i];
-        result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*touched_parameters[i]*touched_parameters[i];
+        int touched_index = touched_parameters_indices[i];
+        result -= pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters_before[touched_index]*rotated_parameters_before[touched_index];
+        result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters[touched_index]*rotated_parameters[touched_index];
     }
 
     int small_block_size = overlapping_dim;
+//    for(i = 0; i < number_of_parameters; i++) rotated_parameters[i] = parameters[i];
 
     for( i = 1; i < number_of_blocks; i++ ) {
         cluster = (double *) Malloc(small_block_size * sizeof(double));
@@ -1225,27 +1240,44 @@ void scaledSumOfEllipsoidsFunctionPartialProblemEvaluation( double *parameters, 
         rotated_cluster = matrixVectorMultiplication(overlapping_rotation_matrix, cluster, small_block_size,
                                                      small_block_size);
         for (j = 0; j < small_block_size; j++) {
-            touched_parameters[(i * block_size) + (j - 1)] = rotated_cluster[j];
+            rotated_parameters[(i * block_size) + (j - 1)] = rotated_cluster[j];
         }
         free(cluster);
         free(rotated_cluster);
     }
 
+    for( i = 1; i < number_of_blocks; i++ ) {
+        cluster = (double *) Malloc(small_block_size * sizeof(double));
+        for (j = 0; j < small_block_size; j++) {
+            cluster[j] = all_parameters_before[(i * block_size) + (j - 1)];
+        }
+        rotated_cluster = matrixVectorMultiplication(overlapping_rotation_matrix, cluster, small_block_size,
+                                                     small_block_size);
+        for (j = 0; j < small_block_size; j++) {
+            rotated_parameters_before[(i * block_size) + (j - 1)] = rotated_cluster[j];
+        }
+        free(cluster);
+        free(rotated_cluster);
+    }
 
     for( i = 0; i < number_of_touched_parameters; i++ )
     {
-        int block_location = touched_parameters_indices[i] % block_size;
+        int touched_index = touched_parameters_indices[i];
+        int block_location = touched_index%block_size;
         if(block_location == 0 || block_location == block_size -1){
             if( block_location == block_size-1){
                 j = block_size-1;
             } else{
                 j = 0;
             }
-            result -= pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*parameters_before[i]*parameters_before[i];
-            result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*touched_parameters[i]*touched_parameters[i];
+            result -= pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters_before[touched_index]*rotated_parameters_before[touched_index];
+            result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters[touched_index]*rotated_parameters[touched_index];
         }
     }
 
+
+//    free ( rotated_parameters );
+//    free ( all_parameters_before );
     *objective_value  = result;
     *constraint_value = 0;
 }

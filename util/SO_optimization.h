@@ -122,6 +122,7 @@ void overlappingSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, do
 double overlappingSumOfEllipsoidsFunctionLowerRangeBound( int dimension );
 double overlappingSumOfEllipsoidsFunctionUpperRangeBound( int dimension );
 void scaledSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value ) ;
+void scaledSumOfEllipsoidsFunctionPartialProblemEvaluation( double *parameters, double *objective_value, double *constraint_value, int number_of_touched_parameters, int *touched_parameters_indices, double *touched_parameters, double *parameters_before, double objective_value_before, double constraint_value_before );
 double scaledSumOfEllipsoidsFunctionLowerRangeBound( int dimension );
 double scaledSumOfEllipsoidsFunctionUpperRangeBound( int dimension );
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
