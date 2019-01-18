@@ -103,6 +103,9 @@ char *installedProblemName( int index )
     case 17: return( (char *) "Circles in a Square unrelaxed" );
     case 18: return( (char *) "Overlapping sum of ellipsoids" );
     case 19: return( (char *) "Scaled sum of ellipsoids" );
+    case 20: return( (char *) "Schwefel's Function" );
+    case 21: return( (char *) "Shifted Schwefel's Function" );
+    case 22: return( (char *) "CEC Functions" );
     }
 
     return( NULL );
@@ -167,6 +170,9 @@ double installedProblemLowerRangeBound( int index, int dimension )
     case 17: return( ciasFunctionLowerRangeBound( dimension ) );
     case 18: return( overlappingSumOfEllipsoidsFunctionLowerRangeBound( dimension ) );
     case 19: return( scaledSumOfEllipsoidsFunctionLowerRangeBound( dimension ) );
+    case 20: return( schwefelsFunctionLowerRangeBound( dimension ) );
+    case 21: return( schwefelsFunctionLowerRangeBound( dimension ) );
+    case 22: return( CECFunctionLowerRangeBound( dimension ) );
     }
 
     return( 0.0 );
@@ -199,6 +205,9 @@ double installedProblemUpperRangeBound( int index, int dimension )
     case 17: return( ciasFunctionUpperRangeBound( dimension ) );
     case 18: return( overlappingSumOfEllipsoidsFunctionUpperRangeBound( dimension ) );
     case 19: return( scaledSumOfEllipsoidsFunctionUpperRangeBound( dimension ) );
+    case 20: return( schwefelsFunctionUpperRangeBound( dimension ) );
+    case 21: return( schwefelsFunctionUpperRangeBound( dimension ) );
+    case 22: return( CECFunctionUpperRangeBound( dimension ) );
     }
 
     return( 0.0 );
@@ -407,6 +416,9 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 17: ciasFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 18: overlappingSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 19: scaledSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 20: schwefelsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 21: RPSO_schwefel( parameters, objective_value, constraint_value ); break;
+        case 22: CECProblemEvaluation( parameters, objective_value, constraint_value ); break;
         }
         number_of_evaluations++;
     }
@@ -434,6 +446,9 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 17: ciasFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 18: overlappingSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 19: scaledSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 20: schwefelsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 21: RPSO_schwefel( parameters, objective_value, constraint_value ); break;
+        case 22: CECProblemEvaluation( parameters, objective_value, constraint_value ); break;
         }
         number_of_evaluations += number_of_touched_parameters/(double)number_of_parameters;
     }
@@ -1291,6 +1306,107 @@ double scaledSumOfEllipsoidsFunctionLowerRangeBound( int dimension )
 double scaledSumOfEllipsoidsFunctionUpperRangeBound( int dimension )
 {
     return( 1e+308 );
+}
+
+
+
+double schwefelsFunctionLowerRangeBound( int dimension )
+{
+    return( -1e+308 );
+}
+
+double schwefelsFunctionUpperRangeBound( int dimension )
+{
+    return( 1e+308 );
+}
+
+
+void schwefelsFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
+{
+    int    i;
+    double result;
+    for(i = 0; i < number_of_parameters; i++ ) if(parameters[i]<-500) parameters[i] = -500;
+    for(i = 0; i < number_of_parameters; i++ ) if(parameters[i]>500) parameters[i] = 500;
+
+    result = 418.9829* (double)number_of_parameters;
+    for(i = 0; i < number_of_parameters; i ++){
+        double val = parameters[i];
+        val = sin(sqrt(fabs(val)));
+        result += -parameters[i] * val;
+    }
+
+    *objective_value  = result;
+    *constraint_value = 0;
+}
+
+void RPSO_schwefel(double *parameters, double *objective_value,  double *constraint_value) /* Schwefel's  */
+{
+    int i, r_flag = 0; //This flag might influence overlap
+    double tmp, result;
+    double *z = (double *)malloc(sizeof(double)  *  number_of_parameters);
+    double *x = (double *)malloc(sizeof(double)  *  number_of_parameters);
+
+//    for(i = 0; i < number_of_parameters; i ++){
+//        parameters[i] = 50.0*i;
+//    }
+    for (i=0; i<number_of_parameters; i++)
+    {
+        x[i]=parameters[i]-OShift[i];
+    }
+    for (i=0; i<number_of_parameters; i++) //shrink to the orginal search range
+    {
+        x[i]*=1000/100;
+    }
+    if (r_flag==1){
+        int j;
+        for (i=0; i<number_of_parameters; i++)
+        {
+            z[i]=0;
+            for (j=0; j<number_of_parameters; j++)
+            {
+                z[i]=z[i]+x[j]*M[i*number_of_parameters+j];
+            }
+        }
+    }
+    else
+        for (i=0; i<number_of_parameters; i++)
+            z[i]=x[i];
+
+    for (i=0; i<number_of_parameters; i++)
+        x[i] = z[i]*pow(10.0,1.0*i/(number_of_parameters-1)/2.0);
+
+    for (i=0; i<number_of_parameters; i++)
+        z[i] = x[i]+4.209687462275036e+002;
+
+    result=0;
+    for (i=0; i<number_of_parameters; i++)
+    {
+        if (z[i]>500)
+        {
+            result-=(500.0-fmod(z[i],500))*sin(pow(500.0-fmod(z[i],500),0.5));
+            tmp=(z[i]-500.0)/100;
+            result+= tmp*tmp/number_of_parameters;
+        }
+        else if (z[i]<-500)
+        {
+            result-=(-500.0+fmod(fabs(z[i]),500))*sin(pow(500.0-fmod(fabs(z[i]),500),0.5));
+            tmp=(z[i]+500.0)/100;
+            result+= tmp*tmp/number_of_parameters;
+        }
+        else
+            result-=z[i]*sin(pow(fabs(z[i]),0.5));
+    }
+    result=4.189828872724338e+002*number_of_parameters+result;
+    if(r_flag){
+        result+=100;
+    } else{
+        result -=100;
+    }
+    printf("result: %f, \n ", result);
+    *objective_value = result;
+    *constraint_value = 0;
+    free(x);
+    free(z);
 }
 
 

@@ -46,6 +46,7 @@
 #include "../util/Tools.h"
 #include "../util/SO_optimization.h"
 #include "../util/Optimization.h"
+#include "../util/CEC_benchmark.h"
 #include "../util/FOS.h"
 #define REP(i,end) for (int i = 0; i < end; i++)
 #define pn printf("\n")
@@ -330,13 +331,53 @@ void interpretCommandLine( int argc, char **argv )
     block_size = number_of_parameters;
     if(problem_index == 18) overlapping_block_size = 1;
     if(problem_index == 18) block_size = 5;
-    if(problem_index == 19) { block_size = 5; overlapping_block_size = 5;}
+    if(problem_index == 19) { block_size = 3; overlapping_block_size = 3;}
     if( problem_index == 13 || problem_index == 15 ) block_size = 5, overlapping_block_size = 5;
     number_of_blocks = (number_of_parameters + block_size - 1) / block_size;
     if(block_size != overlapping_block_size){
         number_of_blocks = ((number_of_parameters + (block_size-overlapping_block_size) - 1) / (block_size-overlapping_block_size))-1;
     }
     FOS_element_ub = number_of_parameters;
+    if(problem_index == 21){
+        int cf_num = 10, ret;
+        FILE *fpt;
+        char FileName[300];
+        sprintf(FileName, "../extdata/M_D%d.txt", number_of_parameters);
+        fpt = fopen(FileName,"r");
+        if (fpt==NULL)
+        {
+            printf("Cannot open input file for reading\n");
+        }
+
+        M=(double*)malloc(cf_num*number_of_parameters*number_of_parameters*sizeof(double));
+        for (int i=0; i<cf_num*number_of_parameters*number_of_parameters; i++)
+        {
+            ret = fscanf(fpt,"%lf",&M[i]);
+            if (ret != 1)
+            {
+                printf("Error reading from the input file\n");
+            }
+        }
+        fclose(fpt);
+//        for(int i = 0; i <number_of_parameters; i++){
+//            printf("%f, %f, %f, %f, %f \n", M[0], M[1], M[2], M[3], M[4]);
+//        }
+        fpt = fopen("../extdata/shift_data.txt", "r");
+        if (fpt==NULL)
+        {
+            printf("Cannot open input file for reading\n");
+        }
+        OShift=(double *)malloc(number_of_parameters*cf_num*sizeof(double));
+        for(int i=0;i<cf_num*number_of_parameters;i++)
+        {
+            ret = fscanf(fpt,"%lf",&OShift[i]);
+            if (ret != 1)
+            {
+                printf("Error reading from the input file\n");
+            }
+        }
+        fclose(fpt);
+    }
 //    for(int i = 0; i < 50; i ++){
 //        printf("%d ",i);
 //    }
@@ -2264,7 +2305,7 @@ void evolveDifferentialDependencies( int population_index ) {
 //        }
 
     }
-    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 //    printf("max dependency: %f \n", max_dependency);
     //normalize
 
@@ -3239,6 +3280,9 @@ void run( void )
 //    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 //    printf("%d \n", number_of_generations[0]);
 
+//    for(int i = 0; i < number_of_parameters; i++){
+//        printf("%f, ", elitist_solution[i]);
+//    }
     ezilaitini();
 }
 
