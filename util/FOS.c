@@ -522,7 +522,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
     new_FOS->length = FOS_index;
 
 //    printf("making Tree\n");
-//    printFOS(new_FOS);
+    printFOS(new_FOS);
 //    printf("NEW FOS\n");
 //    for( i =0; i < FOS_index; i++){
 //        int setlenght = new_FOS->set_length[i];

@@ -36,7 +36,7 @@
  */
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-= Section Includes -=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-#include "aaa.h"
+#include "link.h"
 
 
 
@@ -47,17 +47,20 @@ void EvaluateCPP(){
 //    double result = F14(temp_parameters, number_of_parameters);
 //    *objective_value = schwefel(temp_parameters, number_of_parameters);
 //    Benchmarks *fp;
-    int dim = 1000;
-    double *X = (double *) malloc(sizeof(double)* dim);
-    for (unsigned i=0; i<dim; i++){
-        X[i]=0.0;
-    }
-    F14 *fp = new F14();
-    double objective = fp->compute(X);
-    printf("REAL CPP %f\n", objective);
+
 //    *objective_value = 0.4;
 //    if( *objective_value )
 //    printf("restul: %f \n", result);
 //    *constraint_value = 0.0;
 }
 
+double EvaluateBenchmark(  double *parameters, int benchmark_index ) {
+    if( !initialized ) {
+        fp = generateFuncObj(benchmark_index - 9);
+        initialized = 1;
+        printf("Function index: %d\n", fp->getID());
+    }
+    double objective = fp->compute(parameters);
+//    delete fp;
+    return objective;
+}

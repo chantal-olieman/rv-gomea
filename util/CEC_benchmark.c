@@ -37,6 +37,7 @@
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-= Section Includes -=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 #include "CEC_benchmark.h"
+//#include "../temp-dir/aaa_c_connector.h"
 //#include "../cpp/F14.h"
 //#include "../cpp/Header.h"
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
@@ -269,16 +270,12 @@
 //
 //
 //
-void CECProblemEvaluation( double *parameters, double *objective_value, double *constraint_value ){
-//    double *temp_parameters = (double*)Malloc(sizeof(double)* number_of_parameters);
-//    for(int i = 0; i< number_of_parameters; i++) temp_parameters[i] = parameters[i];
-//    double result = F14(temp_parameters, number_of_parameters);
-//    *objective_value = schwefel(temp_parameters, number_of_parameters);
-//    Benchmarks *fp;
-//    fp = new F14();
-    *objective_value = 0.4;
-//    if( *objective_value )
-//    printf("restul: %f \n", result);
+void CECProblemEvaluation( double *parameters, double *objective_value, double *constraint_value, int problem_index ){
+    for(int i = 0; i < 1000; i++) if(parameters[i] < -100) parameters[i] = -100;
+    for(int i = 0; i < 1000; i++) if(parameters[i] > 100) parameters[i] = 100;
+    double result = Evaluate(parameters, problem_index);
+
+    *objective_value = result;
     *constraint_value = 0.0;
 }
 

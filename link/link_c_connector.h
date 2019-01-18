@@ -42,8 +42,7 @@
 extern "C" {
 #endif
 
-void Evaluate( double *parameters, double *objective_value, double *constraint_value ) ;
-void Printftheshit();
+double Evaluate( double *parameters, int benchmark_index ) ;
 
 #ifdef __cplusplus
 }
@@ -51,28 +50,3 @@ void Printftheshit();
 
 
 #endif
-
-/*-=-=-=-=-=-=-=-=-=-=-=-=-=-= Section Includes -=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-//#include "../cpp/F14.h"
-/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-
-
-
-/*-=-=-=-=-=-=-=-=-=-=-=-= Section Header Functions -=-=-=-=-=-=-=-=-=-=-=-=*/
-/*Help functions*/
-//void transform_osz(double* z, int dim);
-//void transform_asy(double* z, double beta, int dim);
-
-/*Benchmark functions*/
-//double schwefel(double*x,int dim);
-
-///*Problem evaluations*/
-/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-
-/*-=-=-=-=-=-=-=-=-=-=-=- Section Global Variables -=-=-=-=-=-=-=-=-=-=-=-=-*/
-
-/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-
-/* Benchmark globals */
-//int MinX, MaxX, ID, s_size, dimensions, overlap, *s, *Pvector;
-//double **OvectorVec, **r25, **r50, **r100, *w;

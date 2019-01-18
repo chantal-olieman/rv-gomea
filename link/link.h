@@ -46,6 +46,9 @@
 extern "C" {
 #endif
 void EvaluateCPP() ;
+double EvaluateBenchmark(  double *parameters, int benchmark_index   ) ;
+Benchmarks* fp;
+int initialized = 0;
 #ifdef __cplusplus
 
 

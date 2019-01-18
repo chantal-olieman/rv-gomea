@@ -1,7 +1,7 @@
 #ifndef _F14_H
 #define _F14_H
 
-#include "../cpp/Benchmarks.h"
+#include "Benchmarks.h"
 
 class F14:public Benchmarks{
  public:

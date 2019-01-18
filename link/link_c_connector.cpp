@@ -46,7 +46,7 @@
 #include <cstdlib>
 
 
-#include "aaa_c_connector.h"
+#include "link_c_connector.h"
 #include "link.h"
 
 #ifdef __cplusplus
@@ -55,24 +55,10 @@ extern "C" {
 
 // Inside this "extern C" block, I can define C functions that are able to call C++ code
 
-void Evaluate( double *parameters, double *objective_value, double *constraint_value ){
-//    double *temp_parameters = (double*)Malloc(sizeof(double)* number_of_parameters);
-//    for(int i = 0; i< number_of_parameters; i++) temp_parameters[i] = parameters[i];
-//    double result = F14(temp_parameters, number_of_parameters);
-//    *objective_value = schwefel(temp_parameters, number_of_parameters);
-//    Benchmarks *fp;
-//    fp = new F14();
-//    printf("CONNECTED\n");
-//    EvaluateCPP(parameters, objective_value, constraint_value);
-    *objective_value = 0.4;
-//    if( *objective_value )
-//    printf("restul: %f \n", result);
-    *constraint_value = 0.0;
+double Evaluate( double *parameters, int benchmark_index  ){
 
-}
-void Printftheshit(){
-//    printf("WORKS");
-    EvaluateCPP();
+    return EvaluateBenchmark(parameters, benchmark_index);
+
 }
 
 #ifdef __cplusplus

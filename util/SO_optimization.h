@@ -42,6 +42,7 @@
 #include "Optimization.h"
 #include "FOS.h"
 #include "Tools.h"
+#include "CEC_benchmark.h"
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 
@@ -125,11 +126,19 @@ void scaledSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double 
 void scaledSumOfEllipsoidsFunctionPartialProblemEvaluation( double *parameters, double *objective_value, double *constraint_value, int number_of_touched_parameters, int *touched_parameters_indices, double *touched_parameters, double *parameters_before, double objective_value_before, double constraint_value_before );
 double scaledSumOfEllipsoidsFunctionLowerRangeBound( int dimension );
 double scaledSumOfEllipsoidsFunctionUpperRangeBound( int dimension );
+void schwefelsFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value ) ;
+void schwefelsFunctionPartialProblemEvaluation( double *parameters, double *objective_value, double *constraint_value, int number_of_touched_parameters, int *touched_parameters_indices, double *touched_parameters, double *parameters_before, double objective_value_before, double constraint_value_before );
+double schwefelsFunctionLowerRangeBound( int dimension );
+double schwefelsFunctionUpperRangeBound( int dimension );
+
+void RPSO_schwefel(double *parameters, double *objective_value, double *constraint_value);
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 /*-=-=-=-=-=-=-=-=-=-=-=- Section Global Variables -=-=-=-=-=-=-=-=-=-=-=-=-*/
 double elitist_objective_value,
        elitist_constraint_value,
+       *OShift,
+        *M,
        *elitist_solution;
 int sorting_parameters,
         overlapping_dim,

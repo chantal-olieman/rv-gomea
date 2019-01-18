@@ -142,5 +142,4 @@ class Benchmarks{
   double c2(double x);
   
 };
-
 #endif

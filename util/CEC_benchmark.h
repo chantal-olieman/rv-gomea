@@ -39,7 +39,7 @@
 #define CEC_BENCHMARK_H
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-= Section Includes -=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-//#include "../cpp/Benchmarks.h"
+#include "../link/link_c_connector.h"
 //#include "../cpp/F14.h"
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
@@ -54,7 +54,7 @@
 //double schwefel(double*x,int dim);
 
 ///*Problem evaluations*/
-void CECProblemEvaluation( double *parameters, double *objective_value, double *constraint_value ) ;
+void CECProblemEvaluation( double *parameters, double *objective_value, double *constraint_value, int problem_index ) ;
 double CECFunctionLowerRangeBound( int dimension );
 double CECFunctionUpperRangeBound( int dimension );
 
