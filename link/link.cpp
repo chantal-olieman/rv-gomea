@@ -56,7 +56,7 @@ void EvaluateCPP(){
 
 double EvaluateBenchmark(  double *parameters, int benchmark_index ) {
     if( !initialized ) {
-        fp = generateFuncObj(benchmark_index - 9);
+        fp = generateFuncObj(benchmark_index - 21);
         initialized = 1;
         printf("Function index: %d\n", fp->getID());
     }

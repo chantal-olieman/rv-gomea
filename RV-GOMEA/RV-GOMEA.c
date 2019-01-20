@@ -378,6 +378,14 @@ void interpretCommandLine( int argc, char **argv )
         }
         fclose(fpt);
     }
+    if(problem_index > 21){
+        if(problem_index == 34 || problem_index == 35){
+            number_of_parameters = 905;
+        } else{
+            number_of_parameters = 1000;
+        }
+        printf("D = %d\n", number_of_parameters);
+    }
 //    for(int i = 0; i < 50; i ++){
 //        printf("%d ",i);
 //    }
@@ -389,7 +397,7 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1;}
     if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; allow_incomplete_dependence=1;}
     if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1;}
-        if( FOS_element_size == -12 ) {static_linkage_tree = 1; overlapping_sets = 1;}
+    if( FOS_element_size == -12 ) {static_linkage_tree = 1; overlapping_sets = 1;}
     if( FOS_element_size == -13 ) {static_linkage_tree = 1; overlapping_sets = 2;}
     if( FOS_element_size == -14 ) {static_linkage_tree = 1; overlapping_sets = 2; recalculate_spread = 1;}
     if( FOS_element_size == -16 ) {FOS_element_size = 5; recalculate_spread = 1;}
@@ -1191,6 +1199,54 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                         }
                         new_FOS->sets[blocks + j + number_of_blocks][i] =
                                 (j * 4 * (block_size - overlapping_block_size)) + i;
+                    }
+                }
+            }
+        }
+        else if(problem_index > 21){
+            if(overlapping_sets == number_of_parameters){
+                new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                new_FOS->length             = 1;
+                new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                new_FOS->sets[0]            = (int *) Malloc( number_of_parameters*sizeof( int * ) );
+                new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                new_FOS->set_length[0] = number_of_parameters;
+                for(int i = 0; i < number_of_parameters; i ++){
+                    new_FOS->sets[0][i] = i;
+                }
+            }
+            else if(overlapping_sets == 1){
+                if(number_of_parameters == 905){
+                    int number_of_sets = 20;
+                    new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                    new_FOS->length             = number_of_sets;
+                    new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                    new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                    int set_lengths[20] = {50, 50, 25, 25, 100, 100, 25, 25, 50, 25, 100, 25, 100, 50, 25, 25, 25, 100, 50, 25};
+                    int current_index = 0;
+                    for(int i = 0; i < number_of_sets; i++){
+                        new_FOS->sets[i]       = (int *) Malloc( (set_lengths[i])*sizeof( int * ) );
+                        new_FOS->set_length[i] = set_lengths[i];
+                        for(int j = 0; j < set_lengths[i]; j++){
+                            new_FOS->sets[i][j] = current_index+j;
+                        }
+                        current_index += set_lengths[i] -5;
+                    }
+                } else{
+                    int number_of_sets = 20;
+                    new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                    new_FOS->length             = number_of_sets;
+                    new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                    new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                    int set_lengths[20] = {50, 50, 25, 25, 100, 100, 25, 25, 50, 25, 100, 25, 100, 50, 25, 25, 25, 100, 50, 25};
+                    int current_index = 0;
+                    for(int i = 0; i < number_of_sets; i++){
+                        new_FOS->sets[i]       = (int *) Malloc( (set_lengths[i])*sizeof( int * ) );
+                        new_FOS->set_length[i] = set_lengths[i];
+                        for(int j = 0; j < set_lengths[i]; j++){
+                            new_FOS->sets[i][j] = current_index+j;
+                        }
+                        current_index += set_lengths[i];
                     }
                 }
             }
