@@ -61,6 +61,19 @@ double EvaluateBenchmark(  double *parameters, int benchmark_index ) {
         printf("Function index: %d\n", fp->getID());
     }
     double objective = fp->compute(parameters);
-//    delete fp;
+//    double res = parameters[0];
+//    printf("One evaluation: %f  (i = %f)\n", objective, parameters[0]);
+//    parameters[0] = res+100;
+//    objective = fp->compute(parameters);
+//    printf("Delta i: %f \n", objective);
+//    parameters[0] = res;
+//    parameters[1] = parameters[1]+100;
+//    objective = fp->compute(parameters);
+//    printf("Delta j: %f \n", objective);
+//    parameters[0] = res+100;
+//    objective = fp->compute(parameters);
+//    printf("Delta ij: %f \n", objective);
+
+
     return objective;
 }

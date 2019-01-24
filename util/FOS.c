@@ -395,9 +395,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                         }
                     }
                 }
-//                    else if((all_checked)){
-//                        keep_FOS_element[FOS_index] = 0;
-//                    }
+                    else if((all_checked)){
+                        keep_FOS_element[FOS_index] = 0;
+                    }
             }
 
 

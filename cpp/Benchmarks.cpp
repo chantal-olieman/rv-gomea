@@ -271,20 +271,22 @@ int* Benchmarks::readPermVector(){
 
   d = new int[dimension];
 
-  stringstream ss;
-  ss<< "cdatafiles/" << "F" << ID << "-p.txt";
-  ifstream file (ss.str());
-  int c=0;
-  string value;
-
-  if (file.is_open())
-    {
-      while (getline(file,value,','))
-        {
-          d[c++] = stod(value) - 1;
-        }
-    }
-
+//  stringstream ss;
+//  ss<< "cdatafiles/" << "F" << ID << "-p.txt";
+//  ifstream file (ss.str());
+//  int c=0;
+//  string value;
+//
+//  if (file.is_open())
+//    {
+//      while (getline(file,value,','))
+//        {
+//          d[c++] = stod(value) - 1;
+//        }
+//    }
+  for(int i = 0; i < dimension; i++){
+    d[i] = i;
+  }
   // for (int i = 0; i < dimension; ++i)
   //   {
   //     printf("%d\n", d[i]);
