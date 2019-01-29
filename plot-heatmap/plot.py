@@ -94,9 +94,9 @@ if from_memory:
 #         sorted_matrix[i][j] = matrix[order_list[i]][order_list[j]]
 # print(order_list[:100])
 
-scaled_matrix = [row[476:550] for row in matrix[476:550]]
-# pylab.imshow(matrix)
-pylab.imshow(scaled_matrix)
+scaled_matrix = [row[700:850] for row in matrix[700:850]]
+pylab.imshow(matrix)
+# pylab.imshow(scaled_matrix)
 pylab.title(f"Heatmap of soreb for {problem}\n ")
 pylab.savefig(f"heatmaps/{problem}_heatmap.png")
 pylab.show()

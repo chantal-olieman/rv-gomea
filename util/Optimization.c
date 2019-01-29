@@ -194,7 +194,6 @@ double *rotateParametersInRange( double *parameters, int from, int to )
     if(overlapping_block_size != block_size){
         for( i = 0; i < number_of_blocks; i++ )
         {
-//            printf("start_index: %d\n", i*(block_size-overlapping_block_size));
             cluster = (double*) Malloc( block_size*sizeof( double ) );
             for( j = 0; j < block_size; j++ )
                 cluster[j] = parameters[from + i*(block_size-overlapping_block_size) + j];

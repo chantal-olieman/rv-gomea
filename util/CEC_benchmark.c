@@ -274,6 +274,7 @@ void CECProblemEvaluation( double *parameters, double *objective_value, double *
     for(int i = 0; i < 1000; i++) if(parameters[i] < -100) parameters[i] = -100;
     for(int i = 0; i < 1000; i++) if(parameters[i] > 100) parameters[i] = 100;
     double result = Evaluate(parameters, problem_index);
+//    double result = 0.0;
 
     *objective_value = result;
     *constraint_value = 0.0;

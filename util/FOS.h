@@ -51,6 +51,7 @@ typedef struct FOS {
 
 /*-=-=-=-=-=-=-=-=-=-=-=-= Section Header Functions -=-=-=-=-=-=-=-=-=-=-=-=*/
 void printFOS( FOS *fos );
+void printBigFOS( FOS *fos );
 FOS *readFOSFromFile( FILE *file );
 FOS *copyFOS( FOS *f );
 FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, int **checked_matrix);

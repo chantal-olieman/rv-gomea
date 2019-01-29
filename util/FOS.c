@@ -39,12 +39,56 @@
 #include "FOS.h"
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
+void printBigFOS( FOS *fos )
+{
+    int i,j;
+    printf("{");
+    for( i = 0; i < fos->length; i++ )
+    {
+        if(fos->set_length[i] == 1){
+            continue;
+        }
+        int skipping = 0;
+        printf("[");
+        for( j = 0; j < fos->set_length[i]; j++ )
+        {
+            if(!skipping){
+                printf("%d", fos->sets[i][j]);
+                if( j != fos->set_length[i] - 1) {
+                    if(fos->sets[i][j]+1 == fos->sets[i][j+1]){
+                        printf("-");
+                        skipping = 1;
+                    } else{
+                        printf(", ");
+                        skipping = 0;
+                    }
+                }
+            } else if( j == fos->set_length[i]-1){
+                printf("%d", fos->sets[i][j]);
+            }else{
+                if( fos->sets[i][j]+1 == fos->sets[i][j+1] ){
+                    skipping = 1;
+                } else{
+                    printf("%d, ", fos->sets[i][j]);
+                    skipping = 0;
+                }
+            }
+        }
+        printf("]");
+        printf("\n");
+    }
+    printf("}\n");
+}
+
 void printFOS( FOS *fos )
 {
     int i,j;
     printf("{");
     for( i = 0; i < fos->length; i++ )
     {
+        if(fos->set_length[i] == 1){
+            continue;
+        }
         printf("[");
         for( j = 0; j < fos->set_length[i]; j++ )
         {
@@ -57,6 +101,7 @@ void printFOS( FOS *fos )
     }
     printf("}\n");
 }
+
 
 FOS *readFOSFromFile( FILE *file )
 {
@@ -522,7 +567,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
     new_FOS->length = FOS_index;
 
 //    printf("making Tree\n");
-    printFOS(new_FOS);
+//    printFOS(new_FOS);
 //    printf("NEW FOS\n");
 //    for( i =0; i < FOS_index; i++){
 //        int setlenght = new_FOS->set_length[i];

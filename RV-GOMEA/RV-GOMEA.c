@@ -331,13 +331,8 @@ void interpretCommandLine( int argc, char **argv )
     block_size = number_of_parameters;
     if(problem_index == 18) overlapping_block_size = 1;
     if(problem_index == 18) block_size = 5;
-    if(problem_index == 19) { block_size = 3; overlapping_block_size = 3;}
+    if(problem_index == 19) { block_size = 5; overlapping_block_size = 5;}
     if( problem_index == 13 || problem_index == 15 ) block_size = 5, overlapping_block_size = 5;
-    number_of_blocks = (number_of_parameters + block_size - 1) / block_size;
-    if(block_size != overlapping_block_size){
-        number_of_blocks = ((number_of_parameters + (block_size-overlapping_block_size) - 1) / (block_size-overlapping_block_size))-1;
-    }
-    FOS_element_ub = number_of_parameters;
     if(problem_index == 21){
         int cf_num = 10, ret;
         FILE *fpt;
@@ -378,7 +373,7 @@ void interpretCommandLine( int argc, char **argv )
         }
         fclose(fpt);
     }
-    if(problem_index > 21){
+    if(problem_index > 21 && problem_index < 37){
         if(problem_index == 34 || problem_index == 35){
             number_of_parameters = 905;
         } else{
@@ -386,9 +381,19 @@ void interpretCommandLine( int argc, char **argv )
         }
         printf("D = %d\n", number_of_parameters);
     }
-//    for(int i = 0; i < 50; i ++){
-//        printf("%d ",i);
-//    }
+    if(problem_index > 36 && problem_index < 47){
+        printf("porblem index %d \n", problem_index);
+        int overlapping_problem_size = problem_index - 35;
+        block_size = overlapping_problem_size; overlapping_block_size = overlapping_problem_size;
+        problem_index = 19;
+    }
+    number_of_blocks = (number_of_parameters + block_size - 1) / block_size;
+    if(block_size != overlapping_block_size){
+        number_of_blocks = ((number_of_parameters + (block_size-overlapping_block_size) - 1) / (block_size-overlapping_block_size))-1;
+    }
+    FOS_element_ub = number_of_parameters;
+    printf("number of blocks %d, bock size %d, overlapping size %d \n ",number_of_blocks, block_size, overlapping_block_size);
+
     if( FOS_element_size == -1 ) FOS_element_size = number_of_parameters;
     if( FOS_element_size == -2 ) learn_linkage_tree = 1;
     if( FOS_element_size == -3 ) static_linkage_tree = 1;
@@ -728,7 +733,7 @@ void initialize( void )
     initializeObjectiveRotationMatrix();
 
     initializeObjectiveRotationMatrixPointer(overlapping_dim);
-    if(problem_index == 19){
+    if( problem_index == 19 ){
         rotation_angle = 0;
     }
 }
@@ -1203,7 +1208,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                 }
             }
         }
-        else if(problem_index > 21){
+        else if(problem_index > 21 && problem_index < 37){
             if(overlapping_sets == number_of_parameters){
                 new_FOS                     = (FOS*) Malloc(sizeof(FOS));
                 new_FOS->length             = 1;
@@ -1343,7 +1348,8 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                 }
             }
         }
-//        printFOS(new_FOS);
+        printBigFOS(new_FOS);
+        printFOS(new_FOS);
     }
     if( learn_linkage_tree && number_of_generations[population_index] > 0 )
         inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
@@ -2585,8 +2591,8 @@ void evolveDifferentialDependencies( int population_index ) {
 
     }
 //    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
-    printf("max dependency: %.100f \n", max_dependency);
-    printf("total dependencies: %d \n", total_dependencies_found);
+//    printf("max dependency: %.100f \n", max_dependency);
+//    printf("total dependencies: %d \n", total_dependencies_found);
     //normalize
 
 

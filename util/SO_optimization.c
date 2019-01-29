@@ -105,7 +105,8 @@ char *installedProblemName( int index )
     case 19: return( (char *) "Scaled sum of ellipsoids" );
     case 20: return( (char *) "Schwefel's Function" );
     case 21: return( (char *) "Shifted Schwefel's Function" );
-    case 22 ... 37: return( (char *) "CEC Function" + index-21 );
+    case 22 ... 36: return( (char *) "CEC Function" + index-21 );
+    case 37 ... 46: return( (char *) "Scaled sum of ellipsoids with groups of " + index-35 );
     }
 
     return( NULL );
@@ -172,7 +173,8 @@ double installedProblemLowerRangeBound( int index, int dimension )
     case 19: return( scaledSumOfEllipsoidsFunctionLowerRangeBound( dimension ) );
     case 20: return( schwefelsFunctionLowerRangeBound( dimension ) );
     case 21: return( schwefelsFunctionLowerRangeBound( dimension ) );
-    case 22 ... 37: return( CECFunctionLowerRangeBound( dimension ) );
+    case 22 ... 36: return( CECFunctionLowerRangeBound( dimension ) );
+//    case 37 ... 46: return( scaledSumOfEllipsoidsFunctionLowerRangeBound( dimension ) );
     }
 
     return( 0.0 );
@@ -207,7 +209,8 @@ double installedProblemUpperRangeBound( int index, int dimension )
     case 19: return( scaledSumOfEllipsoidsFunctionUpperRangeBound( dimension ) );
     case 20: return( schwefelsFunctionUpperRangeBound( dimension ) );
     case 21: return( schwefelsFunctionUpperRangeBound( dimension ) );
-    case 22 ... 37: return( CECFunctionUpperRangeBound( dimension ) );
+    case 22 ... 36: return( CECFunctionUpperRangeBound( dimension ) );
+//    case 37 ... 46: return( scaledSumOfEllipsoidsFunctionUpperRangeBound( dimension ) );
     }
 
     return( 0.0 );
@@ -418,7 +421,8 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 19: scaledSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 20: schwefelsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 21: RPSO_schwefel( parameters, objective_value, constraint_value ); break;
-        case 22 ... 37: CECProblemEvaluation( parameters, objective_value, constraint_value, index ); break;
+        case 22 ... 36: CECProblemEvaluation( parameters, objective_value, constraint_value, index ); break;
+//        case 37 ... 46: scaledSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         }
         number_of_evaluations++;
     }
@@ -448,7 +452,8 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 19: scaledSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 20: schwefelsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 21: RPSO_schwefel( parameters, objective_value, constraint_value ); break;
-        case 22 ... 37: CECProblemEvaluation( parameters, objective_value, constraint_value, index ); break;
+        case 22 ... 36: CECProblemEvaluation( parameters, objective_value, constraint_value, index ); break;
+//        case 37 ... 46: scaledSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         }
         number_of_evaluations += number_of_touched_parameters/(double)number_of_parameters;
     }
@@ -1175,8 +1180,6 @@ void scaledSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double 
 
     rotated_parameters = rotateAllParameters(parameters);
 
-
-
     result = 0.0;
     for( i = 0; i < number_of_parameters; i++ )
     {
@@ -1216,7 +1219,6 @@ void scaledSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double 
     }
 
     free(rotated_parameters);
-
     *objective_value  = result;
     *constraint_value = 0;
 }

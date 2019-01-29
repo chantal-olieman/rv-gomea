@@ -1,0 +1,19 @@
+#!/bin/sh
+
+/usr/bin/clear
+echo "Current directory:" `pwd`
+echo "Current host     :" `hostname`
+echo ""
+
+
+
+echo -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+gcc -static -g -Wall -O3 RV-GOMEA.c ../util/*.c -o RV-GOMEA1 -lm
+echo -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+if [ -f RV-GOMEA.exe ]
+then
+  mv RV-GOMEA.exe RV-GOMEA
+fi
+
+find . -name "*.o" -type f|xargs rm -f
