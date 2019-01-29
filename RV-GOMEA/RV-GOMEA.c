@@ -303,6 +303,7 @@ void interpretCommandLine( int argc, char **argv )
     pruned_tree = 0;
     continued_learning = 0;
     differential_grouping_evals = 0;
+    build_further = 0;
     differential_groups = 0;
     old_dependency_comparison = 0;
     number_of_waiting_cycles = 2;
@@ -382,10 +383,12 @@ void interpretCommandLine( int argc, char **argv )
         printf("D = %d\n", number_of_parameters);
     }
     if(problem_index > 36 && problem_index < 47){
-        printf("porblem index %d \n", problem_index);
+        printf("Problem index %d \n", problem_index);
+        printf("Setting rotation angle to 45\n");
         int overlapping_problem_size = problem_index - 35;
         block_size = overlapping_problem_size; overlapping_block_size = overlapping_problem_size;
         problem_index = 19;
+        rotation_angle = 45;
     }
     number_of_blocks = (number_of_parameters + block_size - 1) / block_size;
     if(block_size != overlapping_block_size){
@@ -400,7 +403,8 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1;}
-    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; allow_incomplete_dependence=1;}
+    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; build_further = 1;}
+//    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; allow_incomplete_dependence=1;}
     if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1;}
     if( FOS_element_size == -12 ) {static_linkage_tree = 1; overlapping_sets = 1;}
     if( FOS_element_size == -13 ) {static_linkage_tree = 1; overlapping_sets = 2;}

@@ -77,6 +77,7 @@ int      *mpm_number_of_indices,
           iteration,
             allow_incomplete_dependence,
           pruned_tree,
+          build_further,
           dependency_learning,                   /* Wheter we learn dependencies from fitness evaluation of MI */
           random_linkage_tree,                  /* Whether the fixed linkage tree is learned based on a random distance measure. */
           FOS_element_size;                     /* If positive, the size of blocks of consecutive variables in the FOS. If negative, determines specific kind of linkage tree FOS. */
