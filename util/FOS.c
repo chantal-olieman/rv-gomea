@@ -86,9 +86,6 @@ void printFOS( FOS *fos )
     printf("{");
     for( i = 0; i < fos->length; i++ )
     {
-        if(fos->set_length[i] == 1){
-            continue;
-        }
         printf("[");
         for( j = 0; j < fos->set_length[i]; j++ )
         {
@@ -101,6 +98,28 @@ void printFOS( FOS *fos )
     }
     printf("}\n");
 }
+
+void printPythonFOS( FOS *fos )
+{
+    int i,j;
+    printf("[");
+    for( i = 0; i < fos->length; i++ )
+    {
+        if(i > 0){
+            printf(", ");
+        }
+        printf("[");
+        for( j = 0; j < fos->set_length[i]; j++ )
+        {
+            printf("%d", fos->sets[i][j]);
+            if( j != fos->set_length[i]-1)
+                printf(",");
+        }
+        printf("]");
+    }
+    printf("]\n");
+}
+
 
 
 FOS *readFOSFromFile( FILE *file )

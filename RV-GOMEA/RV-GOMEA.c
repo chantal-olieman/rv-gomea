@@ -183,6 +183,8 @@ double maximum_number_of_evaluations,                       /* The maximum numbe
     ***full_covariance_matrix,
      **dependency_matrix,
       *first_individual,
+        *objective_over_gen,
+        *evals_over_gen,
       *second_individual,
       *fitness_of_first_individual,
        eta_ams = 1.0,
@@ -395,7 +397,7 @@ void interpretCommandLine( int argc, char **argv )
         number_of_blocks = ((number_of_parameters + (block_size-overlapping_block_size) - 1) / (block_size-overlapping_block_size))-1;
     }
     FOS_element_ub = number_of_parameters;
-    printf("number of blocks %d, bock size %d, overlapping size %d \n ",number_of_blocks, block_size, overlapping_block_size);
+//    printf("number of blocks %d, bock size %d, overlapping size %d \n ",number_of_blocks, block_size, overlapping_block_size);
 
     if( FOS_element_size == -1 ) FOS_element_size = number_of_parameters;
     if( FOS_element_size == -2 ) learn_linkage_tree = 1;
@@ -776,6 +778,8 @@ void initializeMemory( void )
     linkage_model                    = (FOS **) Malloc( maximum_number_of_populations*sizeof( FOS *) );
     individual_NIS                   = ( int ** ) Malloc( maximum_number_of_populations*sizeof( int * ) );
     elitist_solution                 = (double *) Malloc( number_of_parameters*sizeof( double ) );
+    evals_over_gen                   = (double *) Malloc( 1000*sizeof( double ) );
+    objective_over_gen               = (double *) Malloc( 1000*sizeof( double ) );
 }
 
 void initializeNewPopulationMemory( int population_index )
@@ -1225,7 +1229,20 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                 }
             }
             else if(overlapping_sets == 1){
-                if(number_of_parameters == 905){
+                if(problem_index == 33){
+                    new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                    new_FOS->length             = number_of_parameters-1;
+                    new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                    new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                    for(int i = 0; i < new_FOS->length; i ++){
+                        new_FOS->sets[i]            = (int *) Malloc( 2*sizeof( int * ) );
+                        new_FOS->set_length[i] = 2;
+                        for( int j = 0; j < 2; j++){
+                            new_FOS->sets[i][j] = i+j;
+                        }
+                    }
+                }
+                else if(number_of_parameters == 905){
                     int number_of_sets = 20;
                     new_FOS                     = (FOS*) Malloc(sizeof(FOS));
                     new_FOS->length             = number_of_sets;
@@ -1241,7 +1258,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                         }
                         current_index += set_lengths[i] -5;
                     }
-                } else{
+                }else{
                     int number_of_sets = 20;
                     new_FOS                     = (FOS*) Malloc(sizeof(FOS));
                     new_FOS->length             = number_of_sets;
@@ -1354,6 +1371,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
         }
         printBigFOS(new_FOS);
         printFOS(new_FOS);
+//        printPythonFOS(new_FOS);
     }
     if( learn_linkage_tree && number_of_generations[population_index] > 0 )
         inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
@@ -3525,7 +3543,14 @@ void runAllPopulations()
         if( write_generational_solutions )
             writeGenerationalSolutions( 0 );
 
+        evals_over_gen[total_number_of_generations] = number_of_evaluations;
+        objective_over_gen[total_number_of_generations] = elitist_objective_value;
         total_number_of_generations++;
+
+//        printf("\nobjective: \n");
+//        for(int i = 0; i < total_number_of_generations; i++){printf("%3.3f, ", objective_over_gen[i]);}
+//        printf("\nevaluations: \n");
+//        for(int i = 0; i < total_number_of_generations; i++){printf("%3.3f, ", evals_over_gen[i]);}
     }
 }
 
