@@ -77,6 +77,7 @@ int      *mpm_number_of_indices,
           differential_groups,
           iteration,
             allow_incomplete_dependence,
+            randomized_linkage,
           pruned_tree,
           build_further,
           dependency_learning,                   /* Wheter we learn dependencies from fitness evaluation of MI */

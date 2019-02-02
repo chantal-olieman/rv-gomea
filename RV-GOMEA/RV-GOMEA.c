@@ -306,6 +306,7 @@ void interpretCommandLine( int argc, char **argv )
     continued_learning = 0;
     differential_grouping_evals = 0;
     build_further = 0;
+    randomized_linkage = 0;
     differential_groups = 0;
     old_dependency_comparison = 0;
     number_of_waiting_cycles = 2;
@@ -378,9 +379,9 @@ void interpretCommandLine( int argc, char **argv )
     }
     if(problem_index > 21 && problem_index < 37){
         if(problem_index == 34 || problem_index == 35){
-            number_of_parameters = 905;
+            number_of_parameters = 365;
         } else{
-            number_of_parameters = 1000;
+            number_of_parameters = 400;
         }
         printf("D = %d\n", number_of_parameters);
     }
@@ -416,6 +417,7 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -17 ) {static_linkage_tree = 1; overlapping_sets = 1;}
     if( FOS_element_size == -18 ) {static_linkage_tree = 1; overlapping_sets = 2;}
     if( FOS_element_size == -19 ) {static_linkage_tree = 1; overlapping_sets = number_of_parameters;}
+    if( FOS_element_size == -20 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; randomized_linkage = 1;}
 //    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.5;}
 //    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.5;}
 //    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.1;}
@@ -1242,13 +1244,13 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                         }
                     }
                 }
-                else if(number_of_parameters == 905){
-                    int number_of_sets = 20;
+                else if(number_of_parameters == 356){
+                    int number_of_sets = 8;
                     new_FOS                     = (FOS*) Malloc(sizeof(FOS));
                     new_FOS->length             = number_of_sets;
                     new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
                     new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
-                    int set_lengths[20] = {50, 50, 25, 25, 100, 100, 25, 25, 50, 25, 100, 25, 100, 50, 25, 25, 25, 100, 50, 25};
+                    int set_lengths[8] = {50, 50, 25, 25, 100, 100, 25, 25};
                     int current_index = 0;
                     for(int i = 0; i < number_of_sets; i++){
                         new_FOS->sets[i]       = (int *) Malloc( (set_lengths[i])*sizeof( int * ) );
@@ -1259,12 +1261,12 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                         current_index += set_lengths[i] -5;
                     }
                 }else{
-                    int number_of_sets = 20;
+                    int number_of_sets = 8;
                     new_FOS                     = (FOS*) Malloc(sizeof(FOS));
                     new_FOS->length             = number_of_sets;
                     new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
                     new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
-                    int set_lengths[20] = {50, 50, 25, 25, 100, 100, 25, 25, 50, 25, 100, 25, 100, 50, 25, 25, 25, 100, 50, 25};
+                    int set_lengths[8] = {50, 50, 25, 25, 100, 100, 25, 25};
                     int current_index = 0;
                     for(int i = 0; i < number_of_sets; i++){
                         new_FOS->sets[i]       = (int *) Malloc( (set_lengths[i])*sizeof( int * ) );
@@ -2448,6 +2450,21 @@ void evolveDifferentialDependencies( int population_index ) {
     double temp_problem_index = problem_index;
     if(problem_index == 14 || problem_index == 17){
         temp_problem_index = 16;
+    }
+
+    if(randomized_linkage){
+        for (int i = 0; i < number_of_parameters; ++i) {
+            for (int j = i+1; j < number_of_parameters; ++j) {
+                double rand = randomRealUniform01();
+                dependency_matrix[i][j] = rand;
+                dependency_matrix[j][i] = rand;
+            }
+        }
+        number_of_checked_pairs = number_of_pairs;
+        total_dependencies_found += 1000;
+        current_waiting_position = number_of_waiting_cycles;
+        number_of_waiting_cycles = number_of_waiting_cycles * 2;
+        return;
     }
 
     if (number_of_checked_pairs == 0) {

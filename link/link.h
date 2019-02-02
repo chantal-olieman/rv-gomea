@@ -45,8 +45,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void EvaluateCPP() ;
 double EvaluateBenchmark(  double *parameters, int benchmark_index   ) ;
+double *complete_parameters;
+int dim;
 Benchmarks* fp;
 int initialized = 0;
 #ifdef __cplusplus

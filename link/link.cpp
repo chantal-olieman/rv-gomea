@@ -39,40 +39,19 @@
 #include "link.h"
 
 
-
-
-void EvaluateCPP(){
-//    double *temp_parameters = (double*)Malloc(sizeof(double)* number_of_parameters);
-//    for(int i = 0; i< number_of_parameters; i++) temp_parameters[i] = parameters[i];
-//    double result = F14(temp_parameters, number_of_parameters);
-//    *objective_value = schwefel(temp_parameters, number_of_parameters);
-//    Benchmarks *fp;
-
-//    *objective_value = 0.4;
-//    if( *objective_value )
-//    printf("restul: %f \n", result);
-//    *constraint_value = 0.0;
-}
-
 double EvaluateBenchmark(  double *parameters, int benchmark_index ) {
     if( !initialized ) {
         fp = generateFuncObj(benchmark_index - 21);
-        initialized = 1;
+        dim = 400;
+        if(fp->getID() == 13 or fp->getID() == 14){
+            dim = 365;
+        }
+        complete_parameters = fp->readOvector();
         printf("Function index: %d\n", fp->getID());
+        initialized = true;
     }
-    double objective = fp->compute(parameters);
-//    double res = parameters[0];
-//    printf("One evaluation: %f  (i = %f)\n", objective, parameters[0]);
-//    parameters[0] = res+100;
-//    objective = fp->compute(parameters);
-//    printf("Delta i: %f \n", objective);
-//    parameters[0] = res;
-//    parameters[1] = parameters[1]+100;
-//    objective = fp->compute(parameters);
-//    printf("Delta j: %f \n", objective);
-//    parameters[0] = res+100;
-//    objective = fp->compute(parameters);
-//    printf("Delta ij: %f \n", objective);
+    for (int i =0; i < dim; i ++){complete_parameters[i] = parameters[i];}
+    double objective = fp->compute(complete_parameters);
 
 
     return objective;
