@@ -46,7 +46,13 @@ double EvaluateBenchmark(  double *parameters, int benchmark_index ) {
         if(fp->getID() == 13 or fp->getID() == 14){
             dim = 365;
         }
-        complete_parameters = fp->readOvector();
+        if(fp->getID() == 14){
+            complete_parameters = new double[905];
+            for(int i = 0; i<905; i++) complete_parameters[i] = 0.0;
+        }
+        else{
+            complete_parameters = fp->readOvector();
+        }
         printf("Function index: %d\n", fp->getID());
         initialized = true;
     }

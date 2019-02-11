@@ -1244,7 +1244,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                         }
                     }
                 }
-                else if(number_of_parameters == 356){
+                else if(number_of_parameters == 365){
                     int number_of_sets = 8;
                     new_FOS                     = (FOS*) Malloc(sizeof(FOS));
                     new_FOS->length             = number_of_sets;
