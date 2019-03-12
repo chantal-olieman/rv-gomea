@@ -8,7 +8,7 @@ F14::F14():Benchmarks(){
   ID = 14;
   s_size = 20;
   dimension = 905;        // because of overlapping
-  overlap = 5;
+  overlap = 2;
 }
 
 F14::~F14(){

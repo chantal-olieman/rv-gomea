@@ -7,11 +7,11 @@ from subprocess import check_output
 import json
 import numpy as np
 
+from_memory = 1
+problem = 13
 runs = 1
 dim = 146
 scale = dim
-problem = 13
-from_memory = 0
 
 gomea_command = f"./RV-GOMEA -f -10  -s -r -b {21+problem} {dim} -100 100 0 0.35 50 25 0.9 1 3000000.0 0.1 100 0.0 1"
 # gomea_command = f"./RV-GOMEA -f -8  -s -r -b {13} 10 -100 100 45 0.35 50 25 0.9 1 3000000.0 0.1 100 0.0 1"
@@ -22,7 +22,7 @@ gomea_command = " ./RV-GOMEA -f -10  -s -r  34 1000 -100 100 0 0.35 10 25 0.9 1 
 # if not os.path.exists(directory):
 #     os.makedirs(directory)
 
-filename = f"{os.getcwd()}/heatmaps/src/matrix_{problem}.txt"
+filename = f"{os.getcwd()}/heatmaps/src/empty2"
 heatmaps = {}
 print(gomea_command)
 for i in range(runs):
@@ -69,8 +69,14 @@ for i in range(runs):
 
 if from_memory:
     file = open(filename)
-    matrix = json.load(file)
-#
+    matrix = file.readlines()
+
+print(type(matrix))
+print_matrix = []
+for entry in matrix:
+    print(entry)
+    row = [float(x) for x in entry.split(",")[:-1]]
+    print_matrix.append(row)
 # sorted_matrix = np.zeros((dim,dim))
 # order_index = 1
 # dependency_index = 0
@@ -99,7 +105,7 @@ if from_memory:
 # print(order_list[:100])
 
 # scaled_matrix = [row[700:850] for row in matrix[700:850]]
-pylab.imshow(matrix)
+pylab.imshow(print_matrix)
 # pylab.imshow(scaled_matrix)
 pylab.title(f"Heatmap of CEC 2013 f{problem}\n ")
 pylab.savefig(f"heatmaps/{problem}_heatmap_{dim}.png")

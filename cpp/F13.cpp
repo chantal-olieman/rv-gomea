@@ -9,7 +9,7 @@ F13::F13():Benchmarks(){
   ID = 13;
   s_size = 20;
   dimension = 905;        // because of overlapping
-  overlap = 5;
+  overlap = 2;
   anotherz = new double[dimension];
 }
 
@@ -60,7 +60,7 @@ double F13::compute(double*x){
 
   // s_size non-separable part with rotation
   int c = 0;
-  for (i = 0; i < s_size; i++)
+  for (i = 0; i < 8; i++)
     {
       // cout<<"c="<<c<<", i="<<i<<endl;
       anotherz1 = rotateVectorConform(i, c);

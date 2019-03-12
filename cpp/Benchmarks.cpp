@@ -1,7 +1,7 @@
 #include "Benchmarks.h"
 
 Benchmarks::Benchmarks(){
-  dimension = 1000;		
+  dimension = 1000;
   nonSeparableGroupSize = 50;
   MASK = ((L(1)) << (L(48))) - (L(1));
   m_havenextGaussian = false;
@@ -547,7 +547,7 @@ double* Benchmarks::rotateVectorConform(int i, int &c)
     {    
       anotherz1 = multiply( z, r50, s[i]);
     }
-  else if (s[i] == 100) 
+  else if (s[i] == 100)
     {
       anotherz1 = multiply( z, r100, s[i]);
     }
@@ -581,7 +581,7 @@ double* Benchmarks::rotateVectorConflict(int i, int &c, double* x)
     {    
       anotherz1 = multiply( z, r50, s[i]);
     }
-  else if (s[i] == 100) 
+  else if (s[i] == 100)
     {
       anotherz1 = multiply( z, r100, s[i]);
     }

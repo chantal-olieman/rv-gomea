@@ -467,7 +467,7 @@ void sphereFunctionProblemEvaluation( double *parameters, double *objective_valu
     result = 0.0;
     for( i = 0; i < number_of_parameters; i++ )
         result += parameters[i]*parameters[i];
-
+    printf("results: %f \n", result);
     *objective_value  = result;
     *constraint_value = 0;
 }

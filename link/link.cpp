@@ -42,9 +42,9 @@
 double EvaluateBenchmark(  double *parameters, int benchmark_index ) {
     if( !initialized ) {
         fp = generateFuncObj(benchmark_index - 21);
-        dim = 400;
+        dim = 160;
         if(fp->getID() == 13 or fp->getID() == 14){
-            dim = 365;
+            dim = 146;
         }
         if(fp->getID() == 14){
             complete_parameters = new double[905];

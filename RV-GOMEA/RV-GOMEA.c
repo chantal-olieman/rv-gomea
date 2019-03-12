@@ -183,8 +183,6 @@ double maximum_number_of_evaluations,                       /* The maximum numbe
     ***full_covariance_matrix,
      **dependency_matrix,
       *first_individual,
-        *objective_over_gen,
-        *evals_over_gen,
       *second_individual,
       *fitness_of_first_individual,
        eta_ams = 1.0,
@@ -297,15 +295,17 @@ void interpretCommandLine( int argc, char **argv )
     evaluations_for_statistics_hit = 0;
     haveNextNextGaussian = 0;
     total_dependencies_found = 0;
+    pruning_ub = number_of_parameters;
     dependency_evolve_factor = 1.0;
     evolve_scaling = 0;
     epsilon = 0.0;
     iteration = 0;
     printed = 0;
+    wait_with_pruning = 0;
     pruned_tree = 0;
     continued_learning = 0;
     differential_grouping_evals = 0;
-    build_further = 0;
+    sparse_tree = 0;
     randomized_linkage = 0;
     differential_groups = 0;
     old_dependency_comparison = 0;
@@ -379,9 +379,9 @@ void interpretCommandLine( int argc, char **argv )
     }
     if(problem_index > 21 && problem_index < 37){
         if(problem_index == 34 || problem_index == 35){
-            number_of_parameters = 365;
+            number_of_parameters = 146;
         } else{
-            number_of_parameters = 400;
+            number_of_parameters = 160;
         }
         printf("D = %d\n", number_of_parameters);
     }
@@ -399,24 +399,28 @@ void interpretCommandLine( int argc, char **argv )
     }
     FOS_element_ub = number_of_parameters;
 //    printf("number of blocks %d, bock size %d, overlapping size %d \n ",number_of_blocks, block_size, overlapping_block_size);
-
+    pruning_ub = number_of_parameters;
     if( FOS_element_size == -1 ) FOS_element_size = number_of_parameters;
     if( FOS_element_size == -2 ) learn_linkage_tree = 1;
     if( FOS_element_size == -3 ) static_linkage_tree = 1;
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
-    if( FOS_element_size == -6 ) {learn_linkage_tree = 1; FOS_element_ub = 100;} //**LT-100**//
-    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1;} //**DGLT - with pruning**//
-    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; build_further = 1;} //**S-DGLT**//
-    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1;  FOS_element_ub = 100; } //**DGLT-100**//
+    if( FOS_element_size == -6 ) {learn_linkage_tree = 1; pruning_ub = 100;} //**LT-100**//
+    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
+    if( FOS_element_size == -88 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100;  } //**DGLT - with pruning**//
+    if( FOS_element_size == -18 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; pruning_ub = 100; } //**DGLT - with pruning**//
+    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree = 1; pruning_ub = 100; continued_learning=1; } //**S-DGLT**//
+    if( FOS_element_size == -110 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; sparse_tree = 1;   pruning_ub = 100; } //**S-DGLT**//
+    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100;continued_learning=1; } //**DGLT-100**//
+    if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree =1;  wait_with_pruning = 1; pruning_ub = 100; } //**DGLT-DELAY**//
 //    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; allow_incomplete_dependence=1;}
 //    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1;}
-    if( FOS_element_size == -12 ) {static_linkage_tree = 1; overlapping_sets = 1;} //**OVERLAP**//
+//    if( FOS_element_size == -12 ) {static_linkage_tree = 1; overlapping_sets = 1;} //**OVERLAP**//
     if( FOS_element_size == -13 ) {static_linkage_tree = 1; overlapping_sets = 2;}
     if( FOS_element_size == -14 ) {static_linkage_tree = 1; overlapping_sets = 2; recalculate_spread = 1;}
     if( FOS_element_size == -16 ) {FOS_element_size = 5; recalculate_spread = 1;}
     if( FOS_element_size == -15 ) {static_linkage_tree = 1; overlapping_sets = number_of_parameters;} //**FULL**//
-    if( FOS_element_size == -20 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; randomized_linkage = 1;} //**RANDOM**//
+    if( FOS_element_size == -20 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; randomized_linkage = 1; pruning_ub = 100;  } //**RANDOM**//
 //    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.5;}
 //    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.5;}
 //    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.1;}
@@ -739,7 +743,8 @@ void initialize( void )
 
     initializeObjectiveRotationMatrix();
 
-    initializeObjectiveRotationMatrixPointer(overlapping_dim);
+    //initializeObjectiveRotationMatrixPointer(overlapping_dim);
+
     if( problem_index == 19 ){
         rotation_angle = 0;
     }
@@ -779,8 +784,6 @@ void initializeMemory( void )
     linkage_model                    = (FOS **) Malloc( maximum_number_of_populations*sizeof( FOS *) );
     individual_NIS                   = ( int ** ) Malloc( maximum_number_of_populations*sizeof( int * ) );
     elitist_solution                 = (double *) Malloc( number_of_parameters*sizeof( double ) );
-    evals_over_gen                   = (double *) Malloc( 1000*sizeof( double ) );
-    objective_over_gen               = (double *) Malloc( 1000*sizeof( double ) );
 }
 
 void initializeNewPopulationMemory( int population_index )
@@ -1249,13 +1252,13 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                         }
                     }
                 }
-                else if(number_of_parameters == 365){
+                else if(number_of_parameters == 146){
                     int number_of_sets = 8;
                     new_FOS                     = (FOS*) Malloc(sizeof(FOS));
                     new_FOS->length             = number_of_sets;
                     new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
                     new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
-                    int set_lengths[8] = {50, 50, 25, 25, 100, 100, 25, 25};
+                    int set_lengths[8] = {20, 20, 10, 10, 40, 40, 10, 10};
                     int current_index = 0;
                     for(int i = 0; i < number_of_sets; i++){
                         new_FOS->sets[i]       = (int *) Malloc( (set_lengths[i])*sizeof( int * ) );
@@ -1263,7 +1266,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                         for(int j = 0; j < set_lengths[i]; j++){
                             new_FOS->sets[i][j] = current_index+j;
                         }
-                        current_index += set_lengths[i] -5;
+                        current_index += set_lengths[i] - 2;
                     }
                 }else{
                     int number_of_sets = 8;
@@ -1399,6 +1402,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
     }
 
 //    printBigFOS(new_FOS);
+//    printFOS(new_FOS);
 //    printPythonFOS(new_FOS);
 
     return( new_FOS );
@@ -2430,15 +2434,15 @@ void evolveDifferentialDependencies( int population_index ) {
         int found_dependencies_per_run = total_dependencies_found / iteration;
         if (found_dependencies_per_run < minimal_dependencies_per_run) {
             current_waiting_position = number_of_waiting_cycles;
-            number_of_waiting_cycles = number_of_waiting_cycles*2;
+            number_of_waiting_cycles *= 2;
         }
     }
     if (number_of_checked_pairs >= number_of_pairs){
         number_of_checked_pairs = 0;
         current_waiting_position = number_of_waiting_cycles;
-        number_of_waiting_cycles = number_of_waiting_cycles * 2;
-
+        number_of_waiting_cycles *= 2;
     }
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free(individual_to_compare);
 }
 
@@ -2448,7 +2452,7 @@ void printMatrix(double **matrix, int cols, int rows){
     for( i = 0; i < rows; i++ )
     {
         for( j = 0; j < cols; j++ ) {
-            printf("%.6f, ",matrix[i][j]);
+            printf("%f, ",matrix[i][j]);
         }
         printf("  \n");
     }
@@ -3359,14 +3363,7 @@ void runAllPopulations()
         if( write_generational_solutions )
             writeGenerationalSolutions( 0 );
 
-        evals_over_gen[total_number_of_generations] = number_of_evaluations;
-        objective_over_gen[total_number_of_generations] = elitist_objective_value;
         total_number_of_generations++;
-
-//        printf("\nobjective: \n");
-//        for(int i = 0; i < total_number_of_generations; i++){printf("%3.3f, ", objective_over_gen[i]);}
-//        printf("\nevaluations: \n");
-//        for(int i = 0; i < total_number_of_generations; i++){printf("%3.3f, ", evals_over_gen[i]);}
     }
 }
 
@@ -3377,10 +3374,12 @@ void run( void )
 {
     initialize();
 
-    if( print_verbose_overview )
+    if( print_verbose_overview ) {
         printVerboseOverview();
+    }
 
     runAllPopulations();
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 
     printf("evals %f ", number_of_evaluations);
 
@@ -3403,13 +3402,12 @@ void run( void )
 //    evolveDifferentialDependencies(0);
 //    for(int i = 0; i < number_of_parameters; i+=2){
 //        printf("%f, ", elitist_solution[i]);
+//
 //    }
 //    for(int i = 0; i < number_of_parameters; i+=2){
 //        printf("%f, ", elitist_solution[i+1]);
 //    }
 //    printf("\n");
-//
-//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 //    printf("%d \n", number_of_generations[0]);
 
 //    for(int i = 0; i < number_of_parameters; i++){
