@@ -572,6 +572,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                     while(keep_FOS_element[j] && j < FOS_index )
                         j ++;
                     new_FOS->set_length[j] = new_FOS->set_length[i];
+                    free(new_FOS->sets[j]);
                     new_FOS->sets[j] = (int *) Malloc( (new_FOS->set_length[j])*sizeof( int ) );
                     for(int k = 0; k < new_FOS->set_length[j]; k++ ){
                         new_FOS->sets[j][k] = new_FOS->sets[i][k];
@@ -582,6 +583,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                 new_lenght += 1;
             }
             i ++;
+        }
+        for(i = new_lenght; i<FOS_index; i++){
+            free(new_FOS->sets[i]);
         }
         FOS_index = new_lenght;
     }

@@ -126,6 +126,7 @@ void getMinMaxofPopulation(int variable, int population_index, double *min, doub
 void ezilaitini( void );
 void ezilaitiniMemory( void );
 void ezilaitiniDistributionMultipliers( int population_index );
+void ezilaitiniCovarianceMatrices( int population_index );
 void ezilaitiniParametersForSampling( int population_index );
 void ezilaitiniParametersAllPopulations( void );
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
@@ -407,15 +408,14 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -6 ) {learn_linkage_tree = 1; pruning_ub = 100;} //**LT-100**//
     if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
-    if( FOS_element_size == -88 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100;  } //**DGLT - with pruning**//
-    if( FOS_element_size == -18 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; pruning_ub = 100; } //**DGLT - with pruning**//
     if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree = 1; pruning_ub = 100; continued_learning=1; } //**S-DGLT**//
     if( FOS_element_size == -110 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; sparse_tree = 1;   pruning_ub = 100; } //**S-DGLT**//
-    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100;continued_learning=1; } //**DGLT-100**//
+    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT-100**//
     if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree =1;  wait_with_pruning = 1; pruning_ub = 100; } //**DGLT-DELAY**//
 //    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; allow_incomplete_dependence=1;}
 //    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1;}
 //    if( FOS_element_size == -12 ) {static_linkage_tree = 1; overlapping_sets = 1;} //**OVERLAP**//
+
     if( FOS_element_size == -13 ) {static_linkage_tree = 1; overlapping_sets = 2;}
     if( FOS_element_size == -14 ) {static_linkage_tree = 1; overlapping_sets = 2; recalculate_spread = 1;}
     if( FOS_element_size == -16 ) {FOS_element_size = 5; recalculate_spread = 1;}
@@ -833,6 +833,8 @@ void initializeNewPopulationMemory( int population_index )
 //        double one_over_param = 1/number_of_parameters;
         pairs_per_run = dependency_evolve_factor*number_of_parameters;
         pairs_per_run = pairs_per_run*evolve_learning;
+        // just to check
+//        pairs_per_run = number_of_parameters*number_of_parameters;
         number_of_checked_pairs = 0;
         int counter = 0;
         for (i = 0; i < number_of_parameters; i++) {
@@ -1379,10 +1381,8 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
                 }
             }
         }
-//        printFOS(new_FOS);
-//        printPythonFOS(new_FOS);
     }
-    if( learn_linkage_tree && number_of_generations[population_index] > 0 ) {
+    if( (learn_linkage_tree) && number_of_generations[population_index] > 0 ) {
         inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
     }
 
@@ -1395,15 +1395,16 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
         free( linkage_model[population_index]->set_length );
         free( linkage_model[population_index]);
     }
-    if ( evolve_learning ){
-        for( i = 1; i < number_of_populations; i++){
-            linkage_model[i] = copyFOS(new_FOS);
-        }
-    }
-
-//    printBigFOS(new_FOS);
-//    printFOS(new_FOS);
-//    printPythonFOS(new_FOS);
+//    if ( evolve_learning ){
+//        if( number_of_generations[population_index] != 0){
+//            for( i = 0; i < linkage_model[population_index]->length; i++ ) {
+//                free( linkage_model[population_index]->sets[i] );
+//            }
+//            free( linkage_model[population_index]->sets );
+//            free( linkage_model[population_index]->set_length );
+//            free( linkage_model[population_index]);
+//        }
+//    }
 
     return( new_FOS );
 }
@@ -2115,22 +2116,36 @@ void estimateParameters( int population_index )
             if( number_of_generations[population_index] == 0 )
                 initializeDistributionMultipliers( population_index );
         }
-        if ( evolve_learning && (number_of_waiting_cycles== 2 || continued_learning) ){
+        else if ( evolve_learning && (number_of_waiting_cycles== 2 || continued_learning) ){
+            //todo this statement triggers leak
             if((current_waiting_position == 0 || number_of_generations[population_index] == 0 )){
                 if( current_waiting_position == 0 ){
-                    linkage_model[0] = learnLinkageTreeRVGOMEA( 0 );
-                    initializeCovarianceMatrices( 0 );
-                }
-
-                if( number_of_generations[population_index] == 0 )
-                    initializeDistributionMultipliers( population_index );
-
-                if( number_of_populations > 1 ){
-                    for (int i = 1; i < number_of_populations; i++){
-                        linkage_model[i] = copyFOS(linkage_model[0]);
-                        initializeCovarianceMatrices( i );
+                    if(number_of_generations[population_index] != 0){
+                        ezilaitiniCovarianceMatrices(population_index);
+                        ezilaitiniFOS(linkage_model[population_index]);
                     }
+                    linkage_model[population_index] = learnLinkageTreeRVGOMEA( population_index );
+//                    printFOS(linkage_model[population_index]);
+                    if( number_of_populations > 1 ){
+                        for (int i = 0; i < number_of_populations; i++){
+                            if(i != population_index){
+                                if(number_of_generations[i] != 0){
+                                    ezilaitiniCovarianceMatrices(i);
+                                }
+                                ezilaitiniFOS( linkage_model[i] );
+                                linkage_model[i] = copyFOS(linkage_model[population_index]);
+                                initializeCovarianceMatrices( i );
+                            }
+                        }
+                    }
+                    initializeCovarianceMatrices( population_index );
+
                 }
+
+                if( number_of_generations[population_index] == 0 ) {
+                    initializeDistributionMultipliers( population_index );
+                }
+
             }
             else if (current_waiting_position > 0){
                 current_waiting_position -= 1;
@@ -2441,6 +2456,9 @@ void evolveDifferentialDependencies( int population_index ) {
         number_of_checked_pairs = 0;
         current_waiting_position = number_of_waiting_cycles;
         number_of_waiting_cycles *= 2;
+    } else{ //TODO: debugging only
+//        current_waiting_position = number_of_waiting_cycles;
+//        number_of_waiting_cycles *= 2;
     }
 //    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free(individual_to_compare);
@@ -3199,6 +3217,11 @@ void ezilaitiniMemory( void )
     free( out_of_bounds_draws );
     free( individual_NIS );
     free( full_covariance_matrix );
+    if(evolve_learning){
+        for(int i = 0; i < number_of_parameters; i++){
+            free( dependency_matrix[i] );
+        }
+    }
     free( dependency_matrix );
     free( decomposed_covariance_matrices );
     free( decomposed_cholesky_factors_lower_triangle );
