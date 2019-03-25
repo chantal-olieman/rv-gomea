@@ -562,7 +562,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
 //        printf("\n");
 //    }
 
-    if( pruned_tree || epsilon > 0.0 || pruning_ub != number_of_parameters){
+    if(( pruned_tree || epsilon > 0.0 || pruning_ub != number_of_parameters ) && number_of_parameters > 100){
         i = 0;
         j = 0;
         int new_lenght = 0;
@@ -572,7 +572,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                     while(keep_FOS_element[j] && j < FOS_index )
                         j ++;
                     new_FOS->set_length[j] = new_FOS->set_length[i];
-                    free(new_FOS->sets[j]);
+                    //if(j<new_FOS->length){
+                        free(new_FOS->sets[j]);
+                    //}
                     new_FOS->sets[j] = (int *) Malloc( (new_FOS->set_length[j])*sizeof( int ) );
                     for(int k = 0; k < new_FOS->set_length[j]; k++ ){
                         new_FOS->sets[j][k] = new_FOS->sets[i][k];
