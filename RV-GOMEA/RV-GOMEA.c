@@ -986,7 +986,7 @@ void initializeDistributionMultipliers( int population_index )
         free( samples_drawn_from_normal[population_index] );
         free( out_of_bounds_draws[population_index] );
     }
-    if( evolve_learning ){
+    if( evolve_learning || pruning_ub!= number_of_parameters ){
         distribution_multipliers[population_index] = (double *) Malloc( (number_of_parameters*2-1)*sizeof( double ) );
         for( j = 0; j <  (number_of_parameters*2-1); j++ )
             distribution_multipliers[population_index][j] = 1.0;
@@ -3302,7 +3302,7 @@ void ezilaitiniParametersForSampling( int population_index )
     {
         ezilaitiniCovarianceMatrices( population_index );
 
-        for( i = 0; i < number_of_parameters; i++ )
+        for( i = 0; i < linkage_model[population_index]->set_length[i]; i++ )
             free( full_covariance_matrix[population_index][i] );
         free( full_covariance_matrix[population_index] );
     }
