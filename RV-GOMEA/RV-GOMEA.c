@@ -743,7 +743,7 @@ void initialize( void )
 
     initializeObjectiveRotationMatrix();
 
-    //initializeObjectiveRotationMatrixPointer(overlapping_dim);
+    initializeObjectiveRotationMatrixPointer(overlapping_dim);
 
     if( problem_index == 19 ){
         rotation_angle = 0;

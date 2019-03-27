@@ -1293,10 +1293,10 @@ void scaledSumOfEllipsoidsFunctionPartialProblemEvaluation( double *parameters, 
             result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters[touched_index]*rotated_parameters[touched_index];
         }
     }
-
-    if(nround(old_result,0) != nround(objective_value_before,0)){
-        printf("object: %f, new: %f\n", objective_value_before, old_result);
-    }
+//
+//    if(nround(old_result,0) != nround(objective_value_before,0)){
+//        printf("object: %f, new: %f\n", objective_value_before, old_result);
+//    }
     free ( rotated_parameters );
     free ( all_parameters_before );
     *objective_value  = result;
