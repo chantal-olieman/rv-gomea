@@ -449,7 +449,7 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 16: ciasRelaxedFunctionPartialProblemEvaluation( parameters, objective_value, constraint_value, number_of_touched_parameters, touched_parameters_indices, touched_parameters, parameters_before, objective_value_before, constraint_value_before ); break;
         case 17: ciasFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 18: overlappingSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
-        case 19: scaledSumOfEllipsoidsFunctionPartialProblemEvaluation( parameters, objective_value, constraint_value, number_of_touched_parameters, touched_parameters_indices, touched_parameters, parameters_before, objective_value_before, constraint_value_before ); break;
+        case 19: scaledSumOfEllipsoidsFunctionProblemEvaluation(  parameters, objective_value, constraint_value ); break;
         case 20: schwefelsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 21: RPSO_schwefel( parameters, objective_value, constraint_value ); break;
         case 22 ... 36: CECProblemEvaluation( parameters, objective_value, constraint_value, index ); break;
@@ -1293,10 +1293,7 @@ void scaledSumOfEllipsoidsFunctionPartialProblemEvaluation( double *parameters, 
             result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters[touched_index]*rotated_parameters[touched_index];
         }
     }
-//
-//    if(nround(old_result,0) != nround(objective_value_before,0)){
-//        printf("object: %f, new: %f\n", objective_value_before, old_result);
-//    }
+}
     free ( rotated_parameters );
     free ( all_parameters_before );
     *objective_value  = result;
