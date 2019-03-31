@@ -848,7 +848,7 @@ void initializeNewPopulationMemory( int population_index )
             }
         }
         number_of_pairs = counter;
-        printf("number of pairs: %d\n", (int)number_of_pairs/number_of_parameters);
+//        printf("number of pairs: %d\n", (int)number_of_pairs/number_of_parameters);
         for (int i = counter - 1; i >= 0; --i) {
             //generate a random number [0, n-1]
             int j = randomInt(i+1);
@@ -1407,7 +1407,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 //            free( linkage_model[population_index]);
 //        }
 //    }
-    printBigFOS(new_FOS);
+//    printBigFOS(new_FOS);
 //    printFOS(new_FOS);
     return( new_FOS );
 }
