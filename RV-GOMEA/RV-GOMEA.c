@@ -2345,6 +2345,17 @@ void evolveDifferentialDependencies( int population_index ) {
             fitness_of_first_individual[k] = objective_value;
             individual_to_compare[k] = first_individual[k];
         }
+        int counter = number_of_pairs;
+        for (int i = counter - 1; i >= 0; --i) {
+            //generate a random number [0, n-1]
+            int j = randomInt(i+1);
+
+            //swap the last element with element at random index
+            int *temp = dependency_pairs[i];
+            dependency_pairs[i] = dependency_pairs[j];
+            dependency_pairs[j] = temp;
+        }
+
     } else {
         for (k = 0; k < number_of_parameters; k++) {
             individual_to_compare[k] = first_individual[k];
