@@ -408,6 +408,7 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -6 ) {learn_linkage_tree = 1; pruning_ub = 100;} //**LT-100**//
     if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
+    if( FOS_element_size == -80 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
     if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree = 1; pruning_ub = 100; continued_learning=1; } //**S-DGLT**//
     if( FOS_element_size == -110 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; sparse_tree = 1;   pruning_ub = 100; } //**NOEVOLVEDGLT**//
     if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT-100**//
@@ -847,6 +848,7 @@ void initializeNewPopulationMemory( int population_index )
             }
         }
         number_of_pairs = counter;
+        printf("number of pairs: %d\n", (int)number_of_pairs/number_of_parameters);
         for (int i = counter - 1; i >= 0; --i) {
             //generate a random number [0, n-1]
             int j = randomInt(i+1);
@@ -1405,7 +1407,8 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 //            free( linkage_model[population_index]);
 //        }
 //    }
-
+    printBigFOS(new_FOS);
+//    printFOS(new_FOS);
     return( new_FOS );
 }
 
@@ -2124,6 +2127,7 @@ void estimateParameters( int population_index )
                         ezilaitiniCovarianceMatrices(population_index);
                         ezilaitiniFOS(linkage_model[population_index]);
                     }
+//                    printf("checked pairs: %d\n", (int)number_of_checked_pairs/number_of_parameters);
                     linkage_model[population_index] = learnLinkageTreeRVGOMEA( population_index );
 //                    printFOS(linkage_model[population_index]);
                     if( number_of_populations > 1 ){
@@ -2450,12 +2454,18 @@ void evolveDifferentialDependencies( int population_index ) {
         if (found_dependencies_per_run < minimal_dependencies_per_run) {
             current_waiting_position = number_of_waiting_cycles;
             number_of_waiting_cycles *= 2;
+            iteration = 0; total_dependencies_found = 0;
+            //TODO: iteration and total dependencies should be emptied here
+//            printf("Not enough dependencies :( %d\n", total_number_of_generations);
         }
     }
     if (number_of_checked_pairs >= number_of_pairs){
         number_of_checked_pairs = 0;
         current_waiting_position = number_of_waiting_cycles;
         number_of_waiting_cycles *= 2;
+        iteration = 0; total_dependencies_found = 0;
+        //TODO: iteration and total dependencies should be emptied here
+//        printf("Checked all pairs! %d\n", total_number_of_generations);
     } else{ //TODO: debugging only
 //        current_waiting_position = number_of_waiting_cycles;
 //        number_of_waiting_cycles *= 2;
@@ -3387,6 +3397,7 @@ void runAllPopulations()
             writeGenerationalSolutions( 0 );
 
         total_number_of_generations++;
+//        printf("Generations: %d, Pairs Checked: %d, number of populations: %d\n",total_number_of_generations, (int)number_of_checked_pairs/number_of_parameters, number_of_populations);
     }
 }
 
