@@ -76,6 +76,7 @@ void initializeProblem( void );
 void initializeDistributionMultipliers(int population_index );
 void initializePopulationAndFitnessValues( int population_index );
 void inheritDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multipliers );
+void evolveDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multipliers );
 FOS *learnLinkageTreeRVGOMEA( int population_index );
 FOS *learnDifferentialGroups(int population_index);
 void computeRanksForAllPopulations( void );
@@ -145,6 +146,7 @@ int    base_population_size,                                /* The size of the f
        evolve_scaling,
        pairs_per_run,
         current_waiting_position,
+        distribution_flag,
         number_of_waiting_cycles,
         overlapping_sets,
         recalculate_spread,
@@ -286,6 +288,7 @@ void interpretCommandLine( int argc, char **argv )
     use_univariate_FOS = 0;
     learn_linkage_tree = 0;
     static_linkage_tree = 0;
+    distribution_flag = 0;
     dependency_learning = 0;
     evolve_learning = 0;
     random_linkage_tree = 0;
@@ -408,8 +411,10 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -6 ) {learn_linkage_tree = 1; pruning_ub = 100;} //**LT-100**//
     if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
+    if( FOS_element_size == -88 ) {distribution_flag= 1; static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
     if( FOS_element_size == -80 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
     if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree = 1; pruning_ub = 100; continued_learning=1; } //**S-DGLT**//
+    if( FOS_element_size == -101 ) {distribution_flag= 1;static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree = 1; pruning_ub = 100; continued_learning=1; } //**S-DGLT**//
     if( FOS_element_size == -110 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; sparse_tree = 1;   pruning_ub = 100; } //**NOEVOLVEDGLT**//
     if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT-100**//
     if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree =1;  wait_with_pruning = 1; pruning_ub = 100; } //**DGLT-DELAY**//
@@ -1397,7 +1402,12 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
         free( linkage_model[population_index]->set_length );
         free( linkage_model[population_index]);
     }
-//    if ( evolve_learning ){
+    if ( evolve_learning && number_of_generations[population_index] > 1){
+        if(distribution_flag){
+            evolveDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
+        }
+        ezilaitiniFOS(linkage_model[population_index]);
+    }
 //        if( number_of_generations[population_index] != 0){
 //            for( i = 0; i < linkage_model[population_index]->length; i++ ) {
 //                free( linkage_model[population_index]->sets[i] );
@@ -1417,7 +1427,7 @@ void inheritDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multip
     int      i, *permutation;
     double   *multipliers_copy;
 
-    multipliers_copy = (double*) Malloc(new_FOS->length*sizeof(double));
+    multipliers_copy = (double*) Malloc((number_of_parameters*number_of_parameters-1)*sizeof(double));
     for( i = 0; i < new_FOS->length; i++ )
         multipliers_copy[i] = multipliers[i];
     permutation = matchFOSElements( new_FOS, prev_FOS );
@@ -1439,6 +1449,78 @@ void inheritDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multip
     free( multipliers_copy );
     free( permutation );
 }
+
+void evolveDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multipliers )
+{
+    int      i, *permutation;
+    double   *multipliers_copy;
+
+    multipliers_copy = (double*) Malloc(((number_of_parameters*2)-1)*sizeof(double));
+    for( i = 0; i < (number_of_parameters*2)-1; i++ )
+        multipliers_copy[i] = multipliers[i];
+
+    int j, a, b, matches, **FOS_element_similarity_matrix;
+
+    permutation = (int *) Malloc( new_FOS->length*sizeof(int));
+    FOS_element_similarity_matrix = (int**) Malloc((prev_FOS->length)*sizeof(int*));
+    for( i = 0; i < prev_FOS->length; i++ )
+        FOS_element_similarity_matrix[i] = (int*) Malloc((new_FOS->length)*sizeof(int));
+
+    for( i = 0; i < prev_FOS->length; i++ )
+    {
+        for( j = 0; j < new_FOS->length; j++ )
+        {
+            a = 0; b = 0;
+            matches = 0;
+            while( a < prev_FOS->set_length[i] && b < new_FOS->set_length[j] )
+            {
+                if( prev_FOS->sets[i][a] < new_FOS->sets[j][b] )
+                {
+                    a++;
+                }
+                else if( prev_FOS->sets[i][a] > new_FOS->sets[j][b] )
+                {
+                    b++;
+                }
+                else
+                {
+                    a++;
+                    b++;
+                    matches++;
+                }
+            }
+            FOS_element_similarity_matrix[i][j] = (int) 10000*(2.0*matches/(prev_FOS->set_length[i]+new_FOS->set_length[j]));
+        }
+    }
+
+    for( i = 0; i < new_FOS->length; i++ )
+    {
+        int max_index = 0;
+        int max_similarity = -1;
+        for( j = 0; j < prev_FOS->length; j++ )
+        {
+            if(FOS_element_similarity_matrix[j][i]>max_similarity){
+                max_index = j;
+                max_similarity = FOS_element_similarity_matrix[j][i];
+            }
+        }
+        permutation[i] = max_index;
+    }
+
+    if( new_FOS->length != prev_FOS->length) {
+        for( i = 0; i < new_FOS->length; i++ ){
+            multipliers[i] = multipliers_copy[permutation[i]];
+        }
+    }
+
+    for( i = 0; i < prev_FOS->length; i++ )
+        free( FOS_element_similarity_matrix[i] );
+    free( FOS_element_similarity_matrix );
+
+    free( multipliers_copy );
+    free( permutation );
+}
+
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=- Section Ranking -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /**
@@ -2125,7 +2207,6 @@ void estimateParameters( int population_index )
                 if( current_waiting_position == 0 ){
                     if(number_of_generations[population_index] != 0){
                         ezilaitiniCovarianceMatrices(population_index);
-                        ezilaitiniFOS(linkage_model[population_index]);
                     }
 //                    printf("checked pairs: %d\n", (int)number_of_checked_pairs/number_of_parameters);
                     linkage_model[population_index] = learnLinkageTreeRVGOMEA( population_index );
