@@ -562,7 +562,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
 //        printf("\n");
 //    }
 
-    if(( pruned_tree || epsilon > 0.0 || pruning_ub != number_of_parameters ) && number_of_parameters > 100){
+    if(( pruned_tree || epsilon > 0.0 || pruning_ub < number_of_parameters )){  //number of parasm > 100
         i = 0;
         j = 0;
         int new_lenght = 0;
