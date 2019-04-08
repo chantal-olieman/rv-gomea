@@ -410,7 +410,7 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -6 ) {learn_linkage_tree = 1; pruning_ub = 100;} //**LT-100**//
-    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
+    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 60; continued_learning=1; } //**DGLT - with pruning**//
     if( FOS_element_size == -88 ) {distribution_flag= 1; static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
     if( FOS_element_size == -80 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
     if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree = 1; pruning_ub = 100; continued_learning=1; } //**S-DGLT**//
