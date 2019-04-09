@@ -1402,7 +1402,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
         free( linkage_model[population_index]);
     }
     if ( evolve_learning && number_of_generations[population_index] > 1){
-        if(distribution_flag){
+       if(distribution_flag){
             evolveDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
         }
         ezilaitiniFOS(linkage_model[population_index]);
@@ -1418,9 +1418,6 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 //    }
 //    printBigFOS(new_FOS);
 //    printFOS(new_FOS);
-//    for(i = 0; i < new_FOS->length; i ++){
-//        printf("%f, \n", distribution_multipliers[population_index][i]);
-//    }
     return( new_FOS );
 }
 
@@ -1508,11 +1505,8 @@ void evolveDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multipl
         }
         permutation[i] = max_index;
     }
-
-    if( new_FOS->length != prev_FOS->length) {
-        for( i = 0; i < new_FOS->length; i++ ){
-            multipliers[i] = multipliers_copy[permutation[i]];
-        }
+    for( i = 0; i < new_FOS->length; i++ ){
+        multipliers[i] = multipliers_copy[permutation[i]];
     }
 
     for( i = 0; i < prev_FOS->length; i++ )
