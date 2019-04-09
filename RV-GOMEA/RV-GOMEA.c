@@ -969,7 +969,6 @@ void initializeFOS( int population_index )
             new_FOS->set_length[i/FOS_element_size]++;
         }
     }
-//    printFOS(new_FOS);
     linkage_model[population_index] = new_FOS;
 }
 
@@ -1419,6 +1418,9 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 //    }
 //    printBigFOS(new_FOS);
 //    printFOS(new_FOS);
+//    for(i = 0; i < new_FOS->length; i ++){
+//        printf("%f, \n", distribution_multipliers[population_index][i]);
+//    }
     return( new_FOS );
 }
 
@@ -2220,6 +2222,12 @@ void estimateParameters( int population_index )
                                 ezilaitiniFOS( linkage_model[i] );
                                 linkage_model[i] = copyFOS(linkage_model[population_index]);
                                 initializeCovarianceMatrices( i );
+                                if(distribution_flag){
+                                    for(int j = 0; j < linkage_model[population_index]->length; j++){
+                                        distribution_multipliers[i][j] = distribution_multipliers[population_index][j];
+                                    }
+
+                                }
                             }
                         }
                     }
