@@ -1,0 +1,20 @@
+#!/bin/sh
+
+/usr/bin/clear
+echo "Current directory:" `pwd`
+echo "Current host     :" `hostname`
+echo ""
+
+if [ -f AMaLGaM-FOS ]
+then
+  rm AMaLGaM-FOS
+fi
+
+echo -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+g++ -Wall -O3 -o AMaLGaM-FOS AMaLGaM-FOS.c
+echo -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+if [ -f AMaLGaM-FOS.exe ]
+then
+  mv AMaLGaM-FOS.exe AMaLGaM-FOS
+fi
