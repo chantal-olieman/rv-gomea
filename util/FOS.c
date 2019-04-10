@@ -211,6 +211,23 @@ FOS *copyFOS( FOS *f )
     return( new_FOS );
 }
 
+void printMIMatrix(double **matrix, int cols, int rows){
+    int i, j;
+    printf("The whole matrix: \n");
+    for( i = 0; i < rows; i++ )
+    {
+        for( j = 0; j < cols; j++ ) {
+            if(i == j){
+                printf("%f, ", 0.0000);
+            }
+            else{
+                printf("%f, ",matrix[i][j]);
+            }
+        }
+        printf("  \n");
+    }
+}
+
 
 FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, int **checked_matrix)
 {
@@ -227,6 +244,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
     if( learn_linkage_tree && !dependency_learning)
         MI_matrix = computeMIMatrix( covariance_matrix, number_of_parameters );
 
+
+//    if(!dependency_learning)
+//        printMIMatrix(MI_matrix,number_of_parameters, number_of_parameters);
     /* Initialize MPM to the univariate factorization */
     order                 = randomPermutation( number_of_parameters );
     mpm                   = (int **) Malloc( number_of_parameters*sizeof( int * ) );
@@ -580,6 +600,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                     keep_FOS_element[j] = 1;
                     keep_FOS_element[i] = 0;
                 }
+                if(i == j){
+                    j++;
+                }
                 new_lenght += 1;
             }
             i ++;
@@ -591,7 +614,23 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
     }
 
     new_FOS->length = FOS_index;
-
+//    int *present =  (int *) Malloc( ((number_of_parameters)*sizeof( int ) ));
+//    for(int i =0;i<number_of_parameters;i++ )present[i] = 0;
+//    for(int i =0; i < new_FOS->length; i++){
+//        for(int j = 0; j< new_FOS->set_length[i];j++){
+//            if(present[new_FOS->sets[i][j]]){
+//                printf("NOT MARGINAL %d \n ",new_FOS->sets[i][j] );
+//                for(int k = 0; k < number_of_parameters;k++){
+//                    printf("keepfos %d: %d\n",k, keep_FOS_element[k]);
+//                }
+//                printFOS(new_FOS);
+//            }
+//            else{
+//                present[new_FOS->sets[i][j]]=1;
+//            }
+//        }
+//    }
+//    printf("marignal! \n");
 //    printf("making Tree\n");
 //    printFOS(new_FOS);
 //    printf("NEW FOS\n");

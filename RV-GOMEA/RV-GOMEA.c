@@ -1111,7 +1111,6 @@ FOS *learnDifferentialGroups(int population_index){
         new_FOS_length += 1;
     }
     new_FOS->length = new_FOS_length;
-//    printFOS(new_FOS);
 //    printf("original FOS\n");
 //    for( i =0; i < new_FOS_length; i++){
 //        int setlenght = new_FOS->set_length[i];
@@ -1402,9 +1401,10 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
         free( linkage_model[population_index]);
     }
     if ( evolve_learning && number_of_generations[population_index] > 1){
-       if(distribution_flag){
-            evolveDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
-        }
+//        printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+        if(distribution_flag){
+           evolveDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
+       }
         ezilaitiniFOS(linkage_model[population_index]);
     }
 //        if( number_of_generations[population_index] != 0){
@@ -1418,6 +1418,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 //    }
 //    printBigFOS(new_FOS);
 //    printFOS(new_FOS);
+
     return( new_FOS );
 }
 
