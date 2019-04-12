@@ -422,7 +422,7 @@ void interpretCommandLine( int argc, char **argv )
 //    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1;}
 //    if( FOS_element_size == -12 ) {static_linkage_tree = 1; overlapping_sets = 1;} //**OVERLAP**//
 
-    if( FOS_element_size == -13 ) {static_linkage_tree = 1; overlapping_sets = 2;}
+    if( FOS_element_size == -13 ) {static_linkage_tree = 1; overlapping_sets = 1;}
     if( FOS_element_size == -14 ) {static_linkage_tree = 1; overlapping_sets = 2; recalculate_spread = 1;}
     if( FOS_element_size == -16 ) {FOS_element_size = 5; recalculate_spread = 1;}
     if( FOS_element_size == -15 ) {static_linkage_tree = 1; overlapping_sets = number_of_parameters;} //**FULL**//
@@ -1417,8 +1417,8 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 //        }
 //    }
 //    printBigFOS(new_FOS);
-//    printFOS(new_FOS);
- 
+    printFOS(new_FOS);
+
     return( new_FOS );
 }
 
