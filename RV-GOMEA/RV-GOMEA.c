@@ -1418,7 +1418,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 //    }
 //    printBigFOS(new_FOS);
 //    printFOS(new_FOS);
-
+ 
     return( new_FOS );
 }
 
@@ -2384,12 +2384,6 @@ void evolveDifferentialDependencies( int population_index ) {
         temp_problem_index = 16;
     }
 
-    //todo: THIS MUST BE REMOVED AFTER DEBUGGING
-    printf("remove after debugging:\n\n");
-    if(problem_index < 35 ){
-        pairs_per_run = number_of_pairs;
-    }
-
     if(randomized_linkage){
         for (int i = 0; i < number_of_parameters; ++i) {
             for (int j = i+1; j < number_of_parameters; ++j) {
@@ -2571,15 +2565,9 @@ void evolveDifferentialDependencies( int population_index ) {
 //        current_waiting_position = number_of_waiting_cycles;
 //        number_of_waiting_cycles *= 2;
     }
-    //todo: THIS MUST BE REMOVED AFTER DEBUGGING
-    printf("remove after debugging:\n\n");
-    if(problem_index < 35 ){
-        pairs_per_run = number_of_pairs;
-        current_waiting_position = 10e6;
-        number_of_checked_pairs = 0;
-    }
 
-    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free(individual_to_compare);
 }
 
