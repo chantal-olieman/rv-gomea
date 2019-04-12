@@ -466,7 +466,7 @@ int* Benchmarks::readS(int num)
       while (getline(file,value))
         {
           // cout<<stod(value)<<endl;
-          s[c++] = stod(value);
+          s[c++] = stod(value)/2.5;
         }
     }
   return s;
@@ -506,15 +506,15 @@ double* Benchmarks::rotateVector(int i, int &c)
     }
   // cout<<"copy done"<<endl;
 
-  if (s[i]==25)
+  if (s[i]==10)
     {
       anotherz1 = multiply( z, r25, s[i]);
     }
-  else if (s[i] == 50)
+  else if (s[i] == 20)
     {    
       anotherz1 = multiply( z, r50, s[i]);
     }
-  else if (s[i] == 100) 
+  else if (s[i] == 40)
     {
       anotherz1 = multiply( z, r100, s[i]);
     }
@@ -539,15 +539,15 @@ double* Benchmarks::rotateVectorConform(int i, int &c)
       z[j-(c - i*overlap)] = anotherz[Pvector[j]];
     }
   // cout<<"copy done"<<endl;
-  if (s[i]==25)
+  if (s[i]==10)
     {
       anotherz1 = multiply( z, r25, s[i]);
     }
-  else if (s[i] == 50)
+  else if (s[i] == 20)
     {    
       anotherz1 = multiply( z, r50, s[i]);
     }
-  else if (s[i] == 100)
+  else if (s[i] == 40)
     {
       anotherz1 = multiply( z, r100, s[i]);
     }
@@ -573,15 +573,15 @@ double* Benchmarks::rotateVectorConflict(int i, int &c, double* x)
     }
 
   // cout<<"copy done"<<endl;
-  if (s[i]==25)
+  if (s[i]==10)
     {
       anotherz1 = multiply( z, r25, s[i]);
     }
-  else if (s[i] == 50)
+  else if (s[i] == 20)
     {    
       anotherz1 = multiply( z, r50, s[i]);
     }
-  else if (s[i] == 100)
+  else if (s[i] == 40)
     {
       anotherz1 = multiply( z, r100, s[i]);
     }
@@ -636,10 +636,10 @@ double Benchmarks::elliptic(double*x,int dim) {
   double result = 0.0;
   int    i;
   
-  transform_osz(x, dim);
+  transform_osz(x, 146);
 
   // for(i = dim - 1; i >= 0; i--) {
-  for(i=0; i<dim; i++)
+  for(i=0; i<146; i++)
     {
       // printf("%f\n", pow(1.0e6,  i/((double)(dim - 1)) ));
       result += pow(1.0e6,  i/((double)(dim - 1)) ) * x[i] * x[i];

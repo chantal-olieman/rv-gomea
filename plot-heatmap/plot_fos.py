@@ -8,7 +8,7 @@ import json
 import numpy as np
 
 
-from_memory = 1
+from_memory = 0
 problem = 13
 full = "_full"
 full = ""
@@ -23,6 +23,7 @@ if problem == 13 or problem == 14:
     dim = 365
 else:
     dim = 400
+dim = 50
 scale = dim
 
 dglt = 8
@@ -40,7 +41,8 @@ if not from_memory:
     elif full == "_lt":
         dglt = 2
 
-gomea_command = f"./RV-GOMEA-FOS2 -f -{dglt}  -s -r -b {21+problem} {dim} -100 100 0 0.35 50 25 0.9 1 3000000.0 0.1 100 0.0 200"
+gomea_command = f"./RV-GOMEA-FOS2 -f -{dglt}  -s -r -b {21+problem} {dim} -100 100 45 0.35 50 25 0.9 1 3000000.0 0.1 100 0.0 2"
+gomea_command = f"./RV-GOMEA-FOS2 -f -8  -s -r -b {0} {50} -100 100 0 0.35 50 25 0.9 1 3000000.0 0.1 100 0.0 2"
 
 
 filename = f"{os.getcwd()}/FOS-400/src/FOS_f{problem}{full}.txt"
@@ -76,8 +78,8 @@ count = 0
 FOS.sort(key=lambda x: len(x), reverse=True)
 
 for element in FOS:
-    if len(element) < 4:
-        continue
+    # if len(element) < 4:
+    #     continue
     count += 1
     for xi in element:
         for i in range(size_of_fos):
@@ -89,7 +91,7 @@ current_cmap.set_bad(color='white')
 
 pylab.imshow(matrix[:size_of_fos*count])
 pylab.box(False)
-pylab.xlim(xmin=0, xmax=400)
+pylab.xlim(xmin=0, xmax=50)
 pylab.tick_params(top='off', bottom='off', left='off', right='off', labelleft='off', labelbottom='on')
 # pylab.axes().xaxis.set_visible(True)
 if full == "":

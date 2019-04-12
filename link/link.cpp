@@ -59,6 +59,7 @@ double EvaluateBenchmark(  double *parameters, int benchmark_index ) {
     for (int i =0; i < dim; i ++){complete_parameters[i] = parameters[i];}
     double objective = fp->compute(complete_parameters);
 
+//    printf("computing objective: %f\n ", objective);
 
     return objective;
 }

@@ -13,11 +13,13 @@ scale = dim
 problem = 13
 from_memory = 0
 
+
+
 gomea_command = f"./RV-GOMEA -f -10  -s -r -b {21+problem} {dim} -100 100 0 0.35 50 25 0.9 1 3000000.0 0.1 100 0.0 1"
 # gomea_command = f"./RV-GOMEA -f -8  -s -r -b {13} 10 -100 100 45 0.35 50 25 0.9 1 3000000.0 0.1 100 0.0 1"
 
 
-gomea_command = " ./RV-GOMEA -f -10  -s -r  34 1000 -100 100 0 0.35 10 25 0.9 1 1500000.0 0.1 100 0.0 1"
+gomea_command = " ./RV-GOMEA -f -10  -s -r  0 100 -115 -100 0 0.35 10 25 0.9 1 1500000.0 0.1 100 0.0 1"
 # directory = f"{os.getcwd()}/heatmaps/{dim}"
 # if not os.path.exists(directory):
 #     os.makedirs(directory)

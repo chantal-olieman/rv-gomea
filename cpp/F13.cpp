@@ -9,6 +9,7 @@ F13::F13():Benchmarks(){
   ID = 13;
   s_size = 20;
   dimension = 905;        // because of overlapping
+//  dimension = 146;
   overlap = 2;
   anotherz = new double[dimension];
 }

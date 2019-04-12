@@ -583,6 +583,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                 keep_FOS_element[j] = 1;
                 keep_FOS_element[i] = 0;
             }
+            if( i == j ){
+                j++;
+            }
             new_lenght += 1;
         }
         i ++;
