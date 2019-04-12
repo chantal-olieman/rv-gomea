@@ -689,6 +689,18 @@ double **choleskyDecomposition( double **matrix, int n )
   return( result );
 }
 
+void printMatrix(double **matrix, int cols, int rows){
+    int i, j;
+    printf("The whole matrix: \n");
+    for( i = 0; i < rows; i++ )
+    {
+        for( j = 0; j < cols; j++ ) {
+            printf("%f, ",matrix[i][j]);
+        }
+        printf("  \n");
+    }
+}
+
 /**
  * LINPACK subroutine.
  */
@@ -3653,6 +3665,7 @@ void evolveDifferentialDependencies( int population_index ) {
         change_i = change_i/original_objective;
         change_j = change_j/original_objective;
 
+        change_i_j = change_i_j/original_objective;
 
         delta_i = fabs(1.0 - change_i);
         delta_j = fabs(change_j - change_i_j);
