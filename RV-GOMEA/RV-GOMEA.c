@@ -1054,7 +1054,7 @@ FOS *learnDifferentialGroups(int population_index){
     // fill evaluation storage
     installedProblemEvaluation(temp_problem_index, first_individual, &(old_objective), &(old_constraint),
                                number_of_parameters, NULL, NULL, 0, 0);
-    differential_grouping_evals = 1+ number_of_parameters;
+    differential_grouping_evals += 1+ number_of_parameters;
     fitness_of_first_individual[number_of_parameters] = old_objective;
     fitness_of_first_individual[0] = old_objective;
     for (k = 0; k < number_of_parameters; k++) {
@@ -1388,7 +1388,12 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
         }
     }
     if( (learn_linkage_tree) && number_of_generations[population_index] > 0 ) {
-        inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
+        if(new_FOS->length!=linkage_model[population_index]->length || number_of_parameters!=pruning_ub){
+            evolveDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
+        }
+        else{
+            inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
+        }
     }
 
     if( learn_linkage_tree )
@@ -1417,8 +1422,9 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 //        }
 //    }
 //    printBigFOS(new_FOS);
-    printFOS(new_FOS);
-
+//    printFOS(new_FOS);
+//
+//    printf("length:%d \n", new_FOS->length);
     return( new_FOS );
 }
 
@@ -2400,6 +2406,8 @@ void evolveDifferentialDependencies( int population_index ) {
     }
 
     if (number_of_checked_pairs == 0) {
+
+        printf("beginning with 0 checked pairs, wait: %d\n", number_of_waiting_cycles);
         double rand = randomRealUniform01();
         rand = 0.7;
 
@@ -2419,7 +2427,7 @@ void evolveDifferentialDependencies( int population_index ) {
         // fill evaluation storage
         installedProblemEvaluation(temp_problem_index, first_individual, &(old_objective), &(old_constraint),
                                    number_of_parameters, NULL, NULL, 0, 0);
-        differential_grouping_evals = 1+ number_of_parameters;
+        differential_grouping_evals += 1+ number_of_parameters;
         fitness_of_first_individual[number_of_parameters] = old_objective;
         fitness_of_first_individual[0] = old_objective;
         for (k = 0; k < number_of_parameters; k++) {
@@ -3519,6 +3527,7 @@ void run( void )
     printf("time %lf ", getTimer());
     if(evolve_learning){
         printf("differential_evals %d ", differential_grouping_evals);
+        printf("\n\nnormal_evals %d ", ((int)number_of_evaluations)-differential_grouping_evals);
     }
 
     printf("generations %d\n", total_number_of_generations);
