@@ -231,6 +231,7 @@ int        number_of_parameters,             /* The number of parameters to be o
            number_of_ellipsoids,
            FOS_element_size = -1,
             pruned_tree=1,sparse_tree=1,wait_with_pruning=0,
+           number_of_differential_evals=0,
            maximum_number_of_evaluations,    /* The maximum number of evaluations. */
            number_of_evaluations,            /* The current number of times a function evaluation was performed. */
           *number_of_generations,            /* The current generation count. */
@@ -295,7 +296,7 @@ int **dependency_pairs;
 int current_waiting_position = 0;
 int sparse_learning;
 int differential_grouping_evals = 0;
-int number_of_waiting_cycles = 0;
+int number_of_waiting_cycles = 2;
 int number_of_pairs = 0;
 int total_dependencies_found = 0;
 int minimal_dependencies_per_run = 2;
@@ -3558,7 +3559,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 
 void learnFOS(int population_index)
 {
-    if( current_waiting_position == 0 ){
+    if( current_waiting_position == 0 || number_of_generations[population_index]==0){
 		if(number_of_generations[population_index] != 0){
 			ezilaitiniCovarianceMatrices(population_index);
 			ezilaitiniFOS(population_index);
@@ -3585,6 +3586,7 @@ void evolveDifferentialDependencies( int population_index ) {
 
     // initialize if no pairs are checked yet
     if (number_of_checked_pairs == 0) {
+        printf("beginning with 0 checked pairs, wait: %d\n", number_of_waiting_cycles);
         double rand = randomRealUniform01();
         rand = 0.7;
 
@@ -3604,106 +3606,108 @@ void evolveDifferentialDependencies( int population_index ) {
         // fill evaluation storage
         installedProblemEvaluation(problem_index, first_individual, &(old_objective), &(old_constraint) ); 
         //installedProblemEvaluation(problem_index, first_individual, &(old_objective), &(old_constraint), number_of_parameters, NULL, NULL, 0, 0);
-        differential_grouping_evals = 1+ number_of_parameters;
+        differential_grouping_evals += 1 + number_of_parameters;
         fitness_of_first_individual[number_of_parameters] = old_objective;
         fitness_of_first_individual[0] = old_objective;
         for (k = 0; k < number_of_parameters; k++) {
-            individual_to_compare[k] = second_individual[k];
-            installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value) ); 
-            //installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value), 1, &(k), &(first_individual[k]), old_objective, old_constraint);
+          individual_to_compare[k] = second_individual[k];
+          installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value) );
+          number_of_differential_evals += 1;
+          //installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value), 1, &(k), &(first_individual[k]), old_objective, old_constraint);
 
-            fitness_of_first_individual[k] = objective_value;
-            individual_to_compare[k] = first_individual[k];
+          fitness_of_first_individual[k] = objective_value;
+          individual_to_compare[k] = first_individual[k];
         }
-        int counter = number_of_pairs;
-        for (int i = counter - 1; i >= 0; --i) {
-            int j = randomInt(i+1);
+      int counter = number_of_pairs;
+      for (int i = counter - 1; i >= 0; --i) {
+          int j = randomInt(i+1);
 
-            //swap the last element with element at random index
-            int *temp = dependency_pairs[i];
-            dependency_pairs[i] = dependency_pairs[j];
-            dependency_pairs[j] = temp;
+          //swap the last element with element at random index
+          int *temp = dependency_pairs[i];
+          dependency_pairs[i] = dependency_pairs[j];
+          dependency_pairs[j] = temp;
         }
 
     } else {
-        for (k = 0; k < number_of_parameters; k++) {
-            individual_to_compare[k] = first_individual[k];
+      for (k = 0; k < number_of_parameters; k++) {
+          individual_to_compare[k] = first_individual[k];
         }
     }
 
-    iteration += 1;
-    int max_index = number_of_checked_pairs + pairs_per_run;
-    if (max_index >= number_of_pairs) {
-        max_index = number_of_pairs;
+  iteration += 1;
+  int max_index = number_of_checked_pairs + pairs_per_run;
+  if (max_index >= number_of_pairs) {
+      max_index = number_of_pairs;
     }
 
-    double original_objective = fitness_of_first_individual[number_of_parameters];
+  double original_objective = fitness_of_first_individual[number_of_parameters];
 
-    for (k = 0; k < number_of_parameters; k++) {
-        individual_to_compare[k] = first_individual[k];
+  for (k = 0; k < number_of_parameters; k++) {
+      individual_to_compare[k] = first_individual[k];
     }
-    int found_dependencies = 0;
-    double max_dependency = 0.0;
-    for (k = number_of_checked_pairs; k < max_index; k++) {
-        i = dependency_pairs[k][0];
-        j = dependency_pairs[k][1];
+  int found_dependencies = 0;
+  double max_dependency = 0.0;
+  for (k = number_of_checked_pairs; k < max_index; k++) {
+      i = dependency_pairs[k][0];
+      j = dependency_pairs[k][1];
 
-        double change_i, change_j, change_i_j;
-        change_i = fitness_of_first_individual[i];
-        change_j = fitness_of_first_individual[j];
+      double change_i, change_j, change_i_j;
+      change_i = fitness_of_first_individual[i];
+      change_j = fitness_of_first_individual[j];
 
-        individual_to_compare[i] = second_individual[i];
-        individual_to_compare[j] = second_individual[j];
-        installedProblemEvaluation(problem_index, individual_to_compare, &(change_i_j), &(constraint_value) );
-        //installedProblemEvaluation(problem_index, individual_to_compare, &(change_i_j), &(constraint_value), 1, &(j), &(first_individual[j]), fitness_of_first_individual[i], 0);
-        differential_grouping_evals+=1;
-        individual_to_compare[i] = first_individual[i];
-        individual_to_compare[j] = first_individual[j];
+      individual_to_compare[i] = second_individual[i];
+      individual_to_compare[j] = second_individual[j];
+      installedProblemEvaluation(problem_index, individual_to_compare, &(change_i_j), &(constraint_value) );
+      number_of_differential_evals += 1;
+      //installedProblemEvaluation(problem_index, individual_to_compare, &(change_i_j), &(constraint_value), 1, &(j), &(first_individual[j]), fitness_of_first_individual[i], 0);
+      differential_grouping_evals+=1;
+      individual_to_compare[i] = first_individual[i];
+      individual_to_compare[j] = first_individual[j];
 
-        double delta_i, delta_j;
+      double delta_i, delta_j;
 
-        change_i = change_i/original_objective;
-        change_j = change_j/original_objective;
+      change_i = change_i/original_objective;
+      change_j = change_j/original_objective;
 
-        change_i_j = change_i_j/original_objective;
+      change_i_j = change_i_j/original_objective;
 
-        delta_i = fabs(1.0 - change_i);
-        delta_j = fabs(change_j - change_i_j);
+      delta_i = fabs(1.0 - change_i);
+      delta_j = fabs(change_j - change_i_j);
 
 
-        delta_i = nround(delta_i, 12);
-        delta_j = nround(delta_j, 12);
+      delta_i = nround(delta_i, 12);
+      delta_j = nround(delta_j, 12);
 
-        double dependency = 0.0;
-        double inverted_difference;
+      double dependency = 0.0;
+      double inverted_difference;
 
-        if(delta_j == 0.0) {
-            double temp = delta_i;
-            delta_i = delta_j;
-            delta_j = temp;
+      if(delta_j == 0.0) {
+          double temp = delta_i;
+          delta_i = delta_j;
+          delta_j = temp;
         }
-        if(delta_j != 0.0){
-            inverted_difference = fabs(delta_i/delta_j);
-            if(inverted_difference > 1.0){
-                inverted_difference = fabs((double)delta_j/delta_i);
+      if(delta_j != 0.0){
+          inverted_difference = fabs(delta_i/delta_j);
+          if(inverted_difference > 1.0){
+              inverted_difference = fabs((double)delta_j/delta_i);
             }
         } else{
-            inverted_difference = 1.0;
+          inverted_difference = 1.0;
         }
-        dependency = 1-inverted_difference;
-        if (inverted_difference < 1) {
-            found_dependencies += 1;
+      dependency = 1-inverted_difference;
+      if (inverted_difference < 1) {
+          found_dependencies += 1;
         } else{
-            dependency = 0.0;
+          dependency = 0.0;
         }
-        dependency_matrix[i][j] = dependency;
-        dependency_matrix[j][i] = dependency;
+      dependency_matrix[i][j] = dependency;
+      dependency_matrix[j][i] = dependency;
 
-        max_dependency = fmax(dependency, max_dependency);
-        checked_matrix[i][j] = 1;
-        checked_matrix[j][i] = 1;
+      max_dependency = fmax(dependency, max_dependency);
+      checked_matrix[i][j] = 1;
+      checked_matrix[j][i] = 1;
     }
-    total_dependencies_found += found_dependencies;
+  total_dependencies_found += found_dependencies;
     number_of_checked_pairs += pairs_per_run;
     if (found_dependencies == 0) {
         int found_dependencies_per_run = total_dependencies_found / iteration;
@@ -4531,6 +4535,9 @@ void run( void )
   ezilaitini();
 
   printf("time %f ", getTimer());
+  printf("differential_evals %d ", differential_grouping_evals);
+  printf("\n\nnormal_evals %d ", number_of_evaluations-differential_grouping_evals);
+
   printf("generations %d\n", total_number_of_generations);
 
 }
