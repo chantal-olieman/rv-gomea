@@ -20,7 +20,7 @@ method = "FB"
 # gomea_command = f"./RV-GOMEA-CECs -f {flag} -s -r {problem} 1000 -100 -100 0 0.35 50 25 0.9 1 3000000 0.1 100 0.0 1"
 # gomea_command = f"./RV-GOMEA -f -8  -s -r -b {13} 10 -100 100 45 0.35 50 25 0.9 1 3000000.0 0.1 100 0.0 1"
 
-gomea_command = f"./RV-GOMEA-CECs -f -8  -s -r  {problem} 1000 -100 100 0 0.35 10 25 0.9 1 1500000.0 0.1 100 0.0 1"
+gomea_command = f"./RV-GOMEA-CECs -f -110  -s -r  {problem} 1000 -100 100 0 0.35 10 25 0.9 1 1500000.0 0.1 100 0.0 1"
 # gomea_command = " ./RV-GOMEA -f -10  -s -r  0 100 -115 -100 0 0.35 10 25 0.9 1 1500000.0 0.1 100 0.0 1"
 # directory = f"{os.getcwd()}/heatmaps/{dim}"
 # if not os.path.exists(directory):
@@ -73,7 +73,7 @@ for i in range(runs):
     # pylab.title(f"Heatmap of 50 dimensional {problem} problem\n ")
     pylab.savefig(f"CEC/{problem}.png")
     # pylab.plt.colorbar(orientation="horizontal")
-    pylab.show()
+    # pylab.show()
     # if result_vec_count[tuple(individual)] > 1:
     #     heatmaps[tuple(individual)] = heatmaps[tuple(individual)] + matrix
     # else:

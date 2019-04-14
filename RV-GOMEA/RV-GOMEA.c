@@ -2389,6 +2389,10 @@ void evolveDifferentialDependencies( int population_index ) {
     if(problem_index == 14 || problem_index == 17){
         temp_problem_index = 16;
     }
+    //todo: just for debug
+    if(problem_index == 35){
+        pairs_per_run = number_of_pairs;
+    }
 
     if(randomized_linkage){
         for (int i = 0; i < number_of_parameters; ++i) {
@@ -2556,13 +2560,14 @@ void evolveDifferentialDependencies( int population_index ) {
         int found_dependencies_per_run = total_dependencies_found / iteration;
         if (found_dependencies_per_run < minimal_dependencies_per_run) {
             current_waiting_position = number_of_waiting_cycles;
+            number_of_checked_pairs = 0;
             number_of_waiting_cycles *= 2;
             iteration = 0; total_dependencies_found = 0;
             //TODO: iteration and total dependencies should be emptied here
 //            printf("Not enough dependencies :( %d\n", total_number_of_generations);
         }
     }
-    if (number_of_checked_pairs >= number_of_pairs){
+    else if (number_of_checked_pairs >= number_of_pairs){
         number_of_checked_pairs = 0;
         current_waiting_position = number_of_waiting_cycles;
         number_of_waiting_cycles *= 2;
@@ -2575,7 +2580,7 @@ void evolveDifferentialDependencies( int population_index ) {
     }
 
 
-//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free(individual_to_compare);
 }
 
@@ -3527,7 +3532,7 @@ void run( void )
     printf("time %lf ", getTimer());
     if(evolve_learning){
         printf("differential_evals %d ", differential_grouping_evals);
-        printf("\n\nnormal_evals %d ", ((int)number_of_evaluations)-differential_grouping_evals);
+//        printf("\n\nnormal_evals %d ", ((int)number_of_evaluations)-differential_grouping_evals);
     }
 
     printf("generations %d\n", total_number_of_generations);

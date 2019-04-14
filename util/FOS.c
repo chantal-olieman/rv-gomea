@@ -245,7 +245,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
         MI_matrix = computeMIMatrix( covariance_matrix, number_of_parameters );
 
 
-    if(!dependency_learning)
+//    if(!dependency_learning)
 //        printMIMatrix(MI_matrix,number_of_parameters, number_of_parameters);
     /* Initialize MPM to the univariate factorization */
     order                 = randomPermutation( number_of_parameters );
