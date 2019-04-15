@@ -2411,7 +2411,7 @@ void evolveDifferentialDependencies( int population_index ) {
 
     if (number_of_checked_pairs == 0) {
 
-        printf("beginning with 0 checked pairs, wait: %d\n", number_of_waiting_cycles);
+//        printf("beginning with 0 checked pairs, wait: %d\n", number_of_waiting_cycles);
         double rand = randomRealUniform01();
         rand = 0.7;
 
@@ -2580,7 +2580,7 @@ void evolveDifferentialDependencies( int population_index ) {
     }
 
 
-    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free(individual_to_compare);
 }
 
