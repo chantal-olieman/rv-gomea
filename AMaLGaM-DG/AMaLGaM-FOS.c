@@ -1760,7 +1760,7 @@ void installedProblemEvaluationWithoutRotation(int index, double *parameters, do
 void sphereFunctionProblemEvaluation(double *parameters, double *objective_value, double *constraint_value) {
     int i;
     double result;
-
+//    printf("%d \n",  number_of_evaluations);
     result = 0.0;
     for (i = 0; i < number_of_parameters; i++)
         result += parameters[i] * parameters[i];
@@ -3513,7 +3513,7 @@ void learnFOS(int population_index) {
         }
         //printFOS( linkage_model[population_index] );
     } else if (current_waiting_position > 0) {
-//        current_waiting_position--;
+        current_waiting_position--;
     }
 }
 
@@ -3525,8 +3525,8 @@ void evolveDifferentialDependencies(int population_index) {
 
     // initialize if no pairs are checked yet
     if (number_of_checked_pairs == 0) {
-        printf("beginning with 0 checked pairs, wait: %d, total: %d, population %d\n", number_of_waiting_cycles,
-               number_of_pairs, population_index);
+//        printf("beginning with 0 checked pairs, wait: %d, total: %d, population %d\n", number_of_waiting_cycles,
+//               number_of_pairs, population_index);
         double rand = randomRealUniform01();
         rand = 0.7;
 
@@ -3642,8 +3642,8 @@ void evolveDifferentialDependencies(int population_index) {
         }
         dependency_matrix[i][j] = dependency;
         dependency_matrix[j][i] = dependency;
-        dependency_matrix[i][j] = 0;
-        dependency_matrix[j][i] = 0;
+//        dependency_matrix[i][j] = 0;
+//        dependency_matrix[j][i] = 0;
 
 
         max_dependency = fmax(dependency, max_dependency);
@@ -3658,8 +3658,8 @@ void evolveDifferentialDependencies(int population_index) {
             current_waiting_position = number_of_waiting_cycles;
             number_of_waiting_cycles *= 2;
             number_of_checked_pairs = 0;
-            printf("THIS happens and waiting cycles is now, %d, evals: %d\n", number_of_waiting_cycles,
-                   number_of_differential_evals);
+//            printf("THIS happens and waiting cycles is now, %d, evals: %d\n", number_of_waiting_cycles,
+//                   number_of_differential_evals);
             iteration = 0;
             total_dependencies_found = 0;
         }
@@ -3670,7 +3670,7 @@ void evolveDifferentialDependencies(int population_index) {
         iteration = 0;
         total_dependencies_found = 0;
     }
-
+//    printMatrix(dep)
     free(individual_to_compare);
 }
 
