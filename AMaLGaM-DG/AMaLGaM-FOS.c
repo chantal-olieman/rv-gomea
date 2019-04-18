@@ -1760,11 +1760,13 @@ void installedProblemEvaluationWithoutRotation(int index, double *parameters, do
 void sphereFunctionProblemEvaluation(double *parameters, double *objective_value, double *constraint_value) {
     int i;
     double result;
-//    printf("%d \n",  number_of_evaluations);
+
     result = 0.0;
     for (i = 0; i < number_of_parameters; i++)
         result += parameters[i] * parameters[i];
 
+//    printf("%d, %lf \n", number_of_evaluations, result);
+    
     *objective_value = result;
     *constraint_value = 0;
 }
@@ -2345,9 +2347,10 @@ void initializeFOS(int population_index) {
         new_FOS->set_length[i] = 0;
     }
 
-    for (i = 0; i < number_of_parameters; i++) {
-        new_FOS->sets[i / FOS_element_size][i % FOS_element_size] = i;
-        new_FOS->set_length[i / FOS_element_size]++;
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        new_FOS->sets[i/FOS_element_size][i%FOS_element_size] = i;
+        new_FOS->set_length[i/FOS_element_size]++;
     }
     linkage_model[population_index] = new_FOS;
 }
@@ -3457,7 +3460,7 @@ FOS *learnLinkageTree(double **covariance_matrix, double **dependency_matrix) {
 //    }
 //    printf("marignal! \n");
 //    printf("making Tree\n");
-    printFOS(new_FOS);
+//    printFOS(new_FOS);
 //    printf("NEW FOS\n");
 //    for( i =0; i < FOS_index; i++){
 //        int setlenght = new_FOS->set_length[i];
@@ -3513,7 +3516,7 @@ void learnFOS(int population_index) {
         }
         //printFOS( linkage_model[population_index] );
     } else if (current_waiting_position > 0) {
-        current_waiting_position--;
+//        current_waiting_position--;
     }
 }
 
@@ -3522,11 +3525,9 @@ void evolveDifferentialDependencies(int population_index) {
     int i, j, k;
     double *individual_to_compare = (double *) Malloc(number_of_parameters * sizeof(double));
     double constraint_value;
-
+    return;
     // initialize if no pairs are checked yet
     if (number_of_checked_pairs == 0) {
-//        printf("beginning with 0 checked pairs, wait: %d, total: %d, population %d\n", number_of_waiting_cycles,
-//               number_of_pairs, population_index);
         double rand = randomRealUniform01();
         rand = 0.7;
 
@@ -3614,7 +3615,6 @@ void evolveDifferentialDependencies(int population_index) {
         delta_i = fabs(1.0 - change_i);
         delta_j = fabs(change_j - change_i_j);
 
-
         delta_i = nround(delta_i, 12);
         delta_j = nround(delta_j, 12);
 
@@ -3642,8 +3642,8 @@ void evolveDifferentialDependencies(int population_index) {
         }
         dependency_matrix[i][j] = dependency;
         dependency_matrix[j][i] = dependency;
-//        dependency_matrix[i][j] = 0;
-//        dependency_matrix[j][i] = 0;
+        dependency_matrix[i][j] = 0;
+        dependency_matrix[j][i] = 0;
 
 
         max_dependency = fmax(dependency, max_dependency);
@@ -3658,8 +3658,6 @@ void evolveDifferentialDependencies(int population_index) {
             current_waiting_position = number_of_waiting_cycles;
             number_of_waiting_cycles *= 2;
             number_of_checked_pairs = 0;
-//            printf("THIS happens and waiting cycles is now, %d, evals: %d\n", number_of_waiting_cycles,
-//                   number_of_differential_evals);
             iteration = 0;
             total_dependencies_found = 0;
         }
@@ -3670,7 +3668,7 @@ void evolveDifferentialDependencies(int population_index) {
         iteration = 0;
         total_dependencies_found = 0;
     }
-//    printMatrix(dep)
+
     free(individual_to_compare);
 }
 
@@ -3986,8 +3984,7 @@ double *generateNewSolution(int population_index) {
                     z[j] = random1DNormalUnit();
 
                 if (use_univariate_FOS) {
-                    result[i] = z[0] * sqrt(covariance_matrices[population_index][i][0][0]) +
-                                mean_vectors[population_index][i];
+                    result[linkage_model[population_index]->sets[i][0]] = z[0]*sqrt(covariance_matrices[population_index][i][0][0]) + mean_vectors[population_index][linkage_model[population_index]->sets[i][0]];
                 } else {
                     FOS_result = matrixVectorMultiplication(cholesky_factors_lower_triangle[population_index][i], z,
                                                             linkage_model[population_index]->set_length[i],
@@ -4159,8 +4156,9 @@ double getStDevRatio(int population_index, double *parameters) {
     result = 0.0;
 
     if (use_univariate_FOS) {
-        for (i = 0; i < number_of_parameters; i++) {
-            z_uni = (parameters[i] - mean_vectors[population_index][i]) /
+        for (i = 0; i < linkage_model[population_index]->length; i++) {
+            int vari = linkage_model[population_index]->sets[i][0];
+            z_uni = (parameters[vari] - mean_vectors[population_index][vari]) /
                     sqrt(covariance_matrices[population_index][i][0][0]);
             if (fabs(z_uni) > result)
                 result = fabs(z_uni);
