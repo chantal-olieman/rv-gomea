@@ -1122,7 +1122,35 @@ void printTimer(void) {
     printf("%.3f\n", cpu_time_used);
 }
 
+FOS *copyFOS( FOS *f )
+{
+    int i,j;
+    FOS *new_FOS;
 
+    new_FOS = (FOS*) Malloc(sizeof(FOS));
+    new_FOS->length = f->length;
+    new_FOS->set_length = (int*) Malloc(new_FOS->length*sizeof(int));
+    new_FOS->sets = (int**) Malloc(new_FOS->length*sizeof(int*));
+    for( i = 0; i < new_FOS->length; i++ )
+    {
+        new_FOS->set_length[i] = f->set_length[i];
+        new_FOS->sets[i] = (int*) Malloc(new_FOS->set_length[i]*sizeof(int));
+        for( j = 0; j < new_FOS->set_length[i]; j++ )
+            new_FOS->sets[i][j] = f->sets[i][j];
+    }
+    return( new_FOS );
+}
+
+//void ezilaitiniFOS( FOS *lm )
+//{
+//    int i;
+//
+//    for( i = 0; i < lm->length; i++ )
+//        free( lm->sets[i] );
+//    free( lm->set_length );
+//    free( lm->sets );
+//    free( lm );
+//}
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
@@ -3503,9 +3531,22 @@ void learnFOS(int population_index) {
             ezilaitiniCovarianceMatrices(population_index);
             ezilaitiniFOS(population_index);
         }
+        estimateMeanVectorML(population_index);
         estimateFullCovarianceMatrixML(population_index);
-        if (current_waiting_position == 0)
-            linkage_model[population_index] = learnLinkageTreeRVGOMEA(population_index);
+        linkage_model[population_index] = learnLinkageTreeRVGOMEA(population_index);
+        if( number_of_populations > 1 ){
+            for (int i = 0; i < number_of_populations; i++){
+                if(i != population_index){
+                    if(number_of_generations[i] != 0){
+                        ezilaitiniCovarianceMatrices(i);
+                        ezilaitiniFOS( i );
+                    }
+                    linkage_model[i] = copyFOS(linkage_model[population_index]);
+                    initializeCovarianceMatrices( i );
+
+                }
+            }
+        }
         else {
             linkage_model[population_index] = linkage_model[0];
         }
@@ -3516,7 +3557,7 @@ void learnFOS(int population_index) {
         }
         //printFOS( linkage_model[population_index] );
     } else if (current_waiting_position > 0) {
-//        current_waiting_position--;
+        current_waiting_position--;
     }
 }
 
@@ -3525,7 +3566,7 @@ void evolveDifferentialDependencies(int population_index) {
     int i, j, k;
     double *individual_to_compare = (double *) Malloc(number_of_parameters * sizeof(double));
     double constraint_value;
-    return;
+
     // initialize if no pairs are checked yet
     if (number_of_checked_pairs == 0) {
         double rand = randomRealUniform01();
@@ -3642,8 +3683,6 @@ void evolveDifferentialDependencies(int population_index) {
         }
         dependency_matrix[i][j] = dependency;
         dependency_matrix[j][i] = dependency;
-        dependency_matrix[i][j] = 0;
-        dependency_matrix[j][i] = 0;
 
 
         max_dependency = fmax(dependency, max_dependency);
@@ -3668,7 +3707,7 @@ void evolveDifferentialDependencies(int population_index) {
         iteration = 0;
         total_dependencies_found = 0;
     }
-
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free(individual_to_compare);
 }
 
