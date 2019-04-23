@@ -3683,7 +3683,10 @@ void evolveDifferentialDependencies(int population_index) {
         }
         dependency_matrix[i][j] = dependency;
         dependency_matrix[j][i] = dependency;
-
+        if(use_univariate_FOS){
+            dependency_matrix[i][j] = 0.0;
+            dependency_matrix[j][i] = 0.0;
+        }
 
         max_dependency = fmax(dependency, max_dependency);
         checked_matrix[i][j] = 1;
@@ -3775,8 +3778,6 @@ void estimateParametersAllPopulations(void) {
  * normal distribution for a specified population.
  */
 void estimateParameters(int population_index) {
-    estimateMeanVectorML(population_index);
-
     learnFOS(population_index);
 
     estimateParametersML(population_index);
