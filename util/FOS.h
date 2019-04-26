@@ -55,7 +55,7 @@ void printBigFOS( FOS *fos );
 void printPythonFOS( FOS *fos );
 FOS *readFOSFromFile( FILE *file );
 FOS *copyFOS( FOS *f );
-FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, int **checked_matrix);
+FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, int **checked_matrix, int population_size);
 int determineNearestNeighbour( int index, double **S_matrix, int *mpm_number_of_indices, int mpm_length );
 double getSimilarity( int a, int b );
 double **computeMIMatrix( double **covariance_matrix, int n );
@@ -79,6 +79,8 @@ int      *mpm_number_of_indices,
             allow_incomplete_dependence,
             randomized_linkage,
           pruned_tree,
+            max_connected_fos_size,
+        population_size_based_on_FOS,
             pruning_ub,
             wait_with_pruning,
           sparse_tree,

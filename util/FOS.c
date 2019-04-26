@@ -229,7 +229,7 @@ void printMIMatrix(double **matrix, int cols, int rows){
 }
 
 
-FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, int **checked_matrix)
+FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, int **checked_matrix, int population_size)
 {
     char     done;
     int      i, j, r0, r1, rswap, *indices, *order, *sorted,
@@ -239,7 +239,8 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
     double   mul0, mul1, **MI_matrix;
     FOS *new_FOS;
 
-    /* Compute Mutual Information matrix */
+    int max_FOS_size = pow((population_size-17)/3, 0.67);
+        /* Compute Mutual Information matrix */
     MI_matrix = NULL;
     if( learn_linkage_tree && !dependency_learning)
         MI_matrix = computeMIMatrix( covariance_matrix, number_of_parameters );
@@ -463,6 +464,9 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                     }
                 }
                 if ( completely_dependent ) { // remove subsets that build this set
+                    if(mpm_number_of_indices[r0]+mpm_number_of_indices[r1]>max_connected_fos_size){
+                        max_connected_fos_size=mpm_number_of_indices[r0]+mpm_number_of_indices[r1];
+                    }
                     //remove r1
                     int first_set_element = mpm[r0][0];
                     int set_length = mpm_number_of_indices[r0];
@@ -482,6 +486,11 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                 }
                 else if(sparse_tree){ // dont add current set since it is not completely dependent
                     if(!wait_with_pruning || all_checked){
+                        keep_FOS_element[FOS_index] = 0;
+                    }
+                }
+                else if(population_size_based_on_FOS){
+                    if(max_FOS_size < mpm_number_of_indices[r0]+mpm_number_of_indices[r1]){
                         keep_FOS_element[FOS_index] = 0;
                     }
                 }
