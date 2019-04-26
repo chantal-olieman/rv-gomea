@@ -94,6 +94,7 @@ void determineBestSolutionInCurrentPopulations( int *population_of_best, int *in
 void checkFitnessVarianceTermination( void );
 short checkFitnessVarianceTerminationSinglePopulation( int population_index );
 void checkDistributionMultiplierTerminationCondition( void );
+void checkPopulationSizeAgainstFOS( void );
 void makeSelections( void );
 void makeSelectionsForOnePopulation( int population_index );
 void makeSelectionsForOnePopulationUsingDiversityOnRank0( int population_index );
@@ -295,6 +296,7 @@ void interpretCommandLine( int argc, char **argv )
     FOS_element_size = -1;
     block_start = 0;
     pairs_per_run = 0 ;
+    max_connected_fos_size = 0;
     minimal_dependencies_per_run = 2;
     evaluations_for_statistics_hit = 0;
     haveNextNextGaussian = 0;
@@ -316,6 +318,7 @@ void interpretCommandLine( int argc, char **argv )
     number_of_waiting_cycles = 2;
     current_waiting_position = 0;
     sorting_parameters = 1;
+    population_size_based_on_FOS = 0;
     overlapping_sets = 0;
     recalculate_spread = 0;
     overlapping_dim = 2;
@@ -411,9 +414,11 @@ void interpretCommandLine( int argc, char **argv )
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -6 ) {learn_linkage_tree = 1; pruning_ub = 100;} //**LT-100**//
     if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
+    if( FOS_element_size == -22 ) {population_size_based_on_FOS=1; static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
     if( FOS_element_size == -88 ) {distribution_flag= 1; static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
     if( FOS_element_size == -80 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
     if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree = 1; pruning_ub = 100; continued_learning=1; } //**S-DGLT**//
+    if( FOS_element_size == -221 ) {population_size_based_on_FOS=1; static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree = 1; pruning_ub = 100; continued_learning=1; } //**S-DGLT**//
     if( FOS_element_size == -101 ) {distribution_flag= 1;static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree = 1; pruning_ub = 100; continued_learning=1; } //**S-DGLT**//
     if( FOS_element_size == -110 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; sparse_tree = 1;   pruning_ub = 100; } //**NOEVOLVEDGLT**//
     if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT-100**//
@@ -1138,7 +1143,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
     }
     else{
         if( !overlapping_sets )
-            new_FOS = learnLinkageTree( full_covariance_matrix[population_index], dependency_matrix, checked_matrix);
+            new_FOS = learnLinkageTree( full_covariance_matrix[population_index], dependency_matrix, checked_matrix, population_sizes[population_index]);
         else if(problem_index == 19){
             if(overlapping_sets == number_of_parameters){
                 new_FOS                     = (FOS*) Malloc(sizeof(FOS));
@@ -1423,6 +1428,7 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
 //    }
 //    printBigFOS(new_FOS);
 //    printFOS(new_FOS);
+//    printf("poulations size: %d", population_sizes[population_index]);
 //
 //    printf("length:%d \n", new_FOS->length);
     return( new_FOS );
@@ -1830,6 +1836,9 @@ short checkTerminationCondition( void )
 
     checkDistributionMultiplierTerminationCondition();
 
+    if(population_size_based_on_FOS)
+        checkPopulationSizeAgainstFOS();
+
     if( number_of_populations < maximum_number_of_populations )
         return( 0 );
 
@@ -2007,6 +2016,29 @@ void checkDistributionMultiplierTerminationCondition( void )
 
             if( converged )
                 populations_terminated[i] = 1;
+        }
+    }
+}
+
+
+
+/**
+ * Checks whether the distribution multiplier in any population
+ * has become too small (1e-10).
+ */
+void checkPopulationSizeAgainstFOS( void )
+{
+    int i, j;
+    short converged;
+
+    for( i = 0; i < number_of_populations; i++ )
+    {
+        if( !populations_terminated[i] )
+        {
+            int minimum_size = 17+(3*max_connected_fos_size*sqrt(max_connected_fos_size));
+            if( population_sizes[i]< minimum_size ){
+                populations_terminated[i] = 1;
+            }
         }
     }
 }
@@ -2897,7 +2929,7 @@ double *generateNewPartialSolutionFromFOSElement( int population_index, int FOS_
             for( i = 0; i < num_indices; i++ )
                 z[i] = random1DNormalUnit();
 
-            if( use_univariate_FOS )
+            if( use_univariate_FOS)
             {
                 result = (double*) Malloc(1*sizeof(double));
                 result[0] = z[0]*sqrt(decomposed_covariance_matrices[population_index][FOS_index][0][0]) + mean_vectors[population_index][indices[0]];
@@ -2905,8 +2937,10 @@ double *generateNewPartialSolutionFromFOSElement( int population_index, int FOS_
             else
             {
                 result = matrixVectorMultiplication( decomposed_cholesky_factors_lower_triangle[population_index][FOS_index], z, num_indices, num_indices );
-                for( i = 0; i < num_indices; i++ )
+                for( i = 0; i < num_indices; i++ ) {
                     result[i] += mean_vectors[population_index][indices[i]];
+                }
+//                printf("st %lf: , other: %lf\n", result[0], z[0]*sqrt(decomposed_covariance_matrices[population_index][FOS_index][0][0]) + mean_vectors[population_index][indices[0]]);
             }
 
             free( z );
