@@ -466,6 +466,7 @@ FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, 
                 if ( completely_dependent ) { // remove subsets that build this set
                     if(mpm_number_of_indices[r0]+mpm_number_of_indices[r1]>max_connected_fos_size){
                         max_connected_fos_size=mpm_number_of_indices[r0]+mpm_number_of_indices[r1];
+                        max_connected_fos_changed = 1;
                     }
                     //remove r1
                     int first_set_element = mpm[r0][0];

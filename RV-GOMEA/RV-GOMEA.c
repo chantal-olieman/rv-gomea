@@ -319,6 +319,7 @@ void interpretCommandLine( int argc, char **argv )
     current_waiting_position = 0;
     sorting_parameters = 1;
     population_size_based_on_FOS = 0;
+    max_connected_fos_changed = 0;
     overlapping_sets = 0;
     recalculate_spread = 0;
     overlapping_dim = 2;
@@ -1836,8 +1837,11 @@ short checkTerminationCondition( void )
 
     checkDistributionMultiplierTerminationCondition();
 
-    if(population_size_based_on_FOS)
+    //check if the max fos size has changed, also check if the size is bigger than 0
+    if(population_size_based_on_FOS && max_connected_fos_changed && max_connected_fos_size){
         checkPopulationSizeAgainstFOS();
+        max_connected_fos_changed = 0;
+    }
 
     if( number_of_populations < maximum_number_of_populations )
         return( 0 );
@@ -2031,11 +2035,12 @@ void checkPopulationSizeAgainstFOS( void )
     int i, j;
     short converged;
 
+    int minimum_size = 17+(3*max_connected_fos_size*sqrt(max_connected_fos_size));
+    printf("minumyun size: %d \n",minimum_size);
     for( i = 0; i < number_of_populations; i++ )
     {
         if( !populations_terminated[i] )
         {
-            int minimum_size = 17+(3*max_connected_fos_size*sqrt(max_connected_fos_size));
             if( population_sizes[i]< minimum_size ){
                 populations_terminated[i] = 1;
             }
