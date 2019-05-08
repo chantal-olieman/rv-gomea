@@ -1838,7 +1838,7 @@ short checkTerminationCondition( void )
     checkDistributionMultiplierTerminationCondition();
 
     //check if the max fos size has changed, also check if the size is bigger than 0
-    if(population_size_based_on_FOS && max_connected_fos_changed && max_connected_fos_size){
+    if(population_size_based_on_FOS && max_connected_fos_changed ){ //&& max_connected_fos_changed && max_connected_fos_size
         checkPopulationSizeAgainstFOS();
         max_connected_fos_changed = 0;
     }
@@ -2036,7 +2036,6 @@ void checkPopulationSizeAgainstFOS( void )
     short converged;
 
     int minimum_size = 17+(3*max_connected_fos_size*sqrt(max_connected_fos_size));
-    printf("minumyun size: %d \n",minimum_size);
     for( i = 0; i < number_of_populations; i++ )
     {
         if( !populations_terminated[i] )
