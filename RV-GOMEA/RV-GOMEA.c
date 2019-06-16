@@ -1125,6 +1125,8 @@ FOS *learnDifferentialGroups(int population_index){
 //        }
 //        printf("\n");
 //    }
+    printFOS(new_FOS);
+    printf("fossize: %d \n ", new_FOS->length);
     return new_FOS;
 
 }
