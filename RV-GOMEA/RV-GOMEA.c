@@ -1044,8 +1044,9 @@ FOS *learnDifferentialGroups(int population_index){
     double rand = randomRealUniform01();
     rand = 0.7;
 
+    double min, max;
     for (k = 0; k < number_of_parameters; k++) {
-        double min = lower_init_ranges[k], max = upper_init_ranges[k];
+        min = lower_init_ranges[k], max = upper_init_ranges[k];
         getMinMaxofPopulation(k, population_index, &min, &max);
         if (nround(min, 2) == nround(max, 2)) {
             max = upper_init_ranges[k];
@@ -1102,7 +1103,9 @@ FOS *learnDifferentialGroups(int population_index){
             if(grouped[j]){
                 continue;
             }
-            if(getDependency(i, j, individual_to_compare)>0.00000){
+            double dependency = getDependency(i, j, individual_to_compare);
+            dependency = nround(dependency, 8);
+            if(dependency>0.00000000){
                 grouped[j] = 1;
                 temp_fos_incices[k] = j;
                 k++;
@@ -1117,16 +1120,6 @@ FOS *learnDifferentialGroups(int population_index){
         new_FOS_length += 1;
     }
     new_FOS->length = new_FOS_length;
-//    printf("original FOS\n");
-//    for( i =0; i < new_FOS_length; i++){
-//        int setlenght = new_FOS->set_length[i];
-//        for(int j = 0; j < setlenght; j++ ){
-//            printf("%d, ", new_FOS->sets[i][j]);
-//        }
-//        printf("\n");
-//    }
-//    printFOS(new_FOS);
-//    printf("fossize: %d \n ", new_FOS->length);
     return new_FOS;
 
 }
@@ -2383,42 +2376,45 @@ double getDependency(int i, int j, double *individual_to_compare){
 
     individual_to_compare[i] = second_individual[i];
     individual_to_compare[j] = second_individual[j];
-    installedProblemEvaluation( problem_index, individual_to_compare, &(change_i_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+    installedProblemEvaluation(problem_index, individual_to_compare, &(change_i_j), &(constraint_value),
+                               1, &(j), &(first_individual[j]), fitness_of_first_individual[i], 0);
+    differential_grouping_evals+=1;
     individual_to_compare[i] = first_individual[i];
     individual_to_compare[j] = first_individual[j];
+
+    double delta_i, delta_j;
 
     change_i = change_i/original_objective;
     change_j = change_j/original_objective;
     change_i_j = change_i_j/original_objective;
-
-    double delta_i = fabs(1.0 - change_i);
-    double delta_j = fabs(change_j - change_i_j);
+    delta_i = fabs(1.0 - change_i);
+    delta_j = fabs(change_j - change_i_j);
 
     delta_i = nround(delta_i, 12);
     delta_j = nround(delta_j, 12);
 
-
     double dependency = 0.0;
+    //if (delta_i != 0.0 && delta_j != 0.0) {
+    double inverted_difference;
 
     if(delta_j == 0.0) {
         double temp = delta_i;
         delta_i = delta_j;
         delta_j = temp;
     }
-    double inverted_difference = 0.0;
     if(delta_j != 0.0){
-        inverted_difference = fabs(delta_i/delta_j);
-        if(inverted_difference > 1.0){
+        inverted_difference = fabs((double)delta_i/delta_j);
+        inverted_difference = nround(inverted_difference, 12);
+        if(inverted_difference >= 1.0){
             inverted_difference = fabs((double)delta_j/delta_i);
+            inverted_difference = nround(inverted_difference, 12);
         }
     } else{
         inverted_difference = 1.0;
     }
-    dependency = 1-inverted_difference;
-    if (inverted_difference < 1) {//0.999999{
-//            printf("there is a dependency\t delta i: %20.18f \t delta j: %20.18f \t diff: %20.18f \n" , delta_i, delta_j, inverted_difference);
-    } else{
-        dependency = 0.0;
+    dependency = nround(1-inverted_difference,12);
+    if (inverted_difference >= 1) {
+        dependency = nround(0.0, 12);
     }
 
     return dependency;
@@ -2533,37 +2529,15 @@ void evolveDifferentialDependencies( int population_index ) {
         differential_grouping_evals+=1;
         individual_to_compare[i] = first_individual[i];
         individual_to_compare[j] = first_individual[j];
-//        printf("original: \t %f\n", original_objective);
-//        printf("change i: \t %f\n", change_i);
-//        printf("change j: \t %f\n", change_j);
-//        printf("change ij: \t %f\n\n", change_i_j);
-//        double diff, diff_frac, diff_superfrac;
-//        diff = (original_objective-change_i)-(change_j-change_i_j);
-//        diff_frac = (original_objective-change_i)/(change_j-change_i_j);
-//        diff_superfrac = (original_objective/change_i)/(change_j/change_i_j);
-//        printf("diff : \t %f\n", diff);
-//        printf("frac : \t %f\n", diff_frac);
-//        printf("superfrac : \t %f\n\n", diff_superfrac);
-//
-//        printf("original i : \t %f\n", first_individual[i]);
-//        printf("change i: \t %f\n", second_individual[i]);
-//        printf("original j: \t %f\n", first_individual[j]);
 //        printf("change j: \t %f\n", second_individual[j]);
         double delta_i, delta_j;
 
         change_i = change_i/original_objective;
         change_j = change_j/original_objective;
         change_i_j = change_i_j/original_objective;
-//        printf("original: \t %f\n", original_objective);
-//        printf("change i: \t %f\n", change_i);
-//        printf("change j: \t %f\n", change_j);
-//        printf("change ij: \t %f\n", change_i_j);
-
         delta_i = fabs(1.0 - change_i);
         delta_j = fabs(change_j - change_i_j);
 //
-//        printf("delta i: \t %.100f\n", delta_i);
-//        printf("delta j: \t %.100f\n", delta_j);
 
         delta_i = nround(delta_i, 12);
         delta_j = nround(delta_j, 12);

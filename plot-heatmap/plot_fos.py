@@ -42,7 +42,7 @@ if not from_memory:
         dglt = 2
 
 gomea_command = f"./RV-GOMEA-FOS2 -f -{dglt}  -s -r -b {21+problem} {dim} -100 100 45 0.35 50 25 0.9 1 3000000.0 0.1 100 0.0 2"
-gomea_command = f"./RV-GOMEA-FOS2 -f -8  -s -r -b {0} {50} -100 100 0 0.35 50 25 0.9 1 3000000.0 0.1 100 0.0 2"
+gomea_command = f"./RV-GOMEA-FOS2 -f -10  -s -r -b {19} {20} -100 100 45 0.35 50 25 0.9 1 3000000.0 0.1 100 0.0 2"
 
 
 filename = f"{os.getcwd()}/FOS-400/src/FOS_f{problem}{full}.txt"
@@ -75,6 +75,8 @@ matrix = np.zeros((size_of_fos*len(FOS),dim))
 matrix.fill(np.nan)
 # matrix = np.zeros((dim,2000))
 count = 0
+print(FOS)
+
 FOS.sort(key=lambda x: len(x), reverse=True)
 
 for element in FOS:
@@ -91,7 +93,8 @@ current_cmap.set_bad(color='white')
 
 pylab.imshow(matrix[:size_of_fos*count])
 pylab.box(False)
-pylab.xlim(xmin=0, xmax=50)
+pylab.xlim(xmin=0, xmax=20)
+pylab.xticks([x for x in range(0,22,2)])
 pylab.tick_params(top='off', bottom='off', left='off', right='off', labelleft='off', labelbottom='on')
 # pylab.axes().xaxis.set_visible(True)
 if full == "":
@@ -99,8 +102,8 @@ if full == "":
 elif full == "_overlap":
     pylab.title(f"Manual FOS of CEC 2013 f{problem}\n ")
 else:
-    pylab.title(f"FOS of CEC 2013 f{problem}\n ")
-pylab.savefig(f"FOS-400/f{problem}_FOS{full}.png")
+    pylab.title(f"FOS of FBMP on OSoREB \n ")
+pylab.savefig(f"paper/FOS_osor_FBMP.png")
 pylab.show()
 
 
