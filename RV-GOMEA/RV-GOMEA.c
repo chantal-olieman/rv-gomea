@@ -1125,8 +1125,8 @@ FOS *learnDifferentialGroups(int population_index){
 //        }
 //        printf("\n");
 //    }
-    printFOS(new_FOS);
-    printf("fossize: %d \n ", new_FOS->length);
+//    printFOS(new_FOS);
+//    printf("fossize: %d \n ", new_FOS->length);
     return new_FOS;
 
 }
@@ -1143,6 +1143,15 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
     }
     if( differential_groups ){
         new_FOS = learnDifferentialGroups( population_index );
+        int checked_FOS = 1;
+        while(new_FOS->length == 128){
+            new_FOS = learnDifferentialGroups( population_index );
+            checked_FOS +=1;
+            if(checked_FOS%10==0){
+                printf("checkedFOS: %d\n",checked_FOS);
+            }
+        }
+        printf("Wrong fos size of: %d, after %d runs\n", new_FOS->length, checked_FOS);
     }
     else{
         if( !overlapping_sets )
