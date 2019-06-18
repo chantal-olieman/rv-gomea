@@ -1038,6 +1038,7 @@ FOS *learnDifferentialGroups(int population_index){
     double *individual_to_compare = (double *) Malloc( number_of_parameters*sizeof( double ) );
     double constraint_value;
     double temp_problem_index = problem_index;
+    double evals_to_check = 0;
     if(problem_index == 14 || problem_index == 17){
         temp_problem_index = 16;
     }
@@ -1067,7 +1068,7 @@ FOS *learnDifferentialGroups(int population_index){
     for (k = 0; k < number_of_parameters; k++) {
         individual_to_compare[k] = second_individual[k];
         installedProblemEvaluation(temp_problem_index, individual_to_compare, &(objective_value), &(constraint_value), 1, &(k), &(first_individual[k]), old_objective, old_constraint);
-
+        evals_to_check+=1;
         fitness_of_first_individual[k] = objective_value;
         individual_to_compare[k] = first_individual[k];
     }
@@ -1104,6 +1105,7 @@ FOS *learnDifferentialGroups(int population_index){
                 continue;
             }
             double dependency = getDependency(i, j, individual_to_compare);
+            evals_to_check+=1;
             dependency = nround(dependency, 8);
             if(dependency>0.00000000){
                 grouped[j] = 1;
@@ -2367,8 +2369,7 @@ double getDependency(int i, int j, double *individual_to_compare){
 
     individual_to_compare[i] = second_individual[i];
     individual_to_compare[j] = second_individual[j];
-    installedProblemEvaluation(problem_index, individual_to_compare, &(change_i_j), &(constraint_value),
-                               1, &(j), &(first_individual[j]), fitness_of_first_individual[i], 0);
+    installedProblemEvaluation( problem_index, individual_to_compare, &(change_i_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
     differential_grouping_evals+=1;
     individual_to_compare[i] = first_individual[i];
     individual_to_compare[j] = first_individual[j];
