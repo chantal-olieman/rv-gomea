@@ -2526,7 +2526,7 @@ void evolveDifferentialDependencies( int population_index ) {
         change_i = nround(change_i,8);
         change_j = nround(change_j,8);
         change_i_j = nround(change_i_j,8);
-        original_objective = nround(original_objective, 8);
+        original_objectiveg = nround(original_objective, 8);
         change_i = change_i/original_objective;
         change_j = change_j/original_objective;
         change_i_j = change_i_j/original_objective;
@@ -2547,7 +2547,7 @@ void evolveDifferentialDependencies( int population_index ) {
             delta_j = temp;
         }
         if(delta_j != 0.0){
-            inverted_difference = nroud(fabs(delta_i/delta_j),5);
+            inverted_difference = nround(fabs(delta_i/delta_j),5);
             if(inverted_difference > 1.0){
                 inverted_difference = nround(fabs((double)delta_j/delta_i),5);
             }
