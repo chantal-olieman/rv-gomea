@@ -137,15 +137,15 @@ void ezilaitiniParametersAllPopulations( void );
 
 /*-=-=-=-=-=-=-=-=-=-=-=- Section Global Variables -=-=-=-=-=-=-=-=-=-=-=-=-*/
 short  print_verbose_overview,                              /* Whether to print a overview of settings (0 = no). */
-       use_guidelines,                                      /* Whether to override parameters with guidelines (for those that exist). */
-       fix_seed;                                            /* Whether a fixed seed is used. */
+        use_guidelines,                                      /* Whether to override parameters with guidelines (for those that exist). */
+        fix_seed;                                            /* Whether a fixed seed is used. */
 int    base_population_size,                                /* The size of the first population in the multi-start scheme. */
-      *selection_sizes,                                     /* The size of the selection for each population. */
-       total_number_of_writes,                              /* Total number of times a statistics file has been written. */
-     **dependency_pairs,
-       number_of_pairs,
-       evolve_scaling,
-       pairs_per_run,
+        *selection_sizes,                                     /* The size of the selection for each population. */
+        total_number_of_writes,                              /* Total number of times a statistics file has been written. */
+        **dependency_pairs,
+        number_of_pairs,
+        evolve_scaling,
+        pairs_per_run,
         current_waiting_position,
         distribution_flag,
         number_of_waiting_cycles,
@@ -153,45 +153,45 @@ int    base_population_size,                                /* The size of the f
         recalculate_spread,
         continued_learning,
         minimal_dependencies_per_run,
-       differential_grouping_evals,
-       old_dependency_comparison,
-       total_dependencies_found,
-     **checked_matrix,
-       number_of_checked_pairs,
-       maximum_number_of_populations,                       /* The maximum number of populations in the multi-start scheme. */
-       number_of_subgenerations_per_population_factor,      /* The subgeneration factor in the multi-start scheme. */
-     **samples_drawn_from_normal,                           /* The number of samples drawn from the i-th normal in the last generation. */
-     **out_of_bounds_draws,                                 /* The number of draws that resulted in an out-of-bounds sample. */
-      *no_improvement_stretch,                              /* The number of subsequent generations without an improvement while the distribution multiplier is <= 1.0, for each population separately. */
-       maximum_no_improvement_stretch,                      /* The maximum number of subsequent generations without an improvement while the distribution multiplier is <= 1.0. */
-     **individual_NIS;                                      /* The number of generations a solution has not improved. */
+        differential_grouping_evals,
+        old_dependency_comparison,
+        total_dependencies_found,
+        **checked_matrix,
+        number_of_checked_pairs,
+        maximum_number_of_populations,                       /* The maximum number of populations in the multi-start scheme. */
+        number_of_subgenerations_per_population_factor,      /* The subgeneration factor in the multi-start scheme. */
+        **samples_drawn_from_normal,                           /* The number of samples drawn from the i-th normal in the last generation. */
+        **out_of_bounds_draws,                                 /* The number of draws that resulted in an out-of-bounds sample. */
+        *no_improvement_stretch,                              /* The number of subsequent generations without an improvement while the distribution multiplier is <= 1.0, for each population separately. */
+        maximum_no_improvement_stretch,                      /* The maximum number of subsequent generations without an improvement while the distribution multiplier is <= 1.0. */
+        **individual_NIS;                                      /* The number of generations a solution has not improved. */
 double maximum_number_of_evaluations,                       /* The maximum number of evaluations. */
-       maximum_number_of_seconds,                           /* The maximum number of seconds. */
-       tau,                                                 /* The selection truncation percentile (in [1/population_size,1]). */
-    ***populations,                                         /* The populations containing the solutions. */
-     **objective_values,                                    /* Objective values for population members. */
-     **constraint_values,                                   /* Sum of all constraint violations for population members. */
-     **ranks,                                               /* Ranks of population members. */
-    ***selections,                                          /* Selected solutions, one for each population. */
-     **objective_values_selections,                         /* Objective values of selected solutions. */
-     **constraint_values_selections,                        /* Sum of all constraint violations of selected solutions. */
-     **distribution_multipliers,                            /* Distribution multipliers of each FOS element of each population. */
-       distribution_multiplier_increase,                    /* The multiplicative distribution multiplier increase. */
-       distribution_multiplier_decrease,                    /* The multiplicative distribution multiplier decrease. */
-       st_dev_ratio_threshold,                              /* The maximum ratio of the distance of the average improvement to the mean compared to the distance of one standard deviation before triggering AVS (SDR mechanism). */
-       fitness_variance_tolerance,                          /* The minimum fitness variance level that is allowed. */
-     **mean_vectors,                                        /* The mean vectors, one for each population. */
-     **mean_shift_vector,                                   /* The mean vectors of the previous generation, one for each population. */
-   ****decomposed_covariance_matrices,                      /* The covariance matrices to be used for the sampling. */
-   ****decomposed_cholesky_factors_lower_triangle,          /* The unique lower triangular matrix of the Cholesky factorization for every linkage tree element. */
-    ***full_covariance_matrix,
-     **dependency_matrix,
-      *first_individual,
-      *second_individual,
-      *fitness_of_first_individual,
-       eta_ams = 1.0,
-       dependency_evolve_factor,
-       eta_cov = 1.0;
+        maximum_number_of_seconds,                           /* The maximum number of seconds. */
+        tau,                                                 /* The selection truncation percentile (in [1/population_size,1]). */
+        ***populations,                                         /* The populations containing the solutions. */
+        **objective_values,                                    /* Objective values for population members. */
+        **constraint_values,                                   /* Sum of all constraint violations for population members. */
+        **ranks,                                               /* Ranks of population members. */
+        ***selections,                                          /* Selected solutions, one for each population. */
+        **objective_values_selections,                         /* Objective values of selected solutions. */
+        **constraint_values_selections,                        /* Sum of all constraint violations of selected solutions. */
+        **distribution_multipliers,                            /* Distribution multipliers of each FOS element of each population. */
+        distribution_multiplier_increase,                    /* The multiplicative distribution multiplier increase. */
+        distribution_multiplier_decrease,                    /* The multiplicative distribution multiplier decrease. */
+        st_dev_ratio_threshold,                              /* The maximum ratio of the distance of the average improvement to the mean compared to the distance of one standard deviation before triggering AVS (SDR mechanism). */
+        fitness_variance_tolerance,                          /* The minimum fitness variance level that is allowed. */
+        **mean_vectors,                                        /* The mean vectors, one for each population. */
+        **mean_shift_vector,                                   /* The mean vectors of the previous generation, one for each population. */
+        ****decomposed_covariance_matrices,                      /* The covariance matrices to be used for the sampling. */
+        ****decomposed_cholesky_factors_lower_triangle,          /* The unique lower triangular matrix of the Cholesky factorization for every linkage tree element. */
+        ***full_covariance_matrix,
+        **dependency_matrix,
+        *first_individual,
+        *second_individual,
+        *fitness_of_first_individual,
+        eta_ams = 1.0,
+        dependency_evolve_factor,
+        eta_cov = 1.0;
 FOS  **linkage_model;
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
@@ -493,17 +493,17 @@ void parseOptions( int argc, char **argv, int *index )
             {
                 switch( argv[*index][1] )
                 {
-                case 'h': printUsage(); break;
-                case 'P': printAllInstalledProblems(); break;
-                case 's': write_generational_statistics = 1; break;
-                case 'w': write_generational_solutions  = 1; break;
-                case 'v': print_verbose_overview        = 1; break;
-                case 'r': use_vtr                       = 1; break;
-                case 'g': use_guidelines                = 1; break;
-                case 'b': black_box_evaluations         = 1; break;
-                case 'f': parseFOSElementSize( index, argc, argv ); break;
-                case 'S': fix_seed                      = 1; break;
-                default : optionError( argv, *index );
+                    case 'h': printUsage(); break;
+                    case 'P': printAllInstalledProblems(); break;
+                    case 's': write_generational_statistics = 1; break;
+                    case 'w': write_generational_solutions  = 1; break;
+                    case 'v': print_verbose_overview        = 1; break;
+                    case 'r': use_vtr                       = 1; break;
+                    case 'g': use_guidelines                = 1; break;
+                    case 'b': black_box_evaluations         = 1; break;
+                    case 'f': parseFOSElementSize( index, argc, argv ); break;
+                    case 'S': fix_seed                      = 1; break;
+                    default : optionError( argv, *index );
                 }
             }
         }
@@ -982,7 +982,7 @@ void initializeProblem( void )
 {
     switch( problem_index )
     {
-    default: break;
+        default: break;
     }
 }
 
@@ -1411,8 +1411,8 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
     if ( evolve_learning && number_of_generations[population_index] > 1){
 //        printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
         if(distribution_flag){
-           evolveDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
-       }
+            evolveDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
+        }
         ezilaitiniFOS(linkage_model[population_index]);
     }
 //        if( number_of_generations[population_index] != 0){
@@ -2473,7 +2473,7 @@ void evolveDifferentialDependencies( int population_index ) {
             individual_to_compare[k] = second_individual[k];
             installedProblemEvaluation(temp_problem_index, individual_to_compare, &(objective_value), &(constraint_value), 1, &(k), &(first_individual[k]), old_objective, old_constraint);
 
-
+            fitness_of_first_individual[k] = objective_value;
             individual_to_compare[k] = first_individual[k];
         }
         int counter = number_of_pairs;
@@ -2523,10 +2523,12 @@ void evolveDifferentialDependencies( int population_index ) {
         individual_to_compare[j] = first_individual[j];
 //        printf("change j: \t %f\n", second_individual[j]);
         double delta_i, delta_j;
-        change_i = nround(change_i,8);
-        change_j = nround(change_j,8);
-        change_i_j = nround(change_i_j,8);
-        original_objective = nround(original_objective, 8);
+
+
+//        change_i = nround(change_i, 8);
+//        change_j = nround(change_j, 8);
+//        change_i_j = nround(change_i_j, 8);
+//        original_objective = nround(original_objective, 8);
         change_i = change_i/original_objective;
         change_j = change_j/original_objective;
         change_i_j = change_i_j/original_objective;
@@ -2555,7 +2557,7 @@ void evolveDifferentialDependencies( int population_index ) {
             inverted_difference = 1.0;
         }
         dependency = nround(1-inverted_difference, 5);
-        if (inverted_difference < 1) {//0.999999{
+        if (inverted_difference < 1 && inverted_difference < 0) {//0.999999{
             found_dependencies += 1;
             printf("a fucking dep found: %f \n",dependency);
 //            printf("there is a dependency\t delta i: %20.18f \t delta j: %20.18f \t diff: %20.18f \n" , delta_i, delta_j, inverted_difference);
@@ -3048,7 +3050,7 @@ short applyAMS( int population_index, int individual_index )
         for( m = 0; m < number_of_parameters; m++ )
         {
             solution_AMS[m] = populations[population_index][individual_index][m]
-                    + shrink_factor*delta_AMS*mean_shift_vector[population_index][m]; //*distribution_multipliers[population_index][FOS_index]
+                              + shrink_factor*delta_AMS*mean_shift_vector[population_index][m]; //*distribution_multipliers[population_index][FOS_index]
             if( !isParameterInRangeBounds( solution_AMS[m], m ) )
             {
                 out_of_range = 1;
