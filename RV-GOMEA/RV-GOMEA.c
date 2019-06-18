@@ -2526,7 +2526,7 @@ void evolveDifferentialDependencies( int population_index ) {
         change_i = nround(change_i,8);
         change_j = nround(change_j,8);
         change_i_j = nround(change_i_j,8);
-        original_objectiveg = nround(original_objective, 8);
+        original_objective = nround(original_objective, 8);
         change_i = change_i/original_objective;
         change_j = change_j/original_objective;
         change_i_j = change_i_j/original_objective;
