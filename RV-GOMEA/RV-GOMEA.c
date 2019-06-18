@@ -2467,14 +2467,13 @@ void evolveDifferentialDependencies( int population_index ) {
         installedProblemEvaluation(temp_problem_index, first_individual, &(old_objective), &(old_constraint),
                                    number_of_parameters, NULL, NULL, 0, 0);
         differential_grouping_evals += 1+ number_of_parameters;
-        old_objective = nround(old_objective, 8);
         fitness_of_first_individual[number_of_parameters] = old_objective;
         fitness_of_first_individual[0] = old_objective;
         for (k = 0; k < number_of_parameters; k++) {
             individual_to_compare[k] = second_individual[k];
             installedProblemEvaluation(temp_problem_index, individual_to_compare, &(objective_value), &(constraint_value), 1, &(k), &(first_individual[k]), old_objective, old_constraint);
 
-            fitness_of_first_individual[k] = nround(objective_value, 8);
+
             individual_to_compare[k] = first_individual[k];
         }
         int counter = number_of_pairs;
@@ -2520,12 +2519,14 @@ void evolveDifferentialDependencies( int population_index ) {
         installedProblemEvaluation(temp_problem_index, individual_to_compare, &(change_i_j), &(constraint_value),
                                    1, &(j), &(first_individual[j]), fitness_of_first_individual[i], 0);
         differential_grouping_evals+=1;
-        change_i_j = nround(change_i_j,8);
         individual_to_compare[i] = first_individual[i];
         individual_to_compare[j] = first_individual[j];
 //        printf("change j: \t %f\n", second_individual[j]);
         double delta_i, delta_j;
-
+        change_i = nround(change_i,8);
+        change_j = nround(change_j,8);
+        change_i_j = nround(change_i_j,8);
+        original_objective = nround(original_objective, 8);
         change_i = change_i/original_objective;
         change_j = change_j/original_objective;
         change_i_j = change_i_j/original_objective;
@@ -2546,14 +2547,14 @@ void evolveDifferentialDependencies( int population_index ) {
             delta_j = temp;
         }
         if(delta_j != 0.0){
-            inverted_difference = fabs(delta_i/delta_j);
+            inverted_difference = nroud(fabs(delta_i/delta_j),5);
             if(inverted_difference > 1.0){
-                inverted_difference = nround(fabs((double)delta_j/delta_i),7);
+                inverted_difference = nround(fabs((double)delta_j/delta_i),5);
             }
         } else{
             inverted_difference = 1.0;
         }
-        dependency = nround(1-inverted_difference, 7);
+        dependency = nround(1-inverted_difference, 5);
         if (inverted_difference < 1) {//0.999999{
             found_dependencies += 1;
             printf("a fucking dep found: %f \n",dependency);
