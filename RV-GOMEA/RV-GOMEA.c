@@ -2549,15 +2549,15 @@ void evolveDifferentialDependencies( int population_index ) {
             delta_j = temp;
         }
         if(delta_j != 0.0){
-            inverted_difference = nround(fabs(delta_i/delta_j),5);
+            inverted_difference = nround(fabs(delta_i/delta_j),6);
             if(inverted_difference > 1.0){
-                inverted_difference = nround(fabs((double)delta_j/delta_i),5);
+                inverted_difference = nround(fabs((double)delta_j/delta_i),6);
             }
         } else{
             inverted_difference = 1.0;
         }
-        dependency = nround(1-inverted_difference, 5);
-        if (inverted_difference < 1 && inverted_difference < 0) {//0.999999{
+        dependency = nround(1-inverted_difference, 6);
+        if (inverted_difference < 1 && inverted_difference > 0) {//0.999999{
             found_dependencies += 1;
             printf("a fucking dep found: %f \n",dependency);
 //            printf("there is a dependency\t delta i: %20.18f \t delta j: %20.18f \t diff: %20.18f \n" , delta_i, delta_j, inverted_difference);
