@@ -2559,7 +2559,7 @@ void evolveDifferentialDependencies( int population_index ) {
         dependency = nround(1-inverted_difference, 6);
         if (inverted_difference < 1 && inverted_difference > 0) {//0.999999{
             found_dependencies += 1;
-            printf("a fucking dep found: %f \n",dependency);
+            //printf("a fucking dep found: %f \n",dependency);
 //            printf("there is a dependency\t delta i: %20.18f \t delta j: %20.18f \t diff: %20.18f \n" , delta_i, delta_j, inverted_difference);
         } else{
             dependency = 0.0;
