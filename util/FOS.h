@@ -51,9 +51,11 @@ typedef struct FOS {
 
 /*-=-=-=-=-=-=-=-=-=-=-=-= Section Header Functions -=-=-=-=-=-=-=-=-=-=-=-=*/
 void printFOS( FOS *fos );
+void printBigFOS( FOS *fos );
+void printPythonFOS( FOS *fos );
 FOS *readFOSFromFile( FILE *file );
 FOS *copyFOS( FOS *f );
-FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, int **checked_matrix);
+FOS *learnLinkageTree( double **covariance_matrix , double **dependency_matrix, int **checked_matrix, int population_size);
 int determineNearestNeighbour( int index, double **S_matrix, int *mpm_number_of_indices, int mpm_length );
 double getSimilarity( int a, int b );
 double **computeMIMatrix( double **covariance_matrix, int n );
@@ -74,12 +76,21 @@ int      *mpm_number_of_indices,
           evolve_learning,
           differential_groups,
           iteration,
+            allow_incomplete_dependence,
+            randomized_linkage,
           pruned_tree,
+            max_connected_fos_size,
+            max_connected_fos_changed,
+        population_size_based_on_FOS,
+            pruning_ub,
+            wait_with_pruning,
+          sparse_tree,
           dependency_learning,                   /* Wheter we learn dependencies from fitness evaluation of MI */
           random_linkage_tree,                  /* Whether the fixed linkage tree is learned based on a random distance measure. */
           FOS_element_size;                     /* If positive, the size of blocks of consecutive variables in the FOS. If negative, determines specific kind of linkage tree FOS. */
 double ***MI_matrices,
         **S_matrix,
+          epsilon,
          *S_vector;                             /* Avoids quadratic memory requirements when a linkage tree is learned based on a random distance measure. */
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 

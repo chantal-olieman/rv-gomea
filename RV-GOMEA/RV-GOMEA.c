@@ -46,7 +46,10 @@
 #include "../util/Tools.h"
 #include "../util/SO_optimization.h"
 #include "../util/Optimization.h"
+#include "../util/CEC_benchmark.h"
 #include "../util/FOS.h"
+#define REP(i,end) for (int i = 0; i < end; i++)
+#define pn printf("\n")
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 
@@ -73,6 +76,7 @@ void initializeProblem( void );
 void initializeDistributionMultipliers(int population_index );
 void initializePopulationAndFitnessValues( int population_index );
 void inheritDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multipliers );
+void evolveDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multipliers );
 FOS *learnLinkageTreeRVGOMEA( int population_index );
 FOS *learnDifferentialGroups(int population_index);
 void computeRanksForAllPopulations( void );
@@ -90,6 +94,7 @@ void determineBestSolutionInCurrentPopulations( int *population_of_best, int *in
 void checkFitnessVarianceTermination( void );
 short checkFitnessVarianceTerminationSinglePopulation( int population_index );
 void checkDistributionMultiplierTerminationCondition( void );
+void checkPopulationSizeAgainstFOS( void );
 void makeSelections( void );
 void makeSelectionsForOnePopulation( int population_index );
 void makeSelectionsForOnePopulationUsingDiversityOnRank0( int population_index );
@@ -123,6 +128,7 @@ void getMinMaxofPopulation(int variable, int population_index, double *min, doub
 void ezilaitini( void );
 void ezilaitiniMemory( void );
 void ezilaitiniDistributionMultipliers( int population_index );
+void ezilaitiniCovarianceMatrices( int population_index );
 void ezilaitiniParametersForSampling( int population_index );
 void ezilaitiniParametersAllPopulations( void );
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
@@ -131,55 +137,61 @@ void ezilaitiniParametersAllPopulations( void );
 
 /*-=-=-=-=-=-=-=-=-=-=-=- Section Global Variables -=-=-=-=-=-=-=-=-=-=-=-=-*/
 short  print_verbose_overview,                              /* Whether to print a overview of settings (0 = no). */
-       use_guidelines,                                      /* Whether to override parameters with guidelines (for those that exist). */
-       fix_seed;                                            /* Whether a fixed seed is used. */
+        use_guidelines,                                      /* Whether to override parameters with guidelines (for those that exist). */
+        fix_seed;                                            /* Whether a fixed seed is used. */
 int    base_population_size,                                /* The size of the first population in the multi-start scheme. */
-      *selection_sizes,                                     /* The size of the selection for each population. */
-       total_number_of_writes,                              /* Total number of times a statistics file has been written. */
-     **dependency_pairs,
-       number_of_pairs,
-       evolve_scaling,
-       pairs_per_run,
+        *selection_sizes,                                     /* The size of the selection for each population. */
+        total_number_of_writes,                              /* Total number of times a statistics file has been written. */
+        **dependency_pairs,
+        number_of_pairs,
+        evolve_scaling,
+        pairs_per_run,
+        current_waiting_position,
+        distribution_flag,
+        number_of_waiting_cycles,
+        overlapping_sets,
+        recalculate_spread,
+        continued_learning,
         minimal_dependencies_per_run,
-       differential_grouping_evals,
-       old_dependency_comparison,
-       total_dependencies_found,
-     **checked_matrix,
-       number_of_checked_pairs,
-       maximum_number_of_populations,                       /* The maximum number of populations in the multi-start scheme. */
-       number_of_subgenerations_per_population_factor,      /* The subgeneration factor in the multi-start scheme. */
-     **samples_drawn_from_normal,                           /* The number of samples drawn from the i-th normal in the last generation. */
-     **out_of_bounds_draws,                                 /* The number of draws that resulted in an out-of-bounds sample. */
-      *no_improvement_stretch,                              /* The number of subsequent generations without an improvement while the distribution multiplier is <= 1.0, for each population separately. */
-       maximum_no_improvement_stretch,                      /* The maximum number of subsequent generations without an improvement while the distribution multiplier is <= 1.0. */
-     **individual_NIS;                                      /* The number of generations a solution has not improved. */
+        differential_grouping_evals,
+        old_dependency_comparison,
+        total_dependencies_found,
+        **checked_matrix,
+        number_of_checked_pairs,
+        maximum_number_of_populations,                       /* The maximum number of populations in the multi-start scheme. */
+        number_of_subgenerations_per_population_factor,      /* The subgeneration factor in the multi-start scheme. */
+        **samples_drawn_from_normal,                           /* The number of samples drawn from the i-th normal in the last generation. */
+        **out_of_bounds_draws,                                 /* The number of draws that resulted in an out-of-bounds sample. */
+        *no_improvement_stretch,                              /* The number of subsequent generations without an improvement while the distribution multiplier is <= 1.0, for each population separately. */
+        maximum_no_improvement_stretch,                      /* The maximum number of subsequent generations without an improvement while the distribution multiplier is <= 1.0. */
+        **individual_NIS;                                      /* The number of generations a solution has not improved. */
 double maximum_number_of_evaluations,                       /* The maximum number of evaluations. */
-       maximum_number_of_seconds,                           /* The maximum number of seconds. */
-       tau,                                                 /* The selection truncation percentile (in [1/population_size,1]). */
-    ***populations,                                         /* The populations containing the solutions. */
-     **objective_values,                                    /* Objective values for population members. */
-     **constraint_values,                                   /* Sum of all constraint violations for population members. */
-     **ranks,                                               /* Ranks of population members. */
-    ***selections,                                          /* Selected solutions, one for each population. */
-     **objective_values_selections,                         /* Objective values of selected solutions. */
-     **constraint_values_selections,                        /* Sum of all constraint violations of selected solutions. */
-     **distribution_multipliers,                            /* Distribution multipliers of each FOS element of each population. */
-       distribution_multiplier_increase,                    /* The multiplicative distribution multiplier increase. */
-       distribution_multiplier_decrease,                    /* The multiplicative distribution multiplier decrease. */
-       st_dev_ratio_threshold,                              /* The maximum ratio of the distance of the average improvement to the mean compared to the distance of one standard deviation before triggering AVS (SDR mechanism). */
-       fitness_variance_tolerance,                          /* The minimum fitness variance level that is allowed. */
-     **mean_vectors,                                        /* The mean vectors, one for each population. */
-     **mean_shift_vector,                                   /* The mean vectors of the previous generation, one for each population. */
-   ****decomposed_covariance_matrices,                      /* The covariance matrices to be used for the sampling. */
-   ****decomposed_cholesky_factors_lower_triangle,          /* The unique lower triangular matrix of the Cholesky factorization for every linkage tree element. */
-    ***full_covariance_matrix,
-     **dependency_matrix,
-      *first_individual,
-      *second_individual,
-      *fitness_of_first_individual,
-       eta_ams = 1.0,
-       dependency_evolve_factor,
-       eta_cov = 1.0;
+        maximum_number_of_seconds,                           /* The maximum number of seconds. */
+        tau,                                                 /* The selection truncation percentile (in [1/population_size,1]). */
+        ***populations,                                         /* The populations containing the solutions. */
+        **objective_values,                                    /* Objective values for population members. */
+        **constraint_values,                                   /* Sum of all constraint violations for population members. */
+        **ranks,                                               /* Ranks of population members. */
+        ***selections,                                          /* Selected solutions, one for each population. */
+        **objective_values_selections,                         /* Objective values of selected solutions. */
+        **constraint_values_selections,                        /* Sum of all constraint violations of selected solutions. */
+        **distribution_multipliers,                            /* Distribution multipliers of each FOS element of each population. */
+        distribution_multiplier_increase,                    /* The multiplicative distribution multiplier increase. */
+        distribution_multiplier_decrease,                    /* The multiplicative distribution multiplier decrease. */
+        st_dev_ratio_threshold,                              /* The maximum ratio of the distance of the average improvement to the mean compared to the distance of one standard deviation before triggering AVS (SDR mechanism). */
+        fitness_variance_tolerance,                          /* The minimum fitness variance level that is allowed. */
+        **mean_vectors,                                        /* The mean vectors, one for each population. */
+        **mean_shift_vector,                                   /* The mean vectors of the previous generation, one for each population. */
+        ****decomposed_covariance_matrices,                      /* The covariance matrices to be used for the sampling. */
+        ****decomposed_cholesky_factors_lower_triangle,          /* The unique lower triangular matrix of the Cholesky factorization for every linkage tree element. */
+        ***full_covariance_matrix,
+        **dependency_matrix,
+        *first_individual,
+        *second_individual,
+        *fitness_of_first_individual,
+        eta_ams = 1.0,
+        dependency_evolve_factor,
+        eta_cov = 1.0;
 FOS  **linkage_model;
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
@@ -277,23 +289,41 @@ void interpretCommandLine( int argc, char **argv )
     use_univariate_FOS = 0;
     learn_linkage_tree = 0;
     static_linkage_tree = 0;
+    distribution_flag = 0;
     dependency_learning = 0;
     evolve_learning = 0;
     random_linkage_tree = 0;
     FOS_element_size = -1;
     block_start = 0;
     pairs_per_run = 0 ;
+    max_connected_fos_size = 0;
     minimal_dependencies_per_run = 2;
     evaluations_for_statistics_hit = 0;
     haveNextNextGaussian = 0;
     total_dependencies_found = 0;
+    pruning_ub = number_of_parameters;
     dependency_evolve_factor = 1.0;
     evolve_scaling = 0;
+    epsilon = 0.0;
     iteration = 0;
+    printed = 0;
+    wait_with_pruning = 0;
     pruned_tree = 0;
+    continued_learning = 0;
     differential_grouping_evals = 0;
+    sparse_tree = 0;
+    randomized_linkage = 0;
     differential_groups = 0;
     old_dependency_comparison = 0;
+    number_of_waiting_cycles = 2;
+    current_waiting_position = 0;
+    sorting_parameters = 1;
+    population_size_based_on_FOS = 0;
+    max_connected_fos_changed = 0;
+    overlapping_sets = 0;
+    recalculate_spread = 0;
+    overlapping_dim = 2;
+    allow_incomplete_dependence = 0;
     parseCommandLine( argc, argv );
 
     if( use_guidelines )
@@ -310,18 +340,106 @@ void interpretCommandLine( int argc, char **argv )
         st_dev_ratio_threshold           = 1.0;
         maximum_no_improvement_stretch   = 25 + number_of_parameters;
     }
-    FOS_element_ub = number_of_parameters;
     block_size = number_of_parameters;
-    if( problem_index == 13 || problem_index == 15 ) block_size = 5;
+    if(problem_index == 18) overlapping_block_size = 1;
+    if(problem_index == 18) block_size = 5;
+    if(problem_index == 19) { block_size = 5; overlapping_block_size = 5;}
+    if( problem_index == 13 || problem_index == 15 ) block_size = 5, overlapping_block_size = 5;
+    if(problem_index == 21){
+        int cf_num = 10, ret;
+        FILE *fpt;
+        char FileName[300];
+        sprintf(FileName, "../extdata/M_D%d.txt", number_of_parameters);
+        fpt = fopen(FileName,"r");
+        if (fpt==NULL)
+        {
+            printf("Cannot open input file for reading\n");
+        }
+
+        M=(double*)malloc(cf_num*number_of_parameters*number_of_parameters*sizeof(double));
+        for (int i=0; i<cf_num*number_of_parameters*number_of_parameters; i++)
+        {
+            ret = fscanf(fpt,"%lf",&M[i]);
+            if (ret != 1)
+            {
+                printf("Error reading from the input file\n");
+            }
+        }
+        fclose(fpt);
+//        for(int i = 0; i <number_of_parameters; i++){
+//            printf("%f, %f, %f, %f, %f \n", M[0], M[1], M[2], M[3], M[4]);
+//        }
+        fpt = fopen("../extdata/shift_data.txt", "r");
+        if (fpt==NULL)
+        {
+            printf("Cannot open input file for reading\n");
+        }
+        OShift=(double *)malloc(number_of_parameters*cf_num*sizeof(double));
+        for(int i=0;i<cf_num*number_of_parameters;i++)
+        {
+            ret = fscanf(fpt,"%lf",&OShift[i]);
+            if (ret != 1)
+            {
+                printf("Error reading from the input file\n");
+            }
+        }
+        fclose(fpt);
+    }
+    if(problem_index > 21 && problem_index < 37){
+        if(problem_index == 34 || problem_index == 35){
+            number_of_parameters = 146;
+        } else{
+            number_of_parameters = 160;
+        }
+        printf("D = %d\n", number_of_parameters);
+    }
+    if(problem_index > 36 && problem_index < 47){
+        printf("Problem index %d \n", problem_index);
+        printf("Setting rotation angle to 45\n");
+        int overlapping_problem_size = problem_index - 35;
+        block_size = overlapping_problem_size; overlapping_block_size = overlapping_problem_size;
+        problem_index = 19;
+        rotation_angle = 45;
+    }
     number_of_blocks = (number_of_parameters + block_size - 1) / block_size;
+    if(block_size != overlapping_block_size){
+        number_of_blocks = ((number_of_parameters + (block_size-overlapping_block_size) - 1) / (block_size-overlapping_block_size))-1;
+    }
+    FOS_element_ub = number_of_parameters;
+//    printf("number of blocks %d, bock size %d, overlapping size %d \n ",number_of_blocks, block_size, overlapping_block_size);
+    pruning_ub = number_of_parameters;
     if( FOS_element_size == -1 ) FOS_element_size = number_of_parameters;
     if( FOS_element_size == -2 ) learn_linkage_tree = 1;
     if( FOS_element_size == -3 ) static_linkage_tree = 1;
     if( FOS_element_size == -4 ) {static_linkage_tree = 1; FOS_element_ub = 100;}
     if( FOS_element_size == -5 ) {random_linkage_tree = 1; static_linkage_tree = 1; FOS_element_ub = 100;}
-    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1;}
-    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 1;}
-    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 3;}
+    if( FOS_element_size == -6 ) {learn_linkage_tree = 1; pruning_ub = 100;} //**LT-100**//
+    if( FOS_element_size == -8 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
+    if( FOS_element_size == -22 ) {population_size_based_on_FOS=1; static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
+    if( FOS_element_size == -88 ) {distribution_flag= 1; static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
+    if( FOS_element_size == -80 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT - with pruning**//
+    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree = 1; pruning_ub = 100; continued_learning=1; } //**S-DGLT**//
+    if( FOS_element_size == -221 ) {population_size_based_on_FOS=1; static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree = 1; pruning_ub = 100; continued_learning=1; } //**S-DGLT**//
+    if( FOS_element_size == -101 ) {distribution_flag= 1;static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree = 1; pruning_ub = 100; continued_learning=1; } //**S-DGLT**//
+    if( FOS_element_size == -110 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; sparse_tree = 1;   pruning_ub = 100; } //**NOEVOLVEDGLT**//
+    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; pruning_ub = 100; continued_learning=1; } //**DGLT-100**//
+    if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; sparse_tree =1;  wait_with_pruning = 1; pruning_ub = 100; } //**DGLT-DELAY**//
+//    if( FOS_element_size == -10 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; allow_incomplete_dependence=1;}
+//    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; continued_learning = 1;}
+//    if( FOS_element_size == -12 ) {static_linkage_tree = 1; overlapping_sets = 1;} //**OVERLAP**//
+
+    if( FOS_element_size == -13 ) {static_linkage_tree = 1; overlapping_sets = 1;}
+    if( FOS_element_size == -14 ) {static_linkage_tree = 1; overlapping_sets = 2; recalculate_spread = 1;}
+    if( FOS_element_size == -16 ) {FOS_element_size = 5; recalculate_spread = 1;}
+    if( FOS_element_size == -15 ) {static_linkage_tree = 1; overlapping_sets = number_of_parameters;} //**FULL**//
+    if( FOS_element_size == -20 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; randomized_linkage = 1; pruning_ub = 100;  } //**RANDOM**//
+//    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.5;}
+//    if( FOS_element_size == -14 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.5;}
+//    if( FOS_element_size == -11 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.1;}
+//    if( FOS_element_size == -12 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = number_of_parameters; pruned_tree = 1; epsilon = 0.05;}
+//    if( FOS_element_size == -13 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 0;}
+//    if( FOS_element_size == -16 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 1;}
+//    if( FOS_element_size == -15 ) {static_linkage_tree = 1; dependency_learning = 1; evolve_learning = 1; pruned_tree = 1; minimal_dependencies_per_run = 3;}
     if( FOS_element_size == -9 ) {static_linkage_tree = 1; dependency_learning = 1; differential_groups = 1;}
 
     if( FOS_element_size == 1 ) use_univariate_FOS = 1;
@@ -375,17 +493,17 @@ void parseOptions( int argc, char **argv, int *index )
             {
                 switch( argv[*index][1] )
                 {
-                case 'h': printUsage(); break;
-                case 'P': printAllInstalledProblems(); break;
-                case 's': write_generational_statistics = 1; break;
-                case 'w': write_generational_solutions  = 1; break;
-                case 'v': print_verbose_overview        = 1; break;
-                case 'r': use_vtr                       = 1; break;
-                case 'g': use_guidelines                = 1; break;
-                case 'b': black_box_evaluations         = 1; break;
-                case 'f': parseFOSElementSize( index, argc, argv ); break;
-                case 'S': fix_seed                      = 1; break;
-                default : optionError( argv, *index );
+                    case 'h': printUsage(); break;
+                    case 'P': printAllInstalledProblems(); break;
+                    case 's': write_generational_statistics = 1; break;
+                    case 'w': write_generational_solutions  = 1; break;
+                    case 'v': print_verbose_overview        = 1; break;
+                    case 'r': use_vtr                       = 1; break;
+                    case 'g': use_guidelines                = 1; break;
+                    case 'b': black_box_evaluations         = 1; break;
+                    case 'f': parseFOSElementSize( index, argc, argv ); break;
+                    case 'S': fix_seed                      = 1; break;
+                    default : optionError( argv, *index );
                 }
             }
         }
@@ -636,6 +754,12 @@ void initialize( void )
     initializeMemory();
 
     initializeObjectiveRotationMatrix();
+
+    initializeObjectiveRotationMatrixPointer(overlapping_dim);
+
+    if( problem_index == 19 ){
+        rotation_angle = 0;
+    }
 }
 
 /**
@@ -671,6 +795,7 @@ void initializeMemory( void )
     number_of_generations            = (int *) Malloc( maximum_number_of_populations*sizeof( int ) );
     linkage_model                    = (FOS **) Malloc( maximum_number_of_populations*sizeof( FOS *) );
     individual_NIS                   = ( int ** ) Malloc( maximum_number_of_populations*sizeof( int * ) );
+    elitist_solution                 = (double *) Malloc( number_of_parameters*sizeof( double ) );
 }
 
 void initializeNewPopulationMemory( int population_index )
@@ -719,7 +844,9 @@ void initializeNewPopulationMemory( int population_index )
 
 //        double one_over_param = 1/number_of_parameters;
         pairs_per_run = dependency_evolve_factor*number_of_parameters;
-
+        pairs_per_run = pairs_per_run*evolve_learning;
+        // just to check
+//        pairs_per_run = number_of_parameters*number_of_parameters;
         number_of_checked_pairs = 0;
         int counter = 0;
         for (i = 0; i < number_of_parameters; i++) {
@@ -732,6 +859,7 @@ void initializeNewPopulationMemory( int population_index )
             }
         }
         number_of_pairs = counter;
+//        printf("number of pairs: %d\n", (int)number_of_pairs/number_of_parameters);
         for (int i = counter - 1; i >= 0; --i) {
             //generate a random number [0, n-1]
             int j = randomInt(i+1);
@@ -806,13 +934,18 @@ void initializeFOS( int population_index )
     file = fopen( "FOS.in", "r" );
     if( file != NULL )
     {
-        if( population_index == 0 )
+        if( population_index == 0 ) {
+            printf("newfosfromfile! \n");
             new_FOS = readFOSFromFile( file );
+            printf("newfosfromfile! \n");
+            printFOS(new_FOS);
+        }
         else
             new_FOS = copyFOS( linkage_model[0] );
     }
     else if( static_linkage_tree )
     {
+//        printf("static tree \n");
         if( population_index == 0 ) {
             if ( evolve_learning ) {
                 initializePopulationAndFitnessValues(0);
@@ -823,7 +956,6 @@ void initializeFOS( int population_index )
         else {
             new_FOS = copyFOS( linkage_model[0] );
         }
-
     }
     else
     {
@@ -850,7 +982,7 @@ void initializeProblem( void )
 {
     switch( problem_index )
     {
-    default: break;
+        default: break;
     }
 }
 
@@ -866,7 +998,7 @@ void initializeDistributionMultipliers( int population_index )
         free( samples_drawn_from_normal[population_index] );
         free( out_of_bounds_draws[population_index] );
     }
-    if( evolve_learning ){
+    if( evolve_learning || pruning_ub!= number_of_parameters ){
         distribution_multipliers[population_index] = (double *) Malloc( (number_of_parameters*2-1)*sizeof( double ) );
         for( j = 0; j <  (number_of_parameters*2-1); j++ )
             distribution_multipliers[population_index][j] = 1.0;
@@ -901,36 +1033,47 @@ void initializePopulationAndFitnessValues( int population_index )
 }
 
 FOS *learnDifferentialGroups(int population_index){
+    initializePopulationAndFitnessValues(population_index);
     int i, j, k;
     double *individual_to_compare = (double *) Malloc( number_of_parameters*sizeof( double ) );
     double constraint_value;
-
+    double temp_problem_index = problem_index;
+    double evals_to_check = 0;
+    if(problem_index == 14 || problem_index == 17){
+        temp_problem_index = 16;
+    }
     double rand = randomRealUniform01();
     rand = 0.7;
 
-    for( k = 0; k < number_of_parameters; k++ )
-    {
-        double min = lower_init_ranges[k], max = upper_init_ranges[k];
+    double min, max;
+    for (k = 0; k < number_of_parameters; k++) {
+        min = lower_init_ranges[k], max = upper_init_ranges[k];
         getMinMaxofPopulation(k, population_index, &min, &max);
-        if( nround(min, 2) == nround(max, 2) ){
+        if (nround(min, 2) == nround(max, 2)) {
             max = upper_init_ranges[k];
         }
-        first_individual[k] = min + ((max - min)*rand*0.5);
-        double parameter_diff = (max - min)*0.5*rand;
-        second_individual[k] = parameter_diff+first_individual[k];
+        first_individual[k] = min + ((max - min) * rand * 0.5);
+        double parameter_diff = (max - min) * 0.5 * rand;
+        second_individual[k] = parameter_diff + first_individual[k];
         individual_to_compare[k] = first_individual[k];
     }
-    iteration += 1;
 
-    double objective_value;
+    double objective_value, old_constraint, old_objective;
     // fill evaluation storage
-    installedProblemEvaluation( problem_index, individual_to_compare, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
-    fitness_of_first_individual[number_of_parameters] = objective_value;
-    for( k = 0; k < number_of_parameters; k++ )
-    {
+    installedProblemEvaluation(temp_problem_index, first_individual, &(old_objective), &(old_constraint),
+                               number_of_parameters, NULL, NULL, 0, 0);
+    differential_grouping_evals += 1+ number_of_parameters;
+    fitness_of_first_individual[number_of_parameters] = old_objective;
+    fitness_of_first_individual[0] = old_objective;
+    for (k = 0; k < number_of_parameters; k++) {
         individual_to_compare[k] = second_individual[k];
-        installedProblemEvaluation( problem_index, individual_to_compare, &(objective_value), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+        installedProblemEvaluation(temp_problem_index, individual_to_compare, &(objective_value), &(constraint_value), 1, &(k), &(first_individual[k]), old_objective, old_constraint);
+        evals_to_check+=1;
         fitness_of_first_individual[k] = objective_value;
+        individual_to_compare[k] = first_individual[k];
+    }
+
+    for (k = 0; k < number_of_parameters; k++) {
         individual_to_compare[k] = first_individual[k];
     }
 
@@ -961,7 +1104,10 @@ FOS *learnDifferentialGroups(int population_index){
             if(grouped[j]){
                 continue;
             }
-            if(getDependency(i, j, individual_to_compare)>0.00005){
+            double dependency = getDependency(i, j, individual_to_compare);
+            evals_to_check+=1;
+            dependency = nround(dependency, 8);
+            if(dependency>0.00000000){
                 grouped[j] = 1;
                 temp_fos_incices[k] = j;
                 k++;
@@ -976,15 +1122,6 @@ FOS *learnDifferentialGroups(int population_index){
         new_FOS_length += 1;
     }
     new_FOS->length = new_FOS_length;
-//    printFOS(new_FOS);
-//    printf("original FOS\n");
-//    for( i =0; i < new_FOS_length; i++){
-//        int setlenght = new_FOS->set_length[i];
-//        for(int j = 0; j < setlenght; j++ ){
-//            printf("%d, ", new_FOS->sets[i][j]);
-//        }
-//        printf("\n");
-//    }
     return new_FOS;
 
 }
@@ -1003,26 +1140,295 @@ FOS *learnLinkageTreeRVGOMEA( int population_index )
         new_FOS = learnDifferentialGroups( population_index );
     }
     else{
-        new_FOS = learnLinkageTree( full_covariance_matrix[population_index], dependency_matrix, checked_matrix);
+        if( !overlapping_sets )
+            new_FOS = learnLinkageTree( full_covariance_matrix[population_index], dependency_matrix, checked_matrix, population_sizes[population_index]);
+        else if(problem_index == 19){
+            if(overlapping_sets == number_of_parameters){
+                new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                new_FOS->length             = 1;
+                new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                new_FOS->sets[0]            = (int *) Malloc( number_of_parameters*sizeof( int * ) );
+                new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                new_FOS->set_length[0] = number_of_parameters;
+                for(int i = 0; i < number_of_parameters; i ++){
+                    new_FOS->sets[0][i] = i;
+                }
+            }
+            else if( overlapping_sets == 1 ){
+                new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                new_FOS->length             = number_of_blocks;
+                new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                for (int j = 1; j < number_of_blocks-1; j++){
+                    new_FOS->sets[j]            = (int *) Malloc( 2+(block_size)*sizeof( int * ) );
+                    new_FOS->set_length[j] = 2+(block_size);
+                    for(int i = -1; i < (block_size)+1; i ++){
+                        new_FOS->sets[j][i+1] = (j*block_size)+i;
+                    }
+                }
+                new_FOS->sets[0]            = (int *) Malloc( 1+(block_size)*sizeof( int * ) );
+                new_FOS->set_length[0] = 1+(block_size);
+                for(int i = 0; i < (block_size)+1; i ++){
+                    new_FOS->sets[0][i] = i;
+                }
+                new_FOS->sets[number_of_blocks-1]            = (int *) Malloc( 1+(block_size)*sizeof( int * ) );
+                new_FOS->set_length[number_of_blocks-1] = 1+(block_size);
+                for(int i = -1; i < (block_size); i ++){
+                    new_FOS->sets[number_of_blocks-1][i+1] = ((number_of_blocks-1)*block_size)+i;
+                }
+
+            }
+            else if( overlapping_sets == 2 ){
+                new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                new_FOS->length             = (number_of_blocks*2)-1;
+                new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                for (int j = 0; j < number_of_blocks; j++){
+                    new_FOS->sets[j]            = (int *) Malloc( (block_size)*sizeof( int * ) );
+                    new_FOS->set_length[j] = (block_size);
+                    for(int i = 0; i < (block_size); i ++){
+                        new_FOS->sets[j][i] = (j*(block_size))+i;
+                    }
+                }
+                for (int j = 1; j < number_of_blocks; j++){
+                    new_FOS->sets[j+number_of_blocks-1]            = (int *) Malloc( (2)*sizeof( int * ) );
+                    new_FOS->set_length[j+number_of_blocks-1] = (2);
+                    for(int i = 0; i < (2); i ++){
+                        new_FOS->sets[j+number_of_blocks-1][i] = ((j*(block_size))+i)-1;
+                    }
+                }
+
+            }
+            else if( overlapping_sets == 3 ) {
+                new_FOS = (FOS *) Malloc(sizeof(FOS));
+                new_FOS->length = (int) number_of_blocks * 1.75;
+                new_FOS->sets = (int **) Malloc(new_FOS->length * sizeof(int *));
+                new_FOS->set_length = (int *) Malloc(new_FOS->length * sizeof(int));
+                for (int j = 0; j < number_of_blocks; j++) {
+                    new_FOS->sets[j] = (int *) Malloc((block_size) * sizeof(int *));
+                    new_FOS->set_length[j] = (block_size);
+                    for (int i = 0; i < (block_size); i++) {
+                        new_FOS->sets[j][i] = (j * (block_size - overlapping_block_size)) + i;
+                    }
+                }
+                int blocks = (int) number_of_blocks / 2;
+                for (int j = 0; j < (int) number_of_blocks / 2; j++) {
+                    new_FOS->sets[j + number_of_blocks] = (int *) Malloc((2 * block_size) * sizeof(int *));
+                    new_FOS->set_length[j + number_of_blocks] = (2 * (block_size)) - overlapping_block_size;
+                    for (int i = 0; i < (block_size * 2); i++) {
+                        if ((j * 2 * (block_size - overlapping_block_size)) + i == number_of_parameters) {
+                            break;
+                        }
+                        new_FOS->sets[j + number_of_blocks][i] = (j * 2 * (block_size - overlapping_block_size)) + i;
+                    }
+                }
+                for (int j = 0; j < (int) number_of_blocks / 4; j++) {
+                    new_FOS->sets[blocks + j + number_of_blocks] = (int *) Malloc((4 * block_size) * sizeof(int *));
+                    new_FOS->set_length[blocks + j + number_of_blocks] =
+                            (4 * (block_size)) - (3 * overlapping_block_size);
+                    for (int i = 0; i < (block_size * 4); i++) {
+                        if ((j * 4 * (block_size - overlapping_block_size)) + i == number_of_parameters) {
+                            break;
+                        }
+                        new_FOS->sets[blocks + j + number_of_blocks][i] =
+                                (j * 4 * (block_size - overlapping_block_size)) + i;
+                    }
+                }
+            }
+        }
+        else if(problem_index > 21 && problem_index < 37){
+            if(overlapping_sets == number_of_parameters){
+                new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                new_FOS->length             = 1;
+                new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                new_FOS->sets[0]            = (int *) Malloc( number_of_parameters*sizeof( int * ) );
+                new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                new_FOS->set_length[0] = number_of_parameters;
+                for(int i = 0; i < number_of_parameters; i ++){
+                    new_FOS->sets[0][i] = i;
+                }
+            }
+            else if(overlapping_sets == 1){
+                if(problem_index == 33){
+                    new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                    new_FOS->length             = number_of_parameters-1;
+                    new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                    new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                    for(int i = 0; i < new_FOS->length; i ++){
+                        new_FOS->sets[i]            = (int *) Malloc( 2*sizeof( int * ) );
+                        new_FOS->set_length[i] = 2;
+                        for( int j = 0; j < 2; j++){
+                            new_FOS->sets[i][j] = i+j;
+                        }
+                    }
+                }
+                else if(number_of_parameters == 146){
+                    int number_of_sets = 8;
+                    new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                    new_FOS->length             = number_of_sets;
+                    new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                    new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                    int set_lengths[8] = {20, 20, 10, 10, 40, 40, 10, 10};
+                    int current_index = 0;
+                    for(int i = 0; i < number_of_sets; i++){
+                        new_FOS->sets[i]       = (int *) Malloc( (set_lengths[i])*sizeof( int * ) );
+                        new_FOS->set_length[i] = set_lengths[i];
+                        for(int j = 0; j < set_lengths[i]; j++){
+                            new_FOS->sets[i][j] = current_index+j;
+                        }
+                        current_index += set_lengths[i] - 2;
+                    }
+                }else{
+                    int number_of_sets = 8;
+                    new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                    new_FOS->length             = number_of_sets;
+                    new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                    new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                    int set_lengths[8] = {50, 50, 25, 25, 100, 100, 25, 25};
+                    int current_index = 0;
+                    for(int i = 0; i < number_of_sets; i++){
+                        new_FOS->sets[i]       = (int *) Malloc( (set_lengths[i])*sizeof( int * ) );
+                        new_FOS->set_length[i] = set_lengths[i];
+                        for(int j = 0; j < set_lengths[i]; j++){
+                            new_FOS->sets[i][j] = current_index+j;
+                        }
+                        current_index += set_lengths[i];
+                    }
+                }
+            }
+        }
+        else{
+            if(overlapping_sets == number_of_parameters){
+                new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                new_FOS->length             = 1;
+                new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                new_FOS->sets[0]            = (int *) Malloc( number_of_parameters*sizeof( int * ) );
+                new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                new_FOS->set_length[0] = number_of_parameters;
+                for(int i = 0; i < number_of_parameters; i ++){
+                    new_FOS->sets[0][i] = i;
+                }
+            }
+            else if( overlapping_sets == 1 ){
+                new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                new_FOS->length             = number_of_blocks;
+                new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                for (int j = 0; j < number_of_blocks; j++){
+                    new_FOS->sets[j]            = (int *) Malloc( (block_size)*sizeof( int * ) );
+                    new_FOS->set_length[j] = (block_size);
+                    for(int i = 0; i < (block_size); i ++){
+                        new_FOS->sets[j][i] = (j*(block_size-overlapping_block_size))+i;
+                    }
+                }
+
+            }
+            else if( overlapping_sets == 2 ){
+                new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                new_FOS->length             = number_of_blocks;
+                new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                new_FOS->sets[0]            = (int *) Malloc( (block_size)*sizeof( int * ) );
+                new_FOS->set_length[0] = (block_size);
+                for(int i = 0; i < (block_size); i ++){
+                    new_FOS->sets[0][i] = i;
+                }
+                for (int j = 1; j < number_of_blocks; j++){
+                    new_FOS->sets[j]            = (int *) Malloc( (block_size-overlapping_block_size)*sizeof( int * ) );
+                    new_FOS->set_length[j] = (block_size-overlapping_block_size);
+//                    printf("sizes %d \n", (j*(block_size-overlapping_block_size)));
+                    for(int i = 0; i < (block_size-overlapping_block_size); i ++){
+                        new_FOS->sets[j][i] = (j*(block_size-overlapping_block_size))+i+overlapping_block_size;
+                    }
+                }
+
+            }
+            else if( overlapping_sets == 3 ){
+                new_FOS                     = (FOS*) Malloc(sizeof(FOS));
+                new_FOS->length             = (int) number_of_blocks*1.75;
+                new_FOS->sets               = (int **) Malloc( new_FOS->length*sizeof( int * ) );
+                new_FOS->set_length         = (int *) Malloc( new_FOS->length*sizeof( int ) );
+                for (int j = 0; j < number_of_blocks; j++){
+                    new_FOS->sets[j]            = (int *) Malloc( (block_size)*sizeof( int * ) );
+                    new_FOS->set_length[j] = (block_size);
+                    for(int i = 0; i < (block_size); i ++){
+                        new_FOS->sets[j][i] = (j*(block_size-overlapping_block_size))+i;
+                    }
+                }
+                int blocks = (int)number_of_blocks/2;
+                for (int j = 0; j < (int)number_of_blocks/2; j++){
+                    new_FOS->sets[j+number_of_blocks]            = (int *) Malloc( (2* block_size)*sizeof( int * ) );
+                    new_FOS->set_length[j+number_of_blocks] = (2*(block_size))-overlapping_block_size;
+                    for(int i = 0; i < (block_size*2); i ++){
+                        if((j*2*(block_size-overlapping_block_size))+ i == number_of_parameters){
+                            break;
+                        }
+                        new_FOS->sets[j+number_of_blocks][i] = (j*2*(block_size-overlapping_block_size))+i;
+                    }
+                }
+                for (int j = 0; j < (int)number_of_blocks/4; j++){
+                    new_FOS->sets[blocks + j+ number_of_blocks]            = (int *) Malloc( (4* block_size)*sizeof( int * ) );
+                    new_FOS->set_length[ blocks + j+ number_of_blocks] = (4*(block_size))-(3*overlapping_block_size);
+                    for(int i = 0; i < (block_size*4); i ++){
+                        if((j*4*(block_size-overlapping_block_size))+ i == number_of_parameters){
+                            break;
+                        }
+                        new_FOS->sets[blocks + j+ number_of_blocks][i] = (j*4*(block_size-overlapping_block_size))+i;
+                    }
+                }
+            }
+            else {
+                new_FOS = (FOS *) Malloc(sizeof(FOS));
+                new_FOS->length = 1;
+                new_FOS->sets = (int **) Malloc(new_FOS->length * sizeof(int *));
+                new_FOS->sets[0] = (int *) Malloc(number_of_parameters * sizeof(int *));
+                new_FOS->set_length = (int *) Malloc(new_FOS->length * sizeof(int));
+                new_FOS->set_length[0] = number_of_parameters;
+                for (int i = 0; i < number_of_parameters; i++) {
+                    new_FOS->sets[0][i] = i;
+                }
+            }
+        }
     }
-    if( learn_linkage_tree && number_of_generations[population_index] > 0 )
-        inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
+    if( (learn_linkage_tree) && number_of_generations[population_index] > 0 ) {
+        if(new_FOS->length!=linkage_model[population_index]->length || number_of_parameters!=pruning_ub){
+            evolveDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
+        }
+        else{
+            inheritDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
+        }
+    }
 
     if( learn_linkage_tree )
     {
-        for( i = 0; i < linkage_model[population_index]->length; i++ )
+        for( i = 0; i < linkage_model[population_index]->length; i++ ) {
             free( linkage_model[population_index]->sets[i] );
+        }
         free( linkage_model[population_index]->sets );
         free( linkage_model[population_index]->set_length );
         free( linkage_model[population_index]);
     }
-    if ( evolve_learning ){
-        for( i = 1; i < number_of_populations; i++){
-            linkage_model[i] = copyFOS(new_FOS);
+    if ( evolve_learning && number_of_generations[population_index] > 1){
+//        printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
+        if(distribution_flag){
+            evolveDistributionMultipliers( new_FOS, linkage_model[population_index], distribution_multipliers[population_index] );
         }
+        ezilaitiniFOS(linkage_model[population_index]);
     }
-
-
+//        if( number_of_generations[population_index] != 0){
+//            for( i = 0; i < linkage_model[population_index]->length; i++ ) {
+//                free( linkage_model[population_index]->sets[i] );
+//            }
+//            free( linkage_model[population_index]->sets );
+//            free( linkage_model[population_index]->set_length );
+//            free( linkage_model[population_index]);
+//        }
+//    }
+//    printBigFOS(new_FOS);
+//    printFOS(new_FOS);
+//    printf("poulations size: %d", population_sizes[population_index]);
+//
+//    printf("length:%d \n", new_FOS->length);
     return( new_FOS );
 }
 
@@ -1031,7 +1437,7 @@ void inheritDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multip
     int      i, *permutation;
     double   *multipliers_copy;
 
-    multipliers_copy = (double*) Malloc(new_FOS->length*sizeof(double));
+    multipliers_copy = (double*) Malloc((number_of_parameters*number_of_parameters-1)*sizeof(double));
     for( i = 0; i < new_FOS->length; i++ )
         multipliers_copy[i] = multipliers[i];
     permutation = matchFOSElements( new_FOS, prev_FOS );
@@ -1053,6 +1459,75 @@ void inheritDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multip
     free( multipliers_copy );
     free( permutation );
 }
+
+void evolveDistributionMultipliers( FOS *new_FOS, FOS *prev_FOS, double *multipliers )
+{
+    int      i, *permutation;
+    double   *multipliers_copy;
+
+    multipliers_copy = (double*) Malloc(((number_of_parameters*2)-1)*sizeof(double));
+    for( i = 0; i < (number_of_parameters*2)-1; i++ )
+        multipliers_copy[i] = multipliers[i];
+
+    int j, a, b, matches, **FOS_element_similarity_matrix;
+
+    permutation = (int *) Malloc( new_FOS->length*sizeof(int));
+    FOS_element_similarity_matrix = (int**) Malloc((prev_FOS->length)*sizeof(int*));
+    for( i = 0; i < prev_FOS->length; i++ )
+        FOS_element_similarity_matrix[i] = (int*) Malloc((new_FOS->length)*sizeof(int));
+
+    for( i = 0; i < prev_FOS->length; i++ )
+    {
+        for( j = 0; j < new_FOS->length; j++ )
+        {
+            a = 0; b = 0;
+            matches = 0;
+            while( a < prev_FOS->set_length[i] && b < new_FOS->set_length[j] )
+            {
+                if( prev_FOS->sets[i][a] < new_FOS->sets[j][b] )
+                {
+                    a++;
+                }
+                else if( prev_FOS->sets[i][a] > new_FOS->sets[j][b] )
+                {
+                    b++;
+                }
+                else
+                {
+                    a++;
+                    b++;
+                    matches++;
+                }
+            }
+            FOS_element_similarity_matrix[i][j] = (int) 10000*(2.0*matches/(prev_FOS->set_length[i]+new_FOS->set_length[j]));
+        }
+    }
+
+    for( i = 0; i < new_FOS->length; i++ )
+    {
+        int max_index = 0;
+        int max_similarity = -1;
+        for( j = 0; j < prev_FOS->length; j++ )
+        {
+            if(FOS_element_similarity_matrix[j][i]>max_similarity){
+                max_index = j;
+                max_similarity = FOS_element_similarity_matrix[j][i];
+            }
+        }
+        permutation[i] = max_index;
+    }
+    for( i = 0; i < new_FOS->length; i++ ){
+        multipliers[i] = multipliers_copy[permutation[i]];
+    }
+
+    for( i = 0; i < prev_FOS->length; i++ )
+        free( FOS_element_similarity_matrix[i] );
+    free( FOS_element_similarity_matrix );
+
+    free( multipliers_copy );
+    free( permutation );
+}
+
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=- Section Ranking -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /**
@@ -1359,6 +1834,12 @@ short checkTerminationCondition( void )
 
     checkDistributionMultiplierTerminationCondition();
 
+    //check if the max fos size has changed, also check if the size is bigger than 0
+    if(population_size_based_on_FOS && max_connected_fos_changed ){ //&& max_connected_fos_changed && max_connected_fos_size
+        checkPopulationSizeAgainstFOS();
+        max_connected_fos_changed = 0;
+    }
+
     if( number_of_populations < maximum_number_of_populations )
         return( 0 );
 
@@ -1536,6 +2017,29 @@ void checkDistributionMultiplierTerminationCondition( void )
 
             if( converged )
                 populations_terminated[i] = 1;
+        }
+    }
+}
+
+
+
+/**
+ * Checks whether the distribution multiplier in any population
+ * has become too small (1e-10).
+ */
+void checkPopulationSizeAgainstFOS( void )
+{
+    int i, j;
+    short converged;
+
+    int minimum_size = 17+(3*max_connected_fos_size*sqrt(max_connected_fos_size));
+    for( i = 0; i < number_of_populations; i++ )
+    {
+        if( !populations_terminated[i] )
+        {
+            if( population_sizes[i]< minimum_size ){
+                populations_terminated[i] = 1;
+            }
         }
     }
 }
@@ -1733,23 +2237,47 @@ void estimateParameters( int population_index )
             if( number_of_generations[population_index] == 0 )
                 initializeDistributionMultipliers( population_index );
         }
-        if ( evolve_learning && (number_of_checked_pairs<number_of_pairs ||  number_of_generations[population_index] == 0 ) ){
-            if( number_of_checked_pairs<number_of_pairs ){
-                linkage_model[0] = learnLinkageTreeRVGOMEA( 0 );
-                initializeCovarianceMatrices( 0 );
-            }
+        else if ( evolve_learning && (number_of_waiting_cycles== 2 || continued_learning) ){
+            //todo this statement triggers leak
+            if((current_waiting_position == 0 || number_of_generations[population_index] == 0 )){
+                if( current_waiting_position == 0 ){
+                    if(number_of_generations[population_index] != 0){
+                        ezilaitiniCovarianceMatrices(population_index);
+                    }
+//                    printf("checked pairs: %d\n", (int)number_of_checked_pairs/number_of_parameters);
+                    linkage_model[population_index] = learnLinkageTreeRVGOMEA( population_index );
+//                    printFOS(linkage_model[population_index]);
+                    if( number_of_populations > 1 ){
+                        for (int i = 0; i < number_of_populations; i++){
+                            if(i != population_index){
+                                if(number_of_generations[i] != 0){
+                                    ezilaitiniCovarianceMatrices(i);
+                                }
+                                ezilaitiniFOS( linkage_model[i] );
+                                linkage_model[i] = copyFOS(linkage_model[population_index]);
+                                initializeCovarianceMatrices( i );
+                                if(distribution_flag){
+                                    for(int j = 0; j < linkage_model[population_index]->length; j++){
+                                        distribution_multipliers[i][j] = distribution_multipliers[population_index][j];
+                                    }
 
-            if( number_of_generations[population_index] == 0 )
-                initializeDistributionMultipliers( population_index );
+                                }
+                            }
+                        }
+                    }
+                    initializeCovarianceMatrices( population_index );
 
-            if( number_of_populations > 1 ){
-                for (int i = 1; i < number_of_populations; i++){
-                    linkage_model[i] = copyFOS(linkage_model[0]);
-                    initializeCovarianceMatrices( i );
                 }
+
+                if( number_of_generations[population_index] == 0 ) {
+                    initializeDistributionMultipliers( population_index );
+                }
+
+            }
+            else if (current_waiting_position > 0){
+                current_waiting_position -= 1;
             }
         }
-
         estimateParametersML( population_index );
     }
 }
@@ -1842,29 +2370,47 @@ double getDependency(int i, int j, double *individual_to_compare){
     individual_to_compare[i] = second_individual[i];
     individual_to_compare[j] = second_individual[j];
     installedProblemEvaluation( problem_index, individual_to_compare, &(change_i_j), &(constraint_value), number_of_parameters, NULL, NULL, 0, 0 );
+    differential_grouping_evals+=1;
     individual_to_compare[i] = first_individual[i];
     individual_to_compare[j] = first_individual[j];
+
+    double delta_i, delta_j;
 
     change_i = change_i/original_objective;
     change_j = change_j/original_objective;
     change_i_j = change_i_j/original_objective;
+    delta_i = fabs(1.0 - change_i);
+    delta_j = fabs(change_j - change_i_j);
 
-    double delta_i = fabs(1.0 - change_i);
-    double delta_j = fabs(change_j - change_i_j);
-
+    delta_i = nround(delta_i, 12);
+    delta_j = nround(delta_j, 12);
 
     double dependency = 0.0;
-    if (delta_i != 0.0 && delta_j != 0.0) {
-        double difference = fabs(delta_i / delta_j);
-        if (difference > 1.0) {
-            difference = fabs(delta_j / delta_i);
+    //if (delta_i != 0.0 && delta_j != 0.0) {
+    double inverted_difference;
+
+    if(delta_j == 0.0) {
+        double temp = delta_i;
+        delta_i = delta_j;
+        delta_j = temp;
+    }
+    if(delta_j != 0.0){
+        inverted_difference = fabs((double)delta_i/delta_j);
+        inverted_difference = nround(inverted_difference, 12);
+        if(inverted_difference >= 1.0){
+            inverted_difference = fabs((double)delta_j/delta_i);
+            inverted_difference = nround(inverted_difference, 12);
         }
-        dependency = 1-difference;
+    } else{
+        inverted_difference = 1.0;
+    }
+    dependency = nround(1-inverted_difference,12);
+    if (inverted_difference >= 1) {
+        dependency = nround(0.0, 12);
     }
 
     return dependency;
 }
-
 
 /**
 * Computes the matrix of dependencies for
@@ -1874,8 +2420,33 @@ void evolveDifferentialDependencies( int population_index ) {
     int i, j, k;
     double *individual_to_compare = (double *) Malloc(number_of_parameters * sizeof(double));
     double constraint_value;
+    double temp_problem_index = problem_index;
+    if(problem_index == 14 || problem_index == 17){
+        temp_problem_index = 16;
+    }
+    //todo: just for debug
+    if(problem_index == 35){
+        pairs_per_run = number_of_pairs;
+    }
 
-    if (iteration == 0) {
+    if(randomized_linkage){
+        for (int i = 0; i < number_of_parameters; ++i) {
+            for (int j = i+1; j < number_of_parameters; ++j) {
+                double rand = randomRealUniform01();
+                dependency_matrix[i][j] = rand;
+                dependency_matrix[j][i] = rand;
+            }
+        }
+        number_of_checked_pairs = number_of_pairs;
+        total_dependencies_found += 1000;
+        current_waiting_position = number_of_waiting_cycles;
+        number_of_waiting_cycles = number_of_waiting_cycles * 2;
+        return;
+    }
+
+    if (number_of_checked_pairs == 0) {
+
+//        printf("beginning with 0 checked pairs, wait: %d\n", number_of_waiting_cycles);
         double rand = randomRealUniform01();
         rand = 0.7;
 
@@ -1893,18 +2464,29 @@ void evolveDifferentialDependencies( int population_index ) {
 
         double objective_value, old_constraint, old_objective;
         // fill evaluation storage
-        installedProblemEvaluation(problem_index, first_individual, &(old_objective), &(old_constraint),
+        installedProblemEvaluation(temp_problem_index, first_individual, &(old_objective), &(old_constraint),
                                    number_of_parameters, NULL, NULL, 0, 0);
-        differential_grouping_evals = 1+ number_of_parameters;
+        differential_grouping_evals += 1+ number_of_parameters;
         fitness_of_first_individual[number_of_parameters] = old_objective;
         fitness_of_first_individual[0] = old_objective;
         for (k = 0; k < number_of_parameters; k++) {
             individual_to_compare[k] = second_individual[k];
-            installedProblemEvaluation(problem_index, individual_to_compare, &(objective_value), &(constraint_value), 1, &(k), &(first_individual[k]), old_objective, old_constraint);
+            installedProblemEvaluation(temp_problem_index, individual_to_compare, &(objective_value), &(constraint_value), 1, &(k), &(first_individual[k]), old_objective, old_constraint);
 
             fitness_of_first_individual[k] = objective_value;
             individual_to_compare[k] = first_individual[k];
         }
+        int counter = number_of_pairs;
+        for (int i = counter - 1; i >= 0; --i) {
+            //generate a random number [0, n-1]
+            int j = randomInt(i+1);
+
+            //swap the last element with element at random index
+            int *temp = dependency_pairs[i];
+            dependency_pairs[i] = dependency_pairs[j];
+            dependency_pairs[j] = temp;
+        }
+
     } else {
         for (k = 0; k < number_of_parameters; k++) {
             individual_to_compare[k] = first_individual[k];
@@ -1922,9 +2504,8 @@ void evolveDifferentialDependencies( int population_index ) {
     for (k = 0; k < number_of_parameters; k++) {
         individual_to_compare[k] = first_individual[k];
     }
-
     int found_dependencies = 0;
-
+    double max_dependency = 0.0;
     for (k = number_of_checked_pairs; k < max_index; k++) {
         i = dependency_pairs[k][0];
         j = dependency_pairs[k][1];
@@ -1935,20 +2516,25 @@ void evolveDifferentialDependencies( int population_index ) {
 
         individual_to_compare[i] = second_individual[i];
         individual_to_compare[j] = second_individual[j];
-        installedProblemEvaluation(problem_index, individual_to_compare, &(change_i_j), &(constraint_value),
+        installedProblemEvaluation(temp_problem_index, individual_to_compare, &(change_i_j), &(constraint_value),
                                    1, &(j), &(first_individual[j]), fitness_of_first_individual[i], 0);
         differential_grouping_evals+=1;
         individual_to_compare[i] = first_individual[i];
         individual_to_compare[j] = first_individual[j];
-
+//        printf("change j: \t %f\n", second_individual[j]);
         double delta_i, delta_j;
 
+
+//        change_i = nround(change_i, 8);
+//        change_j = nround(change_j, 8);
+//        change_i_j = nround(change_i_j, 8);
+//        original_objective = nround(original_objective, 8);
         change_i = change_i/original_objective;
         change_j = change_j/original_objective;
         change_i_j = change_i_j/original_objective;
-
         delta_i = fabs(1.0 - change_i);
         delta_j = fabs(change_j - change_i_j);
+//
 
         delta_i = nround(delta_i, 12);
         delta_j = nround(delta_j, 12);
@@ -1963,17 +2549,17 @@ void evolveDifferentialDependencies( int population_index ) {
             delta_j = temp;
         }
         if(delta_j != 0.0){
-            inverted_difference = fabs(delta_i/delta_j);
+            inverted_difference = nround(fabs(delta_i/delta_j),6);
             if(inverted_difference > 1.0){
-                inverted_difference = fabs((double)delta_j/delta_i);
+                inverted_difference = nround(fabs((double)delta_j/delta_i),6);
             }
         } else{
             inverted_difference = 1.0;
         }
-
-        dependency = 1-inverted_difference;
-        if (inverted_difference < 1) {//0.999999{
+        dependency = nround(1-inverted_difference, 6);
+        if (inverted_difference < 1 && inverted_difference > 0) {//0.999999{
             found_dependencies += 1;
+            //printf("a fucking dep found: %f \n",dependency);
 //            printf("there is a dependency\t delta i: %20.18f \t delta j: %20.18f \t diff: %20.18f \n" , delta_i, delta_j, inverted_difference);
         } else{
             dependency = 0.0;
@@ -1981,6 +2567,9 @@ void evolveDifferentialDependencies( int population_index ) {
         //}
         dependency_matrix[i][j] = dependency;
         dependency_matrix[j][i] = dependency;
+
+//        printf("Dependency: \t %.100f\n", dependency);
+        max_dependency = max(dependency, max_dependency);
         checked_matrix[i][j] = 1;
         checked_matrix[j][i] = 1;
     }
@@ -1989,13 +2578,28 @@ void evolveDifferentialDependencies( int population_index ) {
     if (found_dependencies == 0) {
         int found_dependencies_per_run = total_dependencies_found / iteration;
         if (found_dependencies_per_run < minimal_dependencies_per_run) {
-            number_of_checked_pairs = number_of_pairs;
+            current_waiting_position = number_of_waiting_cycles;
+            number_of_checked_pairs = 0;
+            number_of_waiting_cycles *= 2;
+            iteration = 0; total_dependencies_found = 0;
+            //TODO: iteration and total dependencies should be emptied here
+//            printf("Not enough dependencies :( %d\n", total_number_of_generations);
         }
     }
+    else if (number_of_checked_pairs >= number_of_pairs){
+        number_of_checked_pairs = 0;
+        current_waiting_position = number_of_waiting_cycles;
+        number_of_waiting_cycles *= 2;
+        iteration = 0; total_dependencies_found = 0;
+        //TODO: iteration and total dependencies should be emptied here
+//        printf("Checked all pairs! %d\n", total_number_of_generations);
+    } else{ //TODO: debugging only
+//        current_waiting_position = number_of_waiting_cycles;
+//        number_of_waiting_cycles *= 2;
+    }
+
+
 //    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
-//    //todo: find some normalization
-//    if(number_of_checked_pairs>= number_of_pairs)
-//        printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
     free(individual_to_compare);
 }
 
@@ -2005,7 +2609,7 @@ void printMatrix(double **matrix, int cols, int rows){
     for( i = 0; i < rows; i++ )
     {
         for( j = 0; j < cols; j++ ) {
-            printf("%f, ", matrix[i][j] );
+            printf("%f, ",matrix[i][j]);
         }
         printf("  \n");
     }
@@ -2205,6 +2809,18 @@ void generateAndEvaluateNewSolutionsToFillPopulation( int population_index )
             }
 
             FOS_element_caused_improvement[j] = adaptDistributionMultipliers( population_index, j );
+
+            if(recalculate_spread == 1){
+                computeRanksForOnePopulation( population_index );
+                makeSelectionsForOnePopulation( population_index );
+                estimateParametersML( population_index );
+                computeParametersForSampling( population_index );
+            }
+//            if(recalculate_spread == 2){
+//                computeParametersForSampling( population_index );
+//                estimateParameters( population_index );
+//                computeRanksForOnePopulation(population_index);
+//            }
         }
         free( fos_order );
 
@@ -2300,7 +2916,7 @@ double *generateNewPartialSolutionFromFOSElement( int population_index, int FOS_
             for( i = 0; i < num_indices; i++ )
                 z[i] = random1DNormalUnit();
 
-            if( use_univariate_FOS )
+            if( use_univariate_FOS)
             {
                 result = (double*) Malloc(1*sizeof(double));
                 result[0] = z[0]*sqrt(decomposed_covariance_matrices[population_index][FOS_index][0][0]) + mean_vectors[population_index][indices[0]];
@@ -2308,8 +2924,10 @@ double *generateNewPartialSolutionFromFOSElement( int population_index, int FOS_
             else
             {
                 result = matrixVectorMultiplication( decomposed_cholesky_factors_lower_triangle[population_index][FOS_index], z, num_indices, num_indices );
-                for( i = 0; i < num_indices; i++ )
+                for( i = 0; i < num_indices; i++ ) {
                     result[i] += mean_vectors[population_index][indices[i]];
+                }
+//                printf("st %lf: , other: %lf\n", result[0], z[0]*sqrt(decomposed_covariance_matrices[population_index][FOS_index][0][0]) + mean_vectors[population_index][indices[0]]);
             }
 
             free( z );
@@ -2432,7 +3050,7 @@ short applyAMS( int population_index, int individual_index )
         for( m = 0; m < number_of_parameters; m++ )
         {
             solution_AMS[m] = populations[population_index][individual_index][m]
-                    + shrink_factor*delta_AMS*mean_shift_vector[population_index][m]; //*distribution_multipliers[population_index][FOS_index]
+                              + shrink_factor*delta_AMS*mean_shift_vector[population_index][m]; //*distribution_multipliers[population_index][FOS_index]
             if( !isParameterInRangeBounds( solution_AMS[m], m ) )
             {
                 out_of_range = 1;
@@ -2740,6 +3358,11 @@ void ezilaitiniMemory( void )
     free( out_of_bounds_draws );
     free( individual_NIS );
     free( full_covariance_matrix );
+    if(evolve_learning){
+        for(int i = 0; i < number_of_parameters; i++){
+            free( dependency_matrix[i] );
+        }
+    }
     free( dependency_matrix );
     free( decomposed_covariance_matrices );
     free( decomposed_cholesky_factors_lower_triangle );
@@ -2820,7 +3443,7 @@ void ezilaitiniParametersForSampling( int population_index )
     {
         ezilaitiniCovarianceMatrices( population_index );
 
-        for( i = 0; i < number_of_parameters; i++ )
+        for( i = 0; i < linkage_model[population_index]->set_length[i]; i++ )
             free( full_covariance_matrix[population_index][i] );
         free( full_covariance_matrix[population_index] );
     }
@@ -2905,6 +3528,7 @@ void runAllPopulations()
             writeGenerationalSolutions( 0 );
 
         total_number_of_generations++;
+//        printf("Generations: %d, Pairs Checked: %d, number of populations: %d\n",total_number_of_generations, (int)number_of_checked_pairs/number_of_parameters, number_of_populations);
     }
 }
 
@@ -2915,25 +3539,47 @@ void run( void )
 {
     initialize();
 
-    if( print_verbose_overview )
+    if( print_verbose_overview ) {
         printVerboseOverview();
+    }
 
     runAllPopulations();
+//    printMatrix(dependency_matrix, number_of_parameters, number_of_parameters);
 
     printf("evals %f ", number_of_evaluations);
 
-    printf("obj_val %6.2e ", elitist_objective_value);
-
-    ezilaitini();
+    printf("obj_val %6.7e ", elitist_objective_value);
 
     printf("time %lf ", getTimer());
     if(evolve_learning){
         printf("differential_evals %d ", differential_grouping_evals);
+//        printf("\n\nnormal_evals %d ", ((int)number_of_evaluations)-differential_grouping_evals);
     }
 
     printf("generations %d\n", total_number_of_generations);
 
+//    for (int k = 0; k < number_of_parameters; k++) {
+//        printf("first: %f \t second: %f\t eventual: %f\n", first_individual[k], second_individual[k], elitist_solution[k]);
+//    }
+//
+//
+    number_of_checked_pairs = 0;
+    iteration = 0;
+//    evolveDifferentialDependencies(0);
+//    for(int i = 0; i < number_of_parameters; i+=2){
+//        printf("%f, ", elitist_solution[i]);
+//
+//    }
+//    for(int i = 0; i < number_of_parameters; i+=2){
+//        printf("%f, ", elitist_solution[i+1]);
+//    }
+//    printf("\n");
+//    printf("%d \n", number_of_generations[0]);
 
+//    for(int i = 0; i < number_of_parameters; i++){
+//        printf("%f, ", elitist_solution[i]);
+//    }
+    ezilaitini();
 }
 
 /**

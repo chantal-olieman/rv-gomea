@@ -99,6 +99,14 @@ char *installedProblemName( int index )
     case 13: return( (char *) "Sum of ellipsoids" );
     case 14: return( (char *) "Circles in a Square" );
     case 15: return( (char *) "TrapSphere" );
+    case 16: return( (char *) "Circles in a Square 2" );
+    case 17: return( (char *) "Circles in a Square unrelaxed" );
+    case 18: return( (char *) "Overlapping sum of ellipsoids" );
+    case 19: return( (char *) "Scaled sum of ellipsoids" );
+    case 20: return( (char *) "Schwefel's Function" );
+    case 21: return( (char *) "Shifted Schwefel's Function" );
+    case 22 ... 36: return( (char *) "CEC Function" + index-21 );
+    case 37 ... 46: return( (char *) "Scaled sum of ellipsoids with groups of " + index-35 );
     }
 
     return( NULL );
@@ -159,6 +167,14 @@ double installedProblemLowerRangeBound( int index, int dimension )
     case 13: return( sumOfEllipsoidsFunctionLowerRangeBound( dimension ) );
     case 14: return( ciasBRFunctionLowerRangeBound( dimension ) );
     case 15: return( trapSphereFunctionLowerRangeBound( dimension ) );
+    case 16: return( ciasRelaxedFunctionLowerRangeBound( dimension ) );
+    case 17: return( ciasFunctionLowerRangeBound( dimension ) );
+    case 18: return( overlappingSumOfEllipsoidsFunctionLowerRangeBound( dimension ) );
+    case 19: return( scaledSumOfEllipsoidsFunctionLowerRangeBound( dimension ) );
+    case 20: return( schwefelsFunctionLowerRangeBound( dimension ) );
+    case 21: return( schwefelsFunctionLowerRangeBound( dimension ) );
+    case 22 ... 36: return( CECFunctionLowerRangeBound( dimension ) );
+//    case 37 ... 46: return( scaledSumOfEllipsoidsFunctionLowerRangeBound( dimension ) );
     }
 
     return( 0.0 );
@@ -187,6 +203,14 @@ double installedProblemUpperRangeBound( int index, int dimension )
     case 13: return( sumOfEllipsoidsFunctionUpperRangeBound( dimension ) );
     case 14: return( ciasBRFunctionUpperRangeBound( dimension ) );
     case 15: return( trapSphereFunctionUpperRangeBound( dimension ) );
+    case 16: return( ciasRelaxedFunctionUpperRangeBound( dimension ) );
+    case 17: return( ciasFunctionUpperRangeBound( dimension ) );
+    case 18: return( overlappingSumOfEllipsoidsFunctionUpperRangeBound( dimension ) );
+    case 19: return( scaledSumOfEllipsoidsFunctionUpperRangeBound( dimension ) );
+    case 20: return( schwefelsFunctionUpperRangeBound( dimension ) );
+    case 21: return( schwefelsFunctionUpperRangeBound( dimension ) );
+    case 22 ... 36: return( CECFunctionUpperRangeBound( dimension ) );
+//    case 37 ... 46: return( scaledSumOfEllipsoidsFunctionUpperRangeBound( dimension ) );
     }
 
     return( 0.0 );
@@ -272,14 +296,14 @@ void installedProblemEvaluation( int index, double *parameters, double *objectiv
     }
     else
     {
-        if( black_box_evaluations || touched_parameters_indices == NULL  )
+        if( black_box_evaluations || touched_parameters_indices == NULL )
         {
             rotated_parameters = rotateAllParameters( parameters );
             installedProblemEvaluationWithoutRotation( index, rotated_parameters, objective_value, constraint_value, number_of_parameters, NULL, NULL, NULL, 0, 0 );
         }
         else
         {
-            if( problem_index == 13 && (learn_linkage_tree || static_linkage_tree || use_univariate_FOS) ) // indices must be sorted
+            if( (problem_index == 13 )&& (learn_linkage_tree || static_linkage_tree || use_univariate_FOS) ) // indices must be sorted
             {
                 if( touched_parameters_indices != NULL )
                     free( touched_parameters );
@@ -321,6 +345,9 @@ void installedProblemEvaluation( int index, double *parameters, double *objectiv
                 free( block_indices );
                 free( touched_parameters_before );
             }
+            else if ( problem_index == 19 ){
+                installedProblemEvaluationWithoutRotation( index, parameters, objective_value, constraint_value, number_of_touched_parameters, touched_parameters_indices, touched_parameters, parameters_before, objective_value_before, constraint_value_before );
+            }
             else
             {
                 rotated_parameters = matrixVectorMultiplication( rotation_matrix, touched_parameters, number_of_touched_parameters, number_of_touched_parameters );
@@ -349,6 +376,9 @@ void installedProblemEvaluation( int index, double *parameters, double *objectiv
     {
         elitist_objective_value = *objective_value;
         elitist_constraint_value = *constraint_value;
+        for(int k = 0; k < number_of_parameters; k++){
+            elitist_solution[k] = parameters[k];
+        }
     }
 
     if( touched_parameters_indices != NULL )
@@ -385,6 +415,14 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 13: sumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 14: ciasBRFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 15: trapSphereFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 16: ciasRelaxedFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 17: ciasFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 18: overlappingSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 19: scaledSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 20: schwefelsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 21: RPSO_schwefel( parameters, objective_value, constraint_value ); break;
+        case 22 ... 36: CECProblemEvaluation( parameters, objective_value, constraint_value, index ); break;
+//        case 37 ... 46: scaledSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         }
         number_of_evaluations++;
     }
@@ -408,6 +446,14 @@ void installedProblemEvaluationWithoutRotation( int index, double *parameters, d
         case 13: sumOfEllipsoidsFunctionPartialProblemEvaluation( parameters, objective_value, constraint_value, number_of_touched_parameters, touched_parameters_indices, touched_parameters, parameters_before, objective_value_before, constraint_value_before ); break;
         case 14: ciasBRFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         case 15: trapSphereFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 16: ciasRelaxedFunctionPartialProblemEvaluation( parameters, objective_value, constraint_value, number_of_touched_parameters, touched_parameters_indices, touched_parameters, parameters_before, objective_value_before, constraint_value_before ); break;
+        case 17: ciasFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 18: overlappingSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 19: scaledSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 20: schwefelsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
+        case 21: RPSO_schwefel( parameters, objective_value, constraint_value ); break;
+        case 22 ... 36: CECProblemEvaluation( parameters, objective_value, constraint_value, index ); break;
+//        case 37 ... 46: scaledSumOfEllipsoidsFunctionProblemEvaluation( parameters, objective_value, constraint_value ); break;
         }
         number_of_evaluations += number_of_touched_parameters/(double)number_of_parameters;
     }
@@ -421,7 +467,6 @@ void sphereFunctionProblemEvaluation( double *parameters, double *objective_valu
     result = 0.0;
     for( i = 0; i < number_of_parameters; i++ )
         result += parameters[i]*parameters[i];
-
     *objective_value  = result;
     *constraint_value = 0;
 }
@@ -882,6 +927,32 @@ double sumOfEllipsoidsFunctionUpperRangeBound( int dimension )
     return( 1e+308 );
 }
 
+void overlappingSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
+{
+    int    i, j;
+    double result;
+
+    result = 0.0;
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        j = i % block_size;
+        result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*parameters[i]*parameters[i];
+    }
+
+    *objective_value  = result;
+    *constraint_value = 0;
+}
+
+double overlappingSumOfEllipsoidsFunctionLowerRangeBound( int dimension )
+{
+    return( -1e+308 );
+}
+
+double overlappingSumOfEllipsoidsFunctionUpperRangeBound( int dimension )
+{
+    return( 1e+308 );
+}
+
 void ciasBRFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
 {
     int    i, j, nc;
@@ -963,5 +1034,383 @@ double trapSphereFunctionUpperRangeBound( int dimension )
 {
     return( 1e+308 );
 }
+
+
+void quicksort(int *index_order, double *added_parameters, int first, int last){
+    int i, j, pivot, temp;
+
+    if(first<last){
+        pivot=first;
+        i=first;
+        j=last;
+
+        while(i<j){
+            while(added_parameters[index_order[i]]<=added_parameters[index_order[pivot]]&&i<last)
+                i++;
+            while(added_parameters[index_order[j]]> added_parameters[index_order[pivot]])
+                j--;
+            if(i<j){
+                temp = index_order[i];
+                index_order[i]=index_order[j];
+                index_order[j]=temp;
+            }
+        }
+        temp=index_order[pivot];
+        index_order[pivot]=index_order[j];
+        index_order[j]=temp;
+        quicksort(index_order,added_parameters,first,j-1);
+        quicksort(index_order,added_parameters,j+1,last);
+
+    }
+}
+
+void ciasRelaxedFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
+{
+    int    i, j;
+    double result;
+
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        if( parameters[i] < 0 )
+            parameters[i] = 0;
+
+        if( parameters[i] > 1 )
+            parameters[i] = 1;
+    }
+
+    result = 0.0;
+    for( i = 0; i < number_of_parameters; i+=2 ){
+        for( j = 0; j < i; j+=2 ){
+            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[i],parameters[i+1],parameters[j],parameters[j+1])), -4.0);
+        }
+    }
+    result = result;
+    *objective_value  = result;
+    *constraint_value = 0;
+}
+
+void ciasFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
+{
+    int    i, j;
+    double min_distance;
+
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        if( parameters[i] < 0 )
+            parameters[i] = 0;
+
+        if( parameters[i] > 1 )
+            parameters[i] = 1;
+    }
+
+    min_distance = 1.0;
+    for( i = 0; i < number_of_parameters; i+=2 ) {
+        for (j = 0; j < i; j += 2) {
+            min_distance = min(min_distance,
+                               distanceEuclidean2D(parameters[i], parameters[i + 1], parameters[j], parameters[j + 1]));
+        }
+    }
+//    printf("min_distance: %f, \n", min_distance);
+    *objective_value  = -min_distance;
+    *constraint_value = 0;
+}
+
+double ciasFunctionLowerRangeBound( int dimension )
+{
+    return( -1e+308 );
+}
+
+double ciasFunctionUpperRangeBound( int dimension )
+{
+    return( 1e+308 );
+}
+
+void ciasRelaxedFunctionPartialProblemEvaluation(  double *parameters, double *objective_value, double *constraint_value, int number_of_touched_parameters, int *touched_parameters_indices, double *touched_parameters, double *parameters_before, double objective_value_before, double constraint_value_before ){
+    int    i, j;
+    double result;
+
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        if( parameters[i] < 0 )
+            parameters[i] = 0;
+
+        if( parameters[i] > 1 )
+            parameters[i] = 1;
+    }
+
+//    result = 0.0;
+//    for( i = 0; i < number_of_parameters; i+=2 ){
+//        for( j = 0; j < i; j+=2 ){
+//            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[i],parameters[i+1],parameters[j],parameters[j+1])), -4.0);
+//        }
+//    }
+    result = objective_value_before;
+    for( i = 0; i < number_of_touched_parameters; i+=2 )
+    {
+        for( j = 0; j < number_of_parameters; j+=2 )
+        {
+            if( j == touched_parameters_indices[i] ) continue;
+            result -= pow(fmax(1e-5, distanceEuclidean2D(parameters_before[i],parameters_before[i+1],parameters[j],parameters[j+1]) ), -4.0);
+            result += pow(fmax(1e-5, distanceEuclidean2D(parameters[touched_parameters_indices[i]],parameters[touched_parameters_indices[i]+1],parameters[j],parameters[j+1])), -4.0);
+        }
+    }
+
+    result = result;
+    *objective_value  = result;
+    *constraint_value = 0;
+
+}
+
+
+double ciasRelaxedFunctionLowerRangeBound( int dimension )
+{
+    return( -1e+308 );
+}
+
+double ciasRelaxedFunctionUpperRangeBound( int dimension )
+{
+    return( 1e+308 );
+}
+
+void scaledSumOfEllipsoidsFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
+{
+    int    i, j;
+    double result, *rotated_parameters, *cluster, *rotated_cluster;
+    rotated_parameters = rotateAllParameters(parameters);
+
+    result = 0.0;
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        j = i % block_size;
+        result += pow(10, 6.0 * ((double) j/(double)(block_size-1)))*rotated_parameters[i]*rotated_parameters[i];
+    }
+
+    int small_block_size = overlapping_dim;
+//    for(i = 0; i < number_of_parameters; i++) rotated_parameters[i] = parameters[i];
+
+    for( i = 1; i < number_of_blocks; i++ ) {
+        cluster = (double *) Malloc(small_block_size * sizeof(double));
+        for (j = 0; j < small_block_size; j++) {
+            cluster[j] = parameters[(i * block_size) + (j - 1)];
+        }
+        rotated_cluster = matrixVectorMultiplication(overlapping_rotation_matrix, cluster, small_block_size,
+                                                     small_block_size);
+        for (j = 0; j < small_block_size; j++) {
+            rotated_parameters[(i * block_size) + (j - 1)] = rotated_cluster[j];
+        }
+        free(cluster);
+        free(rotated_cluster);
+    }
+
+    for( i = 0; i < number_of_parameters; i++ )
+    {
+        int block_location = i%block_size;
+        if(block_location == 0 || block_location == block_size -1){
+            if( block_location == block_size-1){
+                j = block_size-1;
+            } else{
+                j = 0;
+            }
+            result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters[i]*rotated_parameters[i];
+        }
+
+    }
+
+    free(rotated_parameters);
+    *objective_value  = result;
+    *constraint_value = 0;
+}
+
+void scaledSumOfEllipsoidsFunctionPartialProblemEvaluation( double *parameters, double *objective_value, double *constraint_value, int number_of_touched_parameters, int *touched_parameters_indices, double *touched_parameters, double *parameters_before, double objective_value_before, double constraint_value_before )
+{
+    int    i, j;
+    double result, *cluster, *rotated_cluster;
+    double *all_parameters_before = ( double *) Malloc(number_of_parameters * sizeof(double));
+    for( i = 0; i < number_of_parameters; i++ ) all_parameters_before[i] = parameters[i];
+    for( i = 0; i < number_of_touched_parameters; i++ ) all_parameters_before[touched_parameters_indices[i]] = parameters_before[i];
+    double old_result = 0.0;
+    double *rotated_parameters = rotateAllParameters(parameters);
+    double *rotated_parameters_before = rotateAllParameters(all_parameters_before);
+    number_of_touched_parameters = number_of_parameters;
+    touched_parameters_indices = ( int *) Malloc(number_of_parameters * sizeof(int));
+    for (int i = 0; i < number_of_parameters; ++i) {
+        touched_parameters_indices[i] = i;
+    }
+
+    result = objective_value_before;
+    for( i = 0; i < number_of_touched_parameters; i++ )
+    {
+        j = touched_parameters_indices[i] % block_size;
+        int touched_index = touched_parameters_indices[i];
+        old_result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters_before[touched_index]*rotated_parameters_before[touched_index];
+        result -= pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters_before[touched_index]*rotated_parameters_before[touched_index];
+        result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters[touched_index]*rotated_parameters[touched_index];
+    }
+
+    int small_block_size = overlapping_dim;
+//    for(i = 0; i < number_    of_parameters; i++) rotated_parameters[i] = parameters[i];
+
+    for( i = 1; i < number_of_blocks; i++ ) {
+        cluster = (double *) Malloc(small_block_size * sizeof(double));
+        for (j = 0; j < small_block_size; j++) {
+            cluster[j] = parameters[(i * block_size) + (j - 1)];
+        }
+        rotated_cluster = matrixVectorMultiplication(overlapping_rotation_matrix, cluster, small_block_size,
+                                                     small_block_size);
+        for (j = 0; j < small_block_size; j++) {
+            rotated_parameters[(i * block_size) + (j - 1)] = rotated_cluster[j];
+        }
+        free(cluster);
+        free(rotated_cluster);
+    }
+
+    for( i = 1; i < number_of_blocks; i++ ) {
+        cluster = (double *) Malloc(small_block_size * sizeof(double));
+        for (j = 0; j < small_block_size; j++) {
+            cluster[j] = all_parameters_before[(i * block_size) + (j - 1)];
+        }
+        rotated_cluster = matrixVectorMultiplication(overlapping_rotation_matrix, cluster, small_block_size,
+                                                     small_block_size);
+        for (j = 0; j < small_block_size; j++) {
+            rotated_parameters_before[(i * block_size) + (j - 1)] = rotated_cluster[j];
+        }
+        free(cluster);
+        free(rotated_cluster);
+    }
+
+    for( i = 0; i < number_of_touched_parameters; i++ )
+    {
+        int touched_index = touched_parameters_indices[i];
+        int block_location = touched_index%block_size;
+        if(block_location == 0 || block_location == block_size -1){
+            if( block_location == block_size-1){
+                j = block_size-1;
+            } else{
+                j = 0;
+            }
+            result -= pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters_before[touched_index]*rotated_parameters_before[touched_index];
+            old_result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters_before[touched_index]*rotated_parameters_before[touched_index];
+            result += pow( 10.0, 6.0*(((double) (j))/((double) (block_size-1))) )*rotated_parameters[touched_index]*rotated_parameters[touched_index];
+        }
+    }
+
+    free ( rotated_parameters );
+    free ( all_parameters_before );
+    *objective_value  = result;
+    *constraint_value = 0;
+}
+
+
+double scaledSumOfEllipsoidsFunctionLowerRangeBound( int dimension )
+{
+    return( -1e+308 );
+}
+
+double scaledSumOfEllipsoidsFunctionUpperRangeBound( int dimension )
+{
+    return( 1e+308 );
+}
+
+
+
+double schwefelsFunctionLowerRangeBound( int dimension )
+{
+    return( -1e+308 );
+}
+
+double schwefelsFunctionUpperRangeBound( int dimension )
+{
+    return( 1e+308 );
+}
+
+
+void schwefelsFunctionProblemEvaluation( double *parameters, double *objective_value, double *constraint_value )
+{
+    int    i;
+    double result;
+    for(i = 0; i < number_of_parameters; i++ ) if(parameters[i]<-500) parameters[i] = -500;
+    for(i = 0; i < number_of_parameters; i++ ) if(parameters[i]>500) parameters[i] = 500;
+
+    result = 418.9829* (double)number_of_parameters;
+    for(i = 0; i < number_of_parameters; i ++){
+        double val = parameters[i];
+        val = sin(sqrt(fabs(val)));
+        result += -parameters[i] * val;
+    }
+
+    *objective_value  = result;
+    *constraint_value = 0;
+}
+
+void RPSO_schwefel(double *parameters, double *objective_value,  double *constraint_value) /* Schwefel's  */
+{
+    int i, r_flag = 0; //This flag might influence overlap
+    double tmp, result;
+    double *z = (double *)malloc(sizeof(double)  *  number_of_parameters);
+    double *x = (double *)malloc(sizeof(double)  *  number_of_parameters);
+
+//    for(i = 0; i < number_of_parameters; i ++){
+//        parameters[i] = 50.0*i;
+//    }
+    for (i=0; i<number_of_parameters; i++)
+    {
+        x[i]=parameters[i]-OShift[i];
+    }
+    for (i=0; i<number_of_parameters; i++) //shrink to the orginal search range
+    {
+        x[i]*=1000/100;
+    }
+    if (r_flag==1){
+        int j;
+        for (i=0; i<number_of_parameters; i++)
+        {
+            z[i]=0;
+            for (j=0; j<number_of_parameters; j++)
+            {
+                z[i]=z[i]+x[j]*M[i*number_of_parameters+j];
+            }
+        }
+    }
+    else
+        for (i=0; i<number_of_parameters; i++)
+            z[i]=x[i];
+
+    for (i=0; i<number_of_parameters; i++)
+        x[i] = z[i]*pow(10.0,1.0*i/(number_of_parameters-1)/2.0);
+
+    for (i=0; i<number_of_parameters; i++)
+        z[i] = x[i]+4.209687462275036e+002;
+
+    result=0;
+    for (i=0; i<number_of_parameters; i++)
+    {
+        if (z[i]>500)
+        {
+            result-=(500.0-fmod(z[i],500))*sin(pow(500.0-fmod(z[i],500),0.5));
+            tmp=(z[i]-500.0)/100;
+            result+= tmp*tmp/number_of_parameters;
+        }
+        else if (z[i]<-500)
+        {
+            result-=(-500.0+fmod(fabs(z[i]),500))*sin(pow(500.0-fmod(fabs(z[i]),500),0.5));
+            tmp=(z[i]+500.0)/100;
+            result+= tmp*tmp/number_of_parameters;
+        }
+        else
+            result-=z[i]*sin(pow(fabs(z[i]),0.5));
+    }
+    result=4.189828872724338e+002*number_of_parameters+result;
+    if(r_flag){
+        result+=100;
+    } else{
+        result -=100;
+    }
+    printf("result: %f, \n ", result);
+    *objective_value = result;
+    *constraint_value = 0;
+    free(x);
+    free(z);
+}
+
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/

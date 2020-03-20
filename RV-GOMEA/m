@@ -5,11 +5,19 @@ echo "Current directory:" `pwd`
 echo "Current host     :" `hostname`
 echo ""
 
+
+
 echo -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-gcc -static -g -Wall -O3 RV-GOMEA.c ../util/*.c -o RV-GOMEA -lm
+g++ -fpic -shared ../cpp/*.cpp -o libbench.so
+g++ -fpic -shared ../link/link.cpp -o liblink.so -Wl,-rpath-link,. -L. -lbench
+g++ -fpic -shared ../link/link_c_connector.cpp -o liblink_c_connector.so -Wl,-rpath-link,. -L. -llink -lstdc++
+gcc -static -g -Wall -O3 -c RV-GOMEA.c ../util/*.c
+g++ -o RV-GOMEA *.o -Wl,-rpath-link,. -L. -llink_c_connector -llink
 echo -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 if [ -f RV-GOMEA.exe ]
 then
   mv RV-GOMEA.exe RV-GOMEA
 fi
+
+find . -name "*.o" -type f|xargs rm -f

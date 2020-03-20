@@ -1,0 +1,5 @@
+#!/bin/sh
+
+rm *.dat
+echo Running valgrind and redirecting output to \"output_valgrind.txt\"
+valgrind --tool=memcheck --leak-check=yes --show-reachable=yes  ./AMaLGaM-FOS -v -s -r -f 1 -g 0 40 -115 -100 0 0.35 5 25 0.9 1.0 1000000 1e-10 100 0.0 3600 > output_valgrind.txt
